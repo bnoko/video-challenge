@@ -289,7 +289,7 @@ body {
 /* GO circle — same position and size as the active timer circle */
 .go-circle {
   position: absolute;
-  bottom: max(60px, 10%);
+  bottom: max(20px, 3%);
   left: max(20px, 5%);
   width: 84px;
   height: 84px;
@@ -310,7 +310,7 @@ body {
 /* Prep toggle — sits to the right of the GO circle at the same height */
 #prep-toggle-wrap {
   position: absolute;
-  bottom: max(60px, 10%);
+  bottom: max(20px, 3%);
   left: calc(max(20px, 5%) + 100px);
   height: 84px;
   align-items: center;
@@ -401,8 +401,8 @@ body {
   /* Fallback height so content is clipped before JS measures and sets the exact value */
   height: clamp(72px, 12.6vh, 104px);
   /* Aggressive fade: only the middle band (roughly 1 line) is fully visible */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.18) 33%, black 41%, black 59%, rgba(0,0,0,0.18) 67%, transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.18) 33%, black 41%, black 59%, rgba(0,0,0,0.18) 67%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.18) 33%, black 41%, black 59%, rgba(0,0,0,0.45) 67%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.18) 33%, black 41%, black 59%, rgba(0,0,0,0.45) 67%, transparent 100%);
 }
 
 .art2-text {
@@ -578,7 +578,7 @@ body {
 /* Timer -bottom left */
 .timer-wrap {
   position: absolute;
-  bottom: max(60px, 10%);
+  bottom: max(20px, 3%);
   left: max(20px, 5%);
   display: flex;
   align-items: center;
@@ -766,7 +766,7 @@ body {
 
 .prep-timer-outer {
   position: absolute;
-  bottom: max(60px, 10%);
+  bottom: max(20px, 3%);
   left: max(20px, 5%);
   display: flex;
   flex-direction: row;
@@ -907,6 +907,24 @@ body {
 .help-list li strong {
   color: white;
   font-weight: 600;
+}
+
+.help-section-heading {
+  color: rgba(255,255,255,0.38) !important;
+  font-size: clamp(10px, 1.5vh, 12px) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  padding-left: 0 !important;
+  margin-top: clamp(10px, 1.8vh, 16px);
+}
+
+.help-section-heading:first-child {
+  margin-top: 0;
+}
+
+.help-section-heading::before {
+  content: none !important;
 }
 
 .prep-plus-btn {
@@ -1252,15 +1270,33 @@ const TIPS = {
   },
 };
 TIPS.articulation2 = {
-  title: 'Articulation tips',
-  items: [
-    '<strong>Progress</strong> — how many lines you reached. Aim to get further each attempt by staying smooth rather than rushing.',
-    '<strong>Accuracy</strong> — how cleanly you hit each sound. Every consonant should land: T, D, P, B, S, SH. Rate yourself honestly.',
-    '<strong>Flow</strong> — how natural and connected your speech felt. No stumbles, no resets, no gaps. Smooth is the goal.',
-    '<strong>Slow down</strong> — clarity matters more than speed. Rushing creates stumbles.',
-    '<strong>Exaggerate lip and tongue movement</strong> — it feels strange but sounds better on camera.',
-    '<strong>Breathe before each sentence</strong>, not during it.',
-    '<strong>Feel the consonants land</strong> — especially T, D, P, B. Don\'t swallow them.',
+  title: 'Articulation',
+  sections: [
+    {
+      heading: 'How it works',
+      items: [
+        'Read the passage aloud for 30 seconds, getting as far as you can.',
+        'Tap anywhere on the screen to move to the next line.',
+        'Balance speed with clarity — rushing causes stumbles and drops your score.',
+      ]
+    },
+    {
+      heading: 'Scoring',
+      items: [
+        '<strong>Progress</strong> — how many lines you reached. Aim further each attempt.',
+        '<strong>Accuracy</strong> — how cleanly each sound landed. Every consonant should be crisp: T, D, P, B, S, SH.',
+        '<strong>Flow</strong> — how natural and connected your speech felt. No stumbles, no resets, no gaps.',
+      ]
+    },
+    {
+      heading: 'Tips',
+      items: [
+        '<strong>Slow down</strong> — clarity matters more than speed.',
+        '<strong>Exaggerate lip and tongue movement</strong> — feels strange, sounds better on camera.',
+        '<strong>Breathe before each sentence</strong>, not during it.',
+        '<strong>Feel the consonants land</strong> — especially T, D, P, B. Don\'t swallow them.',
+      ]
+    }
   ]
 };
 
@@ -2039,8 +2075,16 @@ function openHelp() {
   const tips = TIPS[currentChallenge];
   if (tips) {
     document.getElementById('help-title').textContent = tips.title;
-    document.getElementById('help-list').innerHTML =
-      tips.items.map(t => `<li>${t}</li>`).join('');
+    if (tips.sections) {
+      // Multi-section format: heading rows + item rows
+      document.getElementById('help-list').innerHTML = tips.sections.map(sec =>
+        `<li class="help-section-heading">${sec.heading}</li>` +
+        sec.items.map(t => `<li>${t}</li>`).join('')
+      ).join('');
+    } else {
+      document.getElementById('help-list').innerHTML =
+        tips.items.map(t => `<li>${t}</li>`).join('');
+    }
   } else {
     document.getElementById('help-title').textContent = 'Tips';
     document.getElementById('help-list').innerHTML = '';
