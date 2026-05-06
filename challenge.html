@@ -1,0 +1,2638 @@
+<!--
+  ================================================================
+  VIDEO CHALLENGE APP  —  challenge.html
+  ================================================================
+  Single self-contained HTML file. No build tools, no dependencies.
+  Designed for 9:16 (portrait) aspect ratio with camera feed behind
+  the UI. Intended for use during video recording.
+
+  ── SCREENS ──────────────────────────────────────────────────
+  1. screen-select   Challenge selection menu
+  2. screen-intro    Challenge description + optional prep toggle
+  2b. screen-prep    Prep timer countdown (if enabled)
+  3. screen-active   Live challenge with countdown timer
+  4. screen-timesup  End screen
+
+  ── CHALLENGES ───────────────────────────────────────────────
+  story         3 random words, 60s. Words fade after 3s. Reroll ✓
+  tongue        Tongue twister, 30s. Reroll ✓
+  topic         Random topic, 60s. Reroll ✓
+  plot          Story premise, 60s. Reroll ✓
+  selfknowledge Reflective prompt (WNRS/Esther Perel style), 60s.
+                Prompt fades after 3s. Reroll ✓
+  interview     Behavioural interview question, 60s. Reroll ✓
+  gratitude     Fixed prompt ("3 things I'm grateful for"), 60s.
+                No reroll. Prompt fades after 3s.
+  articulation  Long passage to read aloud, 30s. Reroll ✓ (disabled)
+  articulation2 Line-by-line scroll passage, 30s. Tap anywhere to advance.
+                No reroll. No prep time. Tracks lines reached.
+                Times up: self-rate Progress, Accuracy, Flow (1–5 stars).
+
+  ── CONFIG FLAGS ─────────────────────────────────────────────
+  CONFIG.{challenge}.enabled  Show in selection screen
+  CONFIG.{challenge}.public   Include in future public release
+  CONFIG.prepTime.enabled     Show "Add prep time" toggle globally
+
+  ── KEY DESIGN DECISIONS ─────────────────────────────────────
+  - Prompt labels ("Your story" etc.) are hidden — prompt alone
+    is shown; the label was redundant.
+  - Times up screen: no prompt repeat for most challenges.
+    Exceptions: gratitude shows a quote; art2 shows line count.
+  - Prep time fades prompt after 3s on prep screen.
+    Word fade also fires after 3s on active screen for challenges
+    that use it (story, selfknowledge, gratitude).
+  - art2 scroll container height is set dynamically via RAF;
+    a CSS fallback height prevents full-text flash before JS runs.
+  - GO button is same size/position as the active timer circle
+    (bottom-left, 84px). Prep toggle sits to its right.
+  ================================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Challenge</title>
+<style>
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Prevent double-tap zoom on all interactive elements */
+button, .go-circle, .prep-toggle, .challenge-btn {
+  touch-action: manipulation;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   9:16 APP CONTAINER
+   ============================================================ */
+
+.app {
+  position: relative;
+  /* Width is constrained by both viewport width and height */
+  width: min(100vw, calc(100vh * 9 / 16));
+  height: min(100vh, calc(100vw * 16 / 9));
+  max-height: 100vh;
+  background: #111;
+  overflow: hidden;
+}
+
+/* ============================================================
+   CAMERA
+   ============================================================ */
+
+#camera {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* mirror for selfie */
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+#camera.visible { opacity: 1; }
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.screen.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ============================================================
+   TAP ANIMATION (shared)
+   ============================================================ */
+
+@keyframes tapAnim {
+  0%   { transform: scale(1); }
+  28%  { transform: scale(0.88); }
+  100% { transform: scale(1); }
+}
+
+.tapping {
+  animation: tapAnim 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* ============================================================
+   BACK BUTTON (shared)
+   ============================================================ */
+
+.back-btn {
+  position: absolute;
+  top: max(28px, 5%);
+  left: max(18px, 4%);
+  background: none;
+  border: none;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  cursor: pointer;
+  z-index: 10;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Shared SVG icon sizing for all icon buttons */
+.back-btn svg,
+.prep-skip-btn svg,
+.help-btn svg,
+.reroll-btn svg {
+  display: block;
+  filter: drop-shadow(0 1px 8px rgba(0,0,0,0.9));
+}
+
+.back-btn svg,
+.prep-skip-btn svg,
+.help-btn svg {
+  width: clamp(20px, 3.4vh, 26px);
+  height: clamp(20px, 3.4vh, 26px);
+}
+
+.reroll-btn svg {
+  width: clamp(16px, 2.7vh, 21px);
+  height: clamp(16px, 2.7vh, 21px);
+}
+
+/* ============================================================
+   SCREEN 1 -SELECTION
+   ============================================================ */
+
+#screen-select {
+  /* Camera shows through -just a subtle dark scrim for readability */
+  background: rgba(0,0,0,0.28);
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.select-inner {
+  padding: clamp(48px, 9%, 80px) clamp(18px, 5%, 36px) 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2vh, 20px);
+}
+
+.select-title {
+  color: white;
+  font-size: clamp(15px, 2.4vh, 22px);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 14px rgba(0,0,0,0.95), 0 2px 4px rgba(0,0,0,0.7);
+}
+
+.challenge-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(8px, 1.4vh, 12px);
+}
+
+.challenge-btn {
+  background: rgba(0,0,0,0.35);
+  border: 1.5px solid rgba(255,255,255,0.45);
+  color: white;
+  font-size: clamp(13px, 2.1vh, 18px);
+  font-weight: 400;
+  padding: clamp(7px, 1.2vh, 11px) clamp(14px, 3.5%, 22px);
+  border-radius: 30px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  user-select: none;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.8);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   SCREEN 2 -INTRO
+   ============================================================ */
+
+#screen-intro {
+  /* camera behind this */
+}
+
+/* Label sits in the top bar, centred between back and help icons */
+.intro-label {
+  position: absolute;
+  top: max(28px, 5%);
+  left: 50%;
+  transform: translateX(-50%);
+  height: clamp(20px, 3.4vh, 26px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  color: rgba(255,255,255,0.65);
+  font-size: clamp(11px, 1.8vh, 15px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.9);
+  z-index: 5;
+}
+
+/* Description area — left-aligned, starts just below the top bar */
+.intro-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: max(80px, 14%) clamp(18px, 5%, 36px) max(130px, 24%);
+}
+
+.intro-desc {
+  color: white;
+  font-size: clamp(18px, 3.2vh, 28px);
+  font-weight: 300;
+  line-height: 1.55;
+  text-align: left;
+  text-shadow: 0 1px 14px rgba(0,0,0,0.95), 0 2px 4px rgba(0,0,0,0.7);
+}
+
+/* GO circle — same position and size as the active timer circle */
+.go-circle {
+  position: absolute;
+  bottom: max(60px, 10%);
+  left: max(20px, 5%);
+  width: 84px;
+  height: 84px;
+  background: #22c55e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(22px, 4vh, 32px);
+  font-weight: 800;
+  color: white;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 6px 30px rgba(0,0,0,0.5);
+  letter-spacing: -0.02em;
+}
+
+/* Prep toggle — sits to the right of the GO circle at the same height */
+#prep-toggle-wrap {
+  position: absolute;
+  bottom: max(60px, 10%);
+  left: calc(max(20px, 5%) + 100px);
+  height: 84px;
+  align-items: center;
+  margin-top: 0;
+}
+
+/* ============================================================
+   SCREEN 3 -ACTIVE CHALLENGE
+   ============================================================ */
+
+#screen-active {
+  /* camera behind */
+}
+
+/* Prompt area — starts just below the top bar */
+.prompt-area {
+  position: absolute;
+  top: max(64px, 11%);
+  left: 0;
+  right: 0;
+  padding: 0 clamp(18px, 5%, 36px);
+}
+
+/* Prompt label — hidden; prompt content alone is sufficient */
+.prompt-label {
+  display: none;
+}
+
+/* Story: 3 large words stacked */
+.words-list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.5vh, 6px);
+  opacity: 1;
+  transition: opacity 1.2s ease;
+}
+
+.words-list.faded {
+  opacity: 0.35;
+}
+
+/* Prep screen prompt fade */
+#prep-prompt-display {
+  transition: opacity 1.2s ease;
+}
+
+.word-item {
+  color: white;
+  font-size: clamp(34px, 6.5vh, 58px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.8);
+}
+
+/* Articulation: scrollable long passage */
+.articulation-scroll {
+  height: clamp(78px, 13vh, 108px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.articulation-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.articulation-text {
+  color: white;
+  font-size: clamp(15px, 2.5vh, 20px);
+  font-weight: 400;
+  line-height: 1.55;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.7);
+}
+
+/* Story plot */
+.plot-text {
+  color: white;
+  font-size: clamp(22px, 4vh, 34px);
+  font-weight: 300;
+  line-height: 1.4;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.7);
+}
+
+/* Articulation 2: scroll window -height & padding set dynamically by JS */
+.art2-scroll {
+  overflow: hidden;
+  /* Fallback height so content is clipped before JS measures and sets the exact value */
+  height: clamp(72px, 12.6vh, 104px);
+  /* Aggressive fade: only the middle band (roughly 1 line) is fully visible */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.18) 33%, black 41%, black 59%, rgba(0,0,0,0.18) 67%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.18) 33%, black 41%, black 59%, rgba(0,0,0,0.18) 67%, transparent 100%);
+}
+
+.art2-text {
+  color: white;
+  font-size: clamp(16px, 2.8vh, 23px);
+  font-weight: 400;
+  line-height: 1.5;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.8);
+}
+
+
+/* Timesup completion line */
+.timesup-completion {
+  display: none;
+  color: rgba(255,255,255,0.65);
+  font-size: clamp(13px, 2.1vh, 18px);
+  font-weight: 300;
+  line-height: 1.4;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.9);
+}
+
+/* Art2 compact title — floats in the top bar at the same level as the help icon */
+.timesup-title-compact {
+  position: absolute !important;
+  top: max(28px, 5%);
+  left: 50%;
+  transform: translateX(-50%);
+  height: clamp(20px, 3.4vh, 26px);
+  display: flex !important;
+  align-items: center;
+  white-space: nowrap;
+  font-size: clamp(20px, 3.4vh, 28px) !important;
+  font-weight: 600 !important;
+  color: white !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.9) !important;
+}
+
+/* When art2 times-up is shown, push content below the top-bar title */
+#screen-timesup.art2-mode .timesup-inner {
+  padding-top: clamp(100px, 18%, 136px);
+}
+
+/* Art2 self-scoring section */
+.art2-score-section {
+  display: none;
+  width: 100%;
+  flex-direction: column;
+  gap: clamp(12px, 2.2vh, 20px);
+}
+
+.art2-score-section.visible {
+  display: flex;
+}
+
+/* Metric rows (Progress / Accuracy / Flow) */
+.art2-metric-row {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.6vw, 13px);
+  width: 100%;
+}
+
+.art2-metric-label {
+  color: white;
+  font-size: clamp(13px, 2.2vh, 18px);
+  font-weight: 600;
+  width: 5.2em;
+  flex-shrink: 0;
+  text-align: left;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.9);
+}
+
+/* Progress bar — no track, yellow fill only, square left corner / pill right */
+/* Height matches the star size so all three rows feel the same weight */
+.art2-progress-outer {
+  flex: 1;
+  position: relative;
+  height: clamp(30px, 5.2vh, 42px);
+}
+
+.art2-progress-fill {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  background: #eab308;
+  border-radius: 0 8px 8px 0;
+  width: 0%;
+  transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Percentage label — absolutely positioned just off the right end of the fill */
+.art2-progress-pct {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  font-size: clamp(13px, 2.2vh, 18px);
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: clamp(6px, 1vw, 8px);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.8);
+}
+
+/* Inside bar variant (>80%) — white text so it's readable on yellow */
+.art2-progress-pct.inside {
+  padding-left: 0;
+  padding-right: clamp(10px, 1.6vw, 14px);
+  color: white;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  left: auto !important;
+  right: 0;
+}
+
+/* Star rows */
+.art2-stars {
+  flex: 1;
+  display: flex;
+  gap: clamp(8px, 1.8vw, 14px);
+  align-items: center;
+}
+
+.art2-star {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0.3;
+  transition: color 0.12s ease, opacity 0.12s ease;
+}
+
+.art2-star.filled {
+  color: #eab308;
+  opacity: 1;
+}
+
+.art2-star svg {
+  display: block;
+  width: clamp(30px, 5.2vh, 42px);
+  height: clamp(30px, 5.2vh, 42px);
+}
+
+/* Tongue twister: quoted text */
+.twister-text {
+  color: white;
+  font-size: clamp(19px, 3.4vh, 30px);
+  font-weight: 400;
+  line-height: 1.45;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.7);
+}
+
+.reroll-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: clamp(10px, 2vh, 18px);
+  background: none;
+  border: none;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Timer -bottom left */
+.timer-wrap {
+  position: absolute;
+  bottom: max(60px, 10%);
+  left: max(20px, 5%);
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: clamp(8px, 1.5vw, 14px);
+}
+
+#timer-svg {
+  filter: drop-shadow(0 2px 10px rgba(0,0,0,0.7));
+  flex-shrink: 0;
+}
+
+.timer-num {
+  color: white;
+  font-size: clamp(28px, 5vh, 44px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.85);
+  min-width: 2ch;
+  line-height: 1;
+  text-align: right;
+}
+
+/* ============================================================
+   SCREEN 4 -TIME'S UP
+   ============================================================ */
+
+#screen-timesup {
+  /* camera behind -content at top, button at bottom */
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.timesup-inner {
+  text-align: center;
+  padding: clamp(64px, 12%, 110px) 10% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 2vh, 20px);
+}
+
+.timesup-title {
+  color: white;
+  font-size: clamp(32px, 5.8vh, 52px);
+  font-weight: 700;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.95);
+  letter-spacing: -0.01em;
+}
+
+.timesup-sub {
+  color: rgba(255,255,255,0.8);
+  font-size: clamp(18px, 3vh, 26px);
+  font-weight: 300;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.9);
+}
+
+.timesup-prompt {
+  color: rgba(255,255,255,0.55);
+  font-size: clamp(13px, 2.1vh, 18px);
+  line-height: 1.5;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+  margin-top: clamp(4px, 1vh, 10px);
+}
+
+.timesup-quote-text {
+  display: block;
+  font-style: italic;
+  color: rgba(255,255,255,0.78);
+  font-size: clamp(14px, 2.3vh, 20px);
+  font-weight: 300;
+  line-height: 1.6;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.9);
+}
+
+.timesup-quote-attr {
+  display: block;
+  margin-top: clamp(10px, 1.8vh, 16px);
+  color: rgba(255,255,255,0.35);
+  font-size: clamp(11px, 1.7vh, 15px);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+}
+
+.timesup-actions {
+  position: absolute;
+  bottom: max(20px, 3.5%);
+  left: max(20px, 5%);
+  right: max(20px, 5%);
+  display: flex;
+  gap: clamp(8px, 1.5vw, 12px);
+}
+
+.timesup-again-btn,
+.timesup-menu-btn {
+  flex: 1;
+  font-size: clamp(14px, 2.3vh, 19px);
+  padding: clamp(12px, 2.2vh, 18px) 8px;
+  border-radius: 30px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  user-select: none;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+}
+
+.timesup-again-btn {
+  background: rgba(0,0,0,0.35);
+  border: 1.5px solid rgba(255,255,255,0.45);
+  color: white;
+  font-weight: 500;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.timesup-menu-btn {
+  background: rgba(255,255,255,0.12);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.85);
+  font-weight: 400;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* ============================================================
+   PREP TOGGLE (on intro screen)
+   ============================================================ */
+
+.prep-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.prep-toggle input[type=checkbox] {
+  display: none;
+}
+
+.prep-toggle-track {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 13px;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.prep-toggle input:checked ~ .prep-toggle-track {
+  background: #22c55e;
+}
+
+.prep-toggle-thumb {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.prep-toggle input:checked ~ .prep-toggle-track .prep-toggle-thumb {
+  transform: translateX(18px);
+}
+
+.prep-toggle-label {
+  color: rgba(255,255,255,0.75);
+  font-size: clamp(13px, 2.1vh, 17px);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+}
+
+/* ============================================================
+   SCREEN -PREP TIME
+   ============================================================ */
+
+.prep-timer-outer {
+  position: absolute;
+  bottom: max(60px, 10%);
+  left: max(20px, 5%);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: clamp(8px, 1.5vw, 14px);
+}
+
+.prep-timer-num-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.prep-timer-label {
+  color: white;
+  font-size: clamp(12px, 2vh, 16px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+}
+
+.prep-top-right {
+  position: absolute;
+  top: max(28px, 5%);
+  right: max(18px, 4%);
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2.5vw, 22px);
+  z-index: 10;
+}
+
+.prep-skip-btn,
+.help-btn {
+  background: none;
+  border: none;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   HELP OVERLAY
+   ============================================================ */
+
+.help-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(20px, 5%, 36px);
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+.help-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.help-box {
+  background: rgba(18,18,18,0.97);
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: clamp(12px, 2vh, 18px);
+  padding: clamp(18px, 3.5%, 28px);
+  width: 100%;
+  max-height: 72%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.help-box::-webkit-scrollbar { display: none; }
+
+.help-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: clamp(12px, 2vh, 18px);
+}
+
+.help-title {
+  color: white;
+  font-size: clamp(15px, 2.4vh, 20px);
+  font-weight: 600;
+  text-shadow: none;
+}
+
+.help-close-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: clamp(10px, 2%, 16px);
+  display: flex;
+  align-items: center;
+}
+
+.help-close-btn svg {
+  width: clamp(16px, 2.6vh, 20px);
+  height: clamp(16px, 2.6vh, 20px);
+  display: block;
+}
+
+.help-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.8vh, 15px);
+}
+
+.help-list li {
+  color: rgba(255,255,255,0.82);
+  font-size: clamp(12px, 2vh, 16px);
+  line-height: 1.5;
+  padding-left: 1.1em;
+  position: relative;
+}
+
+.help-list li::before {
+  content: '-';
+  position: absolute;
+  left: 0;
+  color: rgba(255,255,255,0.3);
+}
+
+.help-list li strong {
+  color: white;
+  font-weight: 600;
+}
+
+.prep-plus-btn {
+  background: none;
+  border: none;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  color: white;
+  font-size: clamp(15px, 2.5vh, 21px);
+  font-weight: 700;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  user-select: none;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.95);
+}
+
+.ready-set-go {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.ready-set-go.visible {
+  opacity: 1;
+}
+
+.ready-set-go-text {
+  color: white;
+  font-size: clamp(22px, 4vh, 34px);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.95);
+}
+
+.ready-set-go-text.go {
+  color: #22c55e;
+}
+
+/* ============================================================
+   CONFIRM MODAL
+   ============================================================ */
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.modal-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal-box {
+  background: rgba(18,18,18,0.96);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  padding: clamp(24px, 5%, 40px) clamp(20px, 6%, 40px);
+  width: 76%;
+  text-align: center;
+}
+
+.modal-box p {
+  color: white;
+  font-size: clamp(15px, 2.6vh, 21px);
+  font-weight: 300;
+  line-height: 1.4;
+  margin-bottom: clamp(18px, 3.5vh, 28px);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modal-quit {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.6);
+  font-size: clamp(13px, 2.2vh, 18px);
+  padding: clamp(8px, 1.5vh, 12px) clamp(18px, 5%, 28px);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.modal-keep {
+  background: #22c55e;
+  border: none;
+  color: white;
+  font-size: clamp(13px, 2.2vh, 18px);
+  font-weight: 600;
+  padding: clamp(8px, 1.5vh, 12px) clamp(18px, 5%, 28px);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- Camera (shared background for screens 2–4) -->
+  <video id="camera" autoplay muted playsinline></video>
+
+  <!-- ── SCREEN 1: Challenge Selection ── -->
+  <div class="screen active" id="screen-select">
+    <div class="select-inner">
+      <h1 class="select-title">Choose a challenge</h1>
+      <div class="challenge-options">
+        <button class="challenge-btn" id="btn-story">📖 Storytelling</button>
+        <button class="challenge-btn" id="btn-tongue">👅 Tongue Twister</button>
+        <button class="challenge-btn" id="btn-topic">🎲 Random Topic</button>
+        <button class="challenge-btn" id="btn-plot">🎭 Story Plot</button>
+        <button class="challenge-btn" id="btn-selfknowledge">🪞 Self-Knowledge</button>
+        <button class="challenge-btn" id="btn-interview">💼 Interview Practice</button>
+        <button class="challenge-btn" id="btn-gratitude">🙏 Gratitude</button>
+        <button class="challenge-btn" id="btn-articulation">🎙️ Articulation</button>
+        <button class="challenge-btn" id="btn-articulation2">📜 Articulation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 2: Challenge Intro ── -->
+  <div class="screen" id="screen-intro">
+    <button class="back-btn" id="intro-back"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <p class="intro-label" id="intro-label"></p>
+    <div class="prep-top-right">
+      <button class="help-btn" id="intro-help"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
+    </div>
+    <div class="intro-inner">
+      <p class="intro-desc" id="intro-desc"></p>
+    </div>
+    <div class="go-circle" id="go-btn">GO</div>
+    <label class="prep-toggle" id="prep-toggle-wrap" style="display:none;">
+      <input type="checkbox" id="prep-toggle-input">
+      <span class="prep-toggle-track">
+        <span class="prep-toggle-thumb"></span>
+      </span>
+      <span class="prep-toggle-label">Add prep time</span>
+    </label>
+  </div>
+
+  <!-- ── SCREEN 2b: Prep Time ── -->
+  <div class="screen" id="screen-prep">
+    <button class="back-btn" id="prep-back"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <div class="prep-top-right">
+      <button class="help-btn" id="prep-help"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
+      <button class="prep-plus-btn" id="prep-plus">+10</button>
+      <button class="prep-skip-btn" id="prep-skip"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 6 11 12 5 18"/><polyline points="13 6 19 12 13 18"/></svg></button>
+    </div>
+
+    <p class="prompt-label" id="prep-prompt-label"></p>
+    <div class="prompt-area">
+      <div id="prep-prompt-display"></div>
+      <button class="reroll-btn" id="prep-reroll"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+    </div>
+
+    <div class="prep-timer-outer">
+      <svg id="prep-timer-svg" viewBox="0 0 100 100" width="84" height="84">
+        <path id="prep-timer-pie" fill="white" d=""/>
+      </svg>
+      <div class="prep-timer-num-stack">
+        <span class="prep-timer-label">Prep</span>
+        <span class="timer-num" id="prep-timer-num"></span>
+      </div>
+    </div>
+    <div class="ready-set-go" id="ready-set-go-overlay">
+      <span class="ready-set-go-text" id="ready-set-go-text"></span>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 3: Active Challenge ── -->
+  <div class="screen" id="screen-active">
+    <button class="back-btn" id="active-back"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+
+    <div class="prep-top-right">
+      <button class="help-btn" id="active-help"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
+      <button class="prep-skip-btn" id="active-skip"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 6 11 12 5 18"/><polyline points="13 6 19 12 13 18"/></svg></button>
+    </div>
+
+    <p class="prompt-label" id="prompt-label"></p>
+    <div class="prompt-area">
+      <div id="prompt-display"></div>
+      <button class="reroll-btn" id="reroll-btn"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+    </div>
+
+    <div class="timer-wrap">
+      <svg id="timer-svg" viewBox="0 0 100 100" width="84" height="84">
+        <path id="timer-pie" fill="white" d=""/>
+      </svg>
+      <span class="timer-num" id="timer-num"></span>
+    </div>
+
+
+  </div>
+
+  <!-- ── SCREEN 4: Time's Up ── -->
+  <div class="screen" id="screen-timesup">
+    <div class="prep-top-right">
+      <button class="help-btn" id="timesup-help"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
+    </div>
+    <div class="timesup-inner">
+      <h2 class="timesup-title">Time's up!</h2>
+      <p class="timesup-sub">How did you do?</p>
+      <p class="timesup-completion" id="timesup-completion"></p>
+      <p class="timesup-prompt" id="timesup-prompt"></p>
+      <div class="art2-score-section" id="art2-score-section">
+        <div class="art2-metric-row">
+          <span class="art2-metric-label">Progress</span>
+          <div class="art2-progress-outer" id="art2-progress-outer">
+            <div class="art2-progress-fill" id="art2-progress-fill"></div>
+            <span class="art2-progress-pct" id="art2-progress-pct"></span>
+          </div>
+        </div>
+        <div class="art2-metric-row">
+          <span class="art2-metric-label">Accuracy</span>
+          <div class="art2-stars" id="art2-stars-accuracy"></div>
+        </div>
+        <div class="art2-metric-row">
+          <span class="art2-metric-label">Flow</span>
+          <div class="art2-stars" id="art2-stars-flow"></div>
+        </div>
+      </div>
+    </div>
+    <div class="timesup-actions">
+      <button class="timesup-again-btn" id="again-btn">Do it again</button>
+      <button class="timesup-menu-btn" id="menu-btn">Return to menu</button>
+    </div>
+  </div>
+
+  <!-- ── Abandon Confirm Modal ── -->
+  <div class="modal-overlay" id="modal-confirm">
+    <div class="modal-box">
+      <p>Abandon this challenge?<br>Your progress will be lost.</p>
+      <div class="modal-actions">
+        <button class="modal-quit" id="confirm-quit">Quit</button>
+        <button class="modal-keep" id="confirm-keep">Keep going</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Help Overlay ── -->
+  <div class="help-overlay" id="help-overlay">
+    <div class="help-box">
+      <div class="help-header">
+        <h3 class="help-title" id="help-title"></h3>
+        <button class="help-close-btn" id="help-close"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <ul class="help-list" id="help-list"></ul>
+    </div>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+// ============================================================
+// CONFIG
+// ============================================================
+// enabled: show in selection screen
+// public:  include in future public-facing release
+
+const CONFIG = {
+  story:         { enabled: true,  public: true  },
+  tongue:        { enabled: true,  public: true  },
+  topic:         { enabled: true,  public: true  },
+  plot:          { enabled: true,  public: true  },
+  selfknowledge: { enabled: true,  public: true  },
+  interview:     { enabled: true,  public: true  },
+  gratitude:     { enabled: true,  public: true  },
+  articulation:  { enabled: false, public: false },
+  articulation2: { enabled: true,  public: false },
+  prepTime:      { enabled: true,  public: false },
+};
+
+// ============================================================
+// TIPS
+// ============================================================
+
+const TIPS = {
+  story: {
+    title: 'Storytelling tips',
+    items: [
+      '<strong>3-act structure</strong> - Set the scene, introduce a problem, resolve it. Even 60 seconds is enough for all three.',
+      '<strong>Pixar formula</strong> - "Once upon a time… every day… until one day… because of that… until finally…"',
+      '<strong>Start in the action</strong> - don\'t open with "So basically…", open with something happening.',
+      '<strong>Yes, and…</strong> - never get stuck. Accept what you\'ve set up and keep building on it.',
+    ]
+  },
+  plot: {
+    title: 'Story Plot tips',
+    items: [
+      '<strong>Character motivation first</strong> - why does your character want something? That\'s the engine of the story.',
+      '<strong>Raise the stakes fast</strong> - the problem should get worse before it gets better.',
+      '<strong>End with a beat</strong> - a twist, a realisation, or an emotional moment. Don\'t just stop.',
+      '<strong>3-act structure</strong> - Set the scene, introduce a problem, resolve it.',
+    ]
+  },
+  topic: {
+    title: 'Random Topic tips',
+    items: [
+      '<strong>PREP</strong> - Point, Reason, Example, Point (restate). Works for almost any topic.',
+      '<strong>Rule of three</strong> - make three observations. It feels complete and fills time naturally.',
+      '<strong>Lead with an opinion</strong> - "I think X is fascinating because…" is more engaging than "X is a type of…"',
+      '<strong>Bridge when stuck</strong> - "What\'s interesting about this is…" buys you a moment to think.',
+    ]
+  },
+  tongue: {
+    title: 'Tongue Twister tips',
+    items: [
+      '<strong>Slow first, then build</strong> - nail it at half speed before pushing the pace.',
+      '<strong>Isolate the hard bit</strong> - say just the tricky cluster a few times on its own.',
+      '<strong>Breathe between repetitions</strong> - don\'t let it become one continuous blur.',
+      '<strong>Exaggerate</strong> - over-articulate the tricky sounds until they click.',
+    ]
+  },
+  articulation: {
+    title: 'Articulation tips',
+    items: [
+      '<strong>Slow down</strong> - clarity matters more than speed. Rushing creates stumbles.',
+      '<strong>Exaggerate lip and tongue movement</strong> - it feels strange but sounds better on camera.',
+      '<strong>Breathe before each sentence</strong>, not during it.',
+      '<strong>Feel the consonants land</strong> - especially T, D, P, B. Don\'t swallow them.',
+    ]
+  },
+};
+TIPS.articulation2 = {
+  title: 'Articulation tips',
+  items: [
+    '<strong>Progress</strong> — how many lines you reached. Aim to get further each attempt by staying smooth rather than rushing.',
+    '<strong>Accuracy</strong> — how cleanly you hit each sound. Every consonant should land: T, D, P, B, S, SH. Rate yourself honestly.',
+    '<strong>Flow</strong> — how natural and connected your speech felt. No stumbles, no resets, no gaps. Smooth is the goal.',
+    '<strong>Slow down</strong> — clarity matters more than speed. Rushing creates stumbles.',
+    '<strong>Exaggerate lip and tongue movement</strong> — it feels strange but sounds better on camera.',
+    '<strong>Breathe before each sentence</strong>, not during it.',
+    '<strong>Feel the consonants land</strong> — especially T, D, P, B. Don\'t swallow them.',
+  ]
+};
+
+TIPS.selfknowledge = {
+  title: 'Self-Knowledge tips',
+  items: [
+    '<strong>Don\'t perform</strong> - this is about genuine reflection, not impressing anyone. Honesty lands better than polish.',
+    '<strong>Start with the first thing that comes up</strong> - your instinctive answer is usually the most revealing.',
+    '<strong>Go specific</strong> - "a time when I was 12" is more interesting than a general statement.',
+    '<strong>It\'s okay to not have an answer</strong> - saying "I\'m still figuring this out" is itself a real answer.',
+  ]
+};
+
+TIPS.interview = {
+  title: 'Interview tips',
+  items: [
+    '<strong>Use STAR</strong> - Situation, Task, Action, Result. Keep each part brief and move through all four.',
+    '<strong>Lead with the action</strong> - what you did is more compelling than a long setup.',
+    '<strong>Be specific</strong> - "I increased retention by 20%" beats "I improved things significantly".',
+    '<strong>End with the result or lesson</strong> - don\'t trail off mid-story. Land it cleanly.',
+  ]
+};
+
+TIPS.gratitude = {
+  title: 'Gratitude tips',
+  items: [
+    '<strong>Go specific</strong> - "the smell of coffee this morning" beats "health and family". Specificity makes it real.',
+    '<strong>Include one small thing</strong> - noticing tiny moments builds the habit better than only big things.',
+    '<strong>Say why</strong> - briefly explaining what you\'re grateful for deepens the reflection.',
+    '<strong>Don\'t filter</strong> - whatever genuinely comes to mind, however odd, is the right answer.',
+  ]
+};
+
+// ============================================================
+// CONTENT
+// ============================================================
+
+const WORDS = [
+  // Creatures
+  'bear','butterfly','crow','dolphin','eagle','elephant','falcon','fox',
+  'gorilla','hawk','jaguar','jellyfish','lion','lizard','monkey','moth',
+  'octopus','owl','panther','parrot','penguin','rabbit','raven','scorpion',
+  'seahorse','shark','spider','swan','tiger','wolf',
+  // Places
+  'alley','attic','barn','bay','beach','bridge','canyon','castle','cave',
+  'cemetery','cliff','coast','desert','dock','dungeon','factory','forest',
+  'harbor','island','jungle','lighthouse','mansion','meadow','mine',
+  'monastery','mountain','museum','orchard','palace','prison','quarry',
+  'ruins','swamp','temple','tower','tunnel','valley','volcano',
+  // People & roles
+  'archer','astronaut','baker','captain','dancer','detective','doctor',
+  'explorer','farmer','fisherman','ghost','hunter','inventor','knight',
+  'magician','merchant','musician','navigator','painter','pilot','pirate',
+  'poet','prophet','sailor','scholar','soldier','stranger','traveler',
+  'warrior','wizard','thief','healer','elder','exile',
+  // Objects & items
+  'anchor','arrow','axe','balloon','bell','bicycle','bottle','box',
+  'candle','cape','clock','compass','crown','dagger','drum','envelope',
+  'feather','flag','flask','gem','hammer','hourglass','journal','key',
+  'lantern','ladder','letter','locket','map','mirror','necklace',
+  'notebook','painting','passport','portrait','puzzle','ring','rope',
+  'scroll','shield','sword','telescope','ticket','torch','treasure',
+  'trophy','trumpet','umbrella','violin','wagon','whistle','window',
+  'barrel','basket','blanket','chain','charm','chest','cloak','coin',
+  'banner','beacon','blade','bone','cage','glove','helm','horn',
+  'idol','mask','medal','oar','orb','pearl','pipe','plank','pouch',
+  'quill','sack','seal','shell','staff','stone','thread','veil','wire',
+  // Nature & weather
+  'cloud','comet','crystal','dawn','dusk','earthquake','eclipse','fire',
+  'flood','fog','frost','glacier','hurricane','ice','lightning','meteor',
+  'midnight','moonlight','ocean','rainbow','river','rock','sand','shadow',
+  'smoke','snow','spark','spring','star','storm','summer','sunflower',
+  'sunrise','sunset','thunder','tornado','waterfall','wind','tide','ash',
+  'ember','reef',
+  // Abstract & narrative
+  'adventure','betrayal','chaos','choice','danger','destiny','dream',
+  'escape','failure','fortune','freedom','glory','hope','legend','luck',
+  'memory','miracle','mystery','nightmare','omen','promise','quest',
+  'riddle','rumour','secret','sorrow','spirit','wonder','courage',
+  'patience','ambition','victory','revenge','disguise','reunion',
+  'sacrifice','regret','obsession','alliance','conspiracy','crisis',
+  'curse','debt','duel','exile','feud','grief','guilt','honour',
+  'jealousy','mercy','panic','plague','pride','rage','ransom','shame',
+  'terror','truth','vanity','wish','grudge','truce','fate'
+];
+
+// Sound-focus reference for future passage generation:
+// S·SH·SL  |  P·B·BL·PL  |  TH·TR·DR  |  R·L  |  K·G·CL·GL  |  CH·J·SH
+// W·V  |  F·V  |  M·N  |  ST·SP·SK  |  PL·BL·FL·GL  |  TR·DR·R
+// T·D  |  B·D·G  |  STR  |  Mixed
+const ARTICULATIONS = [
+  { name: 'Shell Sorter', text: 'Sally swiftly sorted several slippery, slanted shells along the sunlit seashore, selecting specific shells she suspected were smoother, shinier, and slightly more suitable for stacking. She silently shuffled smaller shells beside larger shells, sliding sandy shells across slick stone surfaces, while shallow seawater surged softly, splashing and spraying scattered specks of salt across her steadily shifting setup. She struggled slightly, since several shells slipped suddenly, spinning sideways and scattering small shards across the sloping shore. Still, Sally stubbornly sustained her sorting, stacking, sliding, and reshuffling sequence, seeking some sense of structured symmetry among the scattered shells she\'d so selectively secured.' },
+  { name: 'The Pepper Packers', text: 'Peter Piper promptly packed piles of perfectly pickled peppers into polished pewter pots, placing each portion precisely before passing portions to Patricia, who patiently processed peppers into potent pepper paste. Patricia blended pale and bright peppers, balancing bitter, buttery, and boldly spiced blends before passing prepared portions to Percy the parrot, who persistently pecked, protested, and puffed in response to the powerful pepper paste. Meanwhile, Bobby brought broad blue baskets brimming with buttery baked bread, breaking bread briskly beside Betty\'s bustling bakery bench, blending butter between baked batches while balancing blistering pans and blazing burners behind him.' },
+  { name: 'Throne Room Heist', text: 'Thirty-three thoughtful thieves threaded through the thick, thorny thicket, tracing the twisted trail toward the towering throne room they\'d targeted through thorough theoretical planning. Their leader, a driven and deliberate thinker, directed them through three threaded thresholds, tracking the trembling footsteps of tired footmen who drifted through drafty corridors. Though the floor threatened to creak beneath their threaded steps, they tightened their formation, treading through treacherous timber floors, determined to complete their theatrical theft. Then, through tense, throttled breaths, they paused—one threadbare board trembled—yet through sheer timing and thin-threaded luck, the threat dissolved, and their daring, deeply thought-through plan continued.' },
+  { name: "Rory's Ridge", text: 'Rory relentlessly rolled along the rugged rural road, rapidly realigning his rhythm while repeatedly rebalancing long, rolling strides against loose, irregular ridges. He leaned left, then right, recalibrating leg rotation, lowering resistance while lifting his relaxed but resilient frame through relentless repetition. Along the route, rolling lorries rattled loudly, releasing lingering roars that reverberated across lowland ridges, while Rory remained locked into a layered, rolling rhythm, rarely relinquishing control. Still, his breathing grew laboured, and his legs reluctantly resisted longer rotations, yet Rory resolutely reasserted control, re-lengthening each stride, re-leveling his line, and relentlessly reclaiming the resilient, rolling cadence he relied on.' },
+  { name: 'Kettle Cottage', text: 'Cecilia carefully catalogued countless copper kettles, clinking clustered collections across cramped corners of her cluttered cottage. Each kettle clicked and clanged as she gradually grouped classic, curved, and cleverly crafted configurations into cleanly classified categories. Clifford, clearly confused, questioned Cecilia\'s calm commitment to collecting such colossal quantities, yet Cecilia calmly countered, claiming each carefully chosen kettle carried character, craftsmanship, and a compelling cultural connection. Gradually, she continued cleaning, clearing, and closely checking cracked clasps, correcting crooked curves, and clamping clattering components back into coherent condition, creating a constantly changing, curiously captivating collection.' },
+  { name: 'Cheesecake Judges', text: 'Charlotte cheerfully checked chilled chocolate cheesecake, carefully choosing chunks of chewy chocolate chips, chopped cherries, and gently glazed layers she had just adjusted. She shifted the cheesecake slightly, ensuring each section showed smooth, shining surfaces, while judges shuffled closer, exchanging quiet judgments as they cautiously chewed each chosen slice. The chef, clearly charged with nervous energy, kept checking, changing, and correcting small details, justifying each choice she had made. Just as chatter shifted and judgment seemed uncertain, the judges suddenly changed tone, cheerfully praising the rich, complex character she had achieved, leaving Charlotte quietly celebrating a challenging but clearly justified success.' },
+  { name: 'Windy Valley', text: 'Vivian vividly visualised vast velvet volumes while wandering westward through a windy, wavering valley where wavering willows whipped wildly in the wind. She veered slightly, weaving between weathered wooden walls while various villagers waved, whispering warm welcomes with wavering voices. Vivian\'s velvety voice, however, wavered whenever she tried to vocalise vivid variations of what she had witnessed, since the velocity of the wind warped her words, veiling vowels and varying volume unpredictably. Still, she ventured forward, repeatedly revising her vocal rhythm, working to stabilise each wavering word while maintaining a vibrant, vivid verbal flow despite the wildly varying weather.' },
+  { name: 'Flamingo Framer', text: 'Frederica fiercely focused on five vivid flamingos feeding in a flat, fading valley flooded with flickering reflections. She carefully framed every feather, favouring fine visual details while filtering faint fluctuations of flickering light across the fluid surface. The flamingos, forever fidgeting, frequently shifted formation, forcing Frederica to rapidly refocus, fine-tuning focal framing while fighting frustration from fleeting, vanishing views. Even so, she firmly fixed her vision, faithfully following each fluid movement, eventually forming a full, vivid visual sequence that felt fully realised despite the fast, volatile environment.' },
+  { name: 'The Music Machine', text: 'Millicent methodically managed multiple moving mechanisms within her meticulously maintained mechanical music machine, monitoring minute movements while making necessary modifications. Meanwhile, Meredith maintained minimal noise, managing murmuring museum members milling nearby, many noting the machine\'s mesmerising motion. Millicent\'s mind moved nonstop, measuring, matching, and modifying minor misalignments, ensuring no mechanism malfunctioned mid-melody. Nearing completion, she made one more minute modification, then nodded modestly as the machine moved smoothly, producing a mellow, mesmerising melody that moved many members into momentary, meaningful silence.' },
+  { name: 'Star Sketcher', text: 'Stanley steadily studied strange, spiralling star streams streaking across the sky, sketching swift, structured strokes while struggling to stabilise his shaking stylus. The spectacle spread steadily, sparkling streams splitting and spinning in symmetrical spirals that seemed to stretch space itself. Stanley stopped, startled, then started sketching faster, stacking sketch upon sketch, striving to store some stable snapshot of the shifting scene. Still, his strokes slipped, smudging soft shapes across the sketch surface, since the speed and scale of the spectacle surpassed his skill. As the spirals slowed, stopped, and sank into stillness, Stanley stood speechless, staring at scattered sketches, sensing he had seen something staggering yet scarcely captured.' },
+  { name: "Blake's Forge", text: 'Blake the blacksmith briskly balanced blazing blocks of blackened metal, placing flat plates beneath glowing flames while flickering sparks flew freely from the forge. He gripped pliers firmly, flipping and flattening blistering layers before blending rigid blocks into smoother, more flexible forms. Flames flared brightly, flooding the blackened workshop with flickering golden light, while Blake focused fully, blocking out background blurs and clattering clutter. Gradually, he aligned each plate, polishing rough flaws, flattening flawed edges, and locking glowing layers into a solid, gleaming final build that glowed brightly against the dim, smoke-filled backdrop.' },
+  { name: 'Dirt Road Driver', text: 'Trevor drove a rugged truck directly through a drenched dirt road, dragging heavy crates across deeply rutted tracks while trying to retain control. The road twisted and dropped unpredictably, forcing Trevor to react rapidly, redirecting the truck through treacherous terrain that threatened to derail his route. Rain drummed relentlessly, drenching the dashboard, while distant thunder rolled, adding to the rising pressure. Still, Trevor remained determined, gripping the wheel tightly, reading each ridge, and driving through the rough, demanding route with disciplined, deliberate responses that gradually restored control despite the relentless conditions.' },
+  { name: "Derek's Data", text: 'Derek deliberately dictated detailed data to a dedicated data director, drafting dense documents that demanded disciplined delivery and tight timing. Each dictated detail depended on Derek distinctly differentiating between tightly related terms, yet the density of the data disrupted his delivery, dragging certain syllables while distorting others. The director demanded total clarity, detecting tiny deviations in tone, tempo, and diction, driving Derek to double down on deliberate, disciplined delivery. Despite repeated disruptions, Derek determinedly tightened his diction, delivering each detail with increasing precision, though the demanding density of the dictated data continued to test his timing and control.' },
+  { name: "Gordon's Garage", text: 'Gordon boldly balanced broad bundles of goods between deep, darkened garage doors, dragging bulky boxes back and forth while dodging broken boards and dangling beams. The burden grew gradually heavier, demanding greater grip and deliberate body control, yet Gordon kept going, driving forward despite growing fatigue. Bags dropped, boxes banged, and boards buckled beneath his boots, but Gordon adjusted, bending, gripping, and driving each movement with better coordination. Gradually, through disciplined repetition, he gained better balance, blending brute strength with controlled, deliberate motion despite the demanding, grinding workload.' },
+  { name: 'The Street Artist', text: 'Strong, structured streams stretched straight through the street, striking stone steps and scattering stray streaks of spray across the surrounding structures. Struggling to stay steady, a street artist strained to stretch stiff strings across a strange, slanted frame, striving to secure each strand before stronger streams stripped his setup away. The strain steadily stacked, stressing his shoulders, stiffening his stance, and stretching his stamina thin. Still, he persisted, stringing, stretching, and straightening each section, stubbornly sustaining structure despite the steady, stressful stream striking everything in sight.' },
+  { name: 'The Ultimate Test', text: 'Simon swiftly switched between several specific speaking sequences, stacking sharp sibilants, plosive patterns, and tricky transitions into a single, continuous stream. He blended slippery "s" sounds with bouncing "b" bursts, threaded through tight "t" taps, and layered rolling "r" rhythms, forcing rapid repositioning of tongue, teeth, and lips. The sequence sped up, stacking strain upon strain, since each segment shifted sound patterns suddenly, preventing any stable speaking rhythm. Simon stumbled, restarted, then steadied slightly, but the sustained sequence still strained his speech, pushing precision, pacing, and control to their absolute limits without pause.' }
+];
+
+const PLOTS = [
+  "A woman goes to fight a dragon, but they become friends",
+  "Two strangers are trapped in a lift together -and one of them is hiding a secret",
+  "A detective investigates a mysterious crime, only to realise they are the suspect",
+  "A child finds a treasure map hidden inside an old library book",
+  "A robot gains feelings for the first time and doesn't know what to do with them",
+  "An astronaut returns home after 10 years to find their whole town has changed",
+  "A chef loses their sense of taste the night before the most important meal of their career",
+  "A lighthouse keeper receives a message in a bottle that changes everything",
+  "Two rivals are forced to work together to survive a storm at sea",
+  "A scientist invents a machine that can read minds -and immediately regrets it",
+  "A shy painter accidentally becomes famous overnight for the wrong reasons",
+  "A time traveller arrives to warn someone about a mistake -but is 10 years too late",
+  "A thief breaks into a house and finds something that makes them rethink everything",
+  "A dog leads its owner on a journey across the city to find something lost long ago",
+  "A young musician gets one shot at an audition -and everything goes wrong",
+  "An explorer discovers a hidden village that doesn't appear on any map",
+  "A ghost haunts a house but becomes attached to the family living there",
+  "A grandparent tells their grandchild a story that turns out to be completely true",
+  "A pilot has to make an emergency landing somewhere completely unexpected",
+  "A letter arrives 30 years late -and changes everything for the person who receives it",
+  "A zookeeper notices one of the animals is behaving very strangely",
+  "Two old friends meet by chance after 20 years apart",
+  "A king gives up the throne to pursue something he has always wanted to do",
+  "A small act of kindness from a stranger sets off an unexpected chain of events",
+  "A doctor discovers a cure -but powerful people don't want it to exist",
+  "A sailor gets lost at sea and discovers an island that shouldn't be there",
+  "A woman inherits a mysterious old shop from an aunt she never knew she had",
+  "A marathon runner collapses near the finish line -and a rival has to make a choice",
+  "A student finds notes written in the margins of a textbook -and starts following the clues",
+  "An unlikely friendship forms between two very different people stuck in a waiting room",
+  "A journalist goes to report a simple story and uncovers something much bigger",
+  "A boy makes a wish on his birthday -and it comes true in the worst possible way",
+  "A spy forgets which side they are working for",
+  "A farmer finds something buried in a field that rewrites local history",
+  "Two neighbours who have argued for years are forced to spend a day helping each other",
+  "A musician agrees to play one final concert -for an audience of just one person",
+  "A storm traps a group of strangers in a remote cabin overnight",
+  "A soldier returns from war to find their hometown has forgotten there ever was one",
+  "A child befriends a creature nobody else can see",
+  "An ordinary person discovers they have been living under a false identity their whole life"
+];
+
+const SELF_KNOWLEDGE = [
+  // From We're Not Really Strangers (Level 2 -solo-appropriate)
+  "What's something you believe that most people disagree with?",
+  "What do you think people misunderstand about you the most?",
+  "What's the bravest thing you've ever done?",
+  "What's something you've been putting off, and why?",
+  "What does your ideal life look like?",
+  "What's your biggest fear and how does it hold you back?",
+  "What's something you feel guilty about?",
+  "What would surprise people most about your inner life?",
+  "What's the most valuable lesson your biggest heartbreak has taught you?",
+  "What's a decision you regret and why?",
+  "What's one thing you'd do differently if you could start over?",
+  "What's the last thing that made you cry?",
+  "What's the best piece of advice you've ever received?",
+  "How do you know when you've met someone you can trust?",
+  "What's a version of yourself you've had to leave behind?",
+  "What are you most proud of that you never talk about?",
+  "What's a belief you held for a long time that turned out to be wrong?",
+  "What's something you've outgrown but haven't let go of yet?",
+  // From Esther Perel -story-starter format
+  "The last time I felt truly alive was…",
+  "What I've never told anyone is…",
+  "The relationship that changed me most was…",
+  "The moment everything changed for me was…",
+  "What I'm most afraid to want is…",
+  "The version of myself I'm most proud of is…",
+  "What I learned too late is…",
+  "The part of myself I hide most is…",
+  "What I wish someone had told me is…",
+  "The story I keep telling myself is…",
+  "What I'm still trying to figure out is…",
+  "What I miss most is…",
+  "A conversation I need to have is…",
+  "The thing that shaped me most was…",
+  "What I'm learning to let go of is…",
+];
+
+const INTERVIEW_QUESTIONS = [
+  "Tell me about yourself.",
+  "What's your greatest professional strength, and how have you used it?",
+  "What's a weakness you've been actively working on?",
+  "Tell me about a time you failed. What did you learn?",
+  "Describe a challenge you faced at work and how you overcame it.",
+  "Tell me about a time you had to work with a difficult colleague.",
+  "What's your proudest professional achievement?",
+  "Tell me about a time you showed leadership.",
+  "How do you handle pressure and tight deadlines?",
+  "Tell me about a time you had to adapt to a major change.",
+  "Describe a situation where you had to make a difficult decision with limited information.",
+  "Tell me about a time you disagreed with your manager. How did you handle it?",
+  "What motivates you in your work?",
+  "Where do you see yourself in five years?",
+  "Why are you looking to make a change right now?",
+  "What do you know about this company, and why does it interest you?",
+  "Tell me about a time you went above and beyond what was expected.",
+  "How do you prioritise when you have multiple competing deadlines?",
+  "Tell me about a time you had to influence someone without having direct authority.",
+  "What kind of work environment brings out the best in you?",
+  "Tell me about a time you received tough feedback. How did you respond?",
+  "What does success look like to you in the first 90 days of a new role?",
+  "Describe a project you led from start to finish.",
+  "Tell me about a time a project didn't go to plan.",
+  "What's a skill you've developed that you're proud of?",
+  "How do you approach building relationships with new colleagues?",
+  "Tell me about a time you had to learn something quickly.",
+  "What's the most complex problem you've solved at work?",
+  "Why should we hire you over other candidates?",
+  "Do you have any questions for us?",
+];
+
+const GRATITUDE_PROMPT = "Share three things you're grateful for right now. They can be big or small.";
+
+
+const TOPICS = [
+  // Everyday objects
+  'Scissors','Mirrors','Umbrellas','The toothbrush','Coffee mugs','Bicycles',
+  'Envelopes','Candles','Ladders','Vending machines','Bubble wrap','Escalators',
+  'Waiting rooms','Revolving doors','Supermarket self-checkouts','Shopping trolleys',
+  // Food & drink
+  'Pizza','Avocado','Croissants','Chilli peppers','Sushi','Cheese','Cucumbers',
+  'Mangoes','Instant noodles','Ketchup','Hot sauce','Sourdough bread',
+  'Fizzy drinks','Biscuits','The perfect sandwich',
+  // Animals
+  'Penguins','Octopuses','Sloths','Bees','Axolotls','Pigeons','Domesticated cats',
+  'Goldfish','Crows','Jellyfish','Pandas','Dolphins',
+  // Places & spaces
+  'The moon','Antarctica','Las Vegas','The Amazon rainforest','Submarines',
+  'Airports','Car parks','Libraries','Rooftops','Lifts','The deep ocean',
+  'Deserts','Tiny islands',
+  // Activities
+  'Swimming','Karaoke','Yoga','Gardening','Cooking','Dancing in public',
+  'Hiking','Online shopping','People watching','Daydreaming',
+  // Modern life
+  'Social media','Emojis','Selfies','Streaming services','Podcasts',
+  'Working from home','Group chats','Notifications','Password fatigue',
+  'Going viral','Autocorrect fails',
+  // Abstract & concepts
+  'Luck','Boredom','Fame','Gravity','Money','Nostalgia','Procrastination',
+  'Coincidences','First impressions','Silence','The colour beige',
+  // Hypotheticals
+  'If you could fly','Living on Mars','If animals could talk',
+  'A world without sleep','If you never had to eat','Time travel',
+  'Being invisible for a day','Swapping lives with a stranger',
+  // Quirky / fun
+  'Why we dream','Things found down the back of a sofa','The smell of rain',
+  'Why queuing exists','Superstitions','Conspiracy theories about mundane things',
+  'The last thing you Googled','Things that are weirdly satisfying'
+];
+
+const TWISTERS = [
+  "She sells seashells by the seashore",
+  "Peter Piper picked a peck of pickled peppers",
+  "How much wood would a woodchuck chuck if a woodchuck could chuck wood?",
+  "Red lorry, yellow lorry",
+  "Unique New York, you know you need unique New York",
+  "Betty Botter bought some butter, but she said the butter's bitter",
+  "I saw Susie sitting in a shoeshine shop",
+  "Fuzzy Wuzzy was a bear, Fuzzy Wuzzy had no hair",
+  "A proper copper coffee pot",
+  "Black background, brown background",
+  "Lesser leather never weathered wetter weather better",
+  "How can a clam cram in a clean cream can?",
+  "Toy boat, toy boat, toy boat",
+  "Rubber baby buggy bumpers",
+  "A skunk sat on a stump and thunk the stump stunk",
+  "Any noise annoys an oyster but a noisy noise annoys an oyster most",
+  "Whether the weather is warm or whether the weather is hot, we have to put up with the weather whether we like it or not",
+  "If a dog chews shoes, whose shoes does he choose?",
+  "The thirty-three thieves thought that they thrilled the throne throughout Thursday",
+  "Near an ear, a nearer ear, a nearly eerie ear",
+  "Double bubble gum bubbles double",
+  "Fresh French fried fish, fresh French fried fish",
+  "Six slippery snails slid slowly seaward",
+  "Which witch switched the Swiss wristwatches?",
+  "Three free throws",
+  "Selfish shellfish",
+  "Can you can a can as a canner can can a can?",
+  "Give papa a cup of proper coffee in a copper coffee cup",
+  "I scream, you scream, we all scream for ice cream",
+  "The sixth sick sheik's sixth sheep's sick"
+];
+
+// ============================================================
+// AUDIO  (Web Audio API -all synthesised, no files needed)
+// ============================================================
+
+let audioCtx = null;
+
+function getACtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function tone(freq, startDelay, dur, vol, type = 'sine') {
+  try {
+    const ac = getACtx();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.type = type;
+    osc.frequency.value = freq;
+    const t = ac.currentTime + startDelay;
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
+  } catch(e) {
+    // Audio unavailable -continue silently
+  }
+}
+
+// Short soft pop -challenge selection
+function playPop() {
+  tone(700, 0, 0.055, 0.22);
+}
+
+// Ascending three-note chord -GO pressed, challenge starting
+function playStart() {
+  tone(523, 0,    0.13, 0.22);   // C5
+  tone(659, 0.11, 0.13, 0.22);   // E5
+  tone(784, 0.22, 0.22, 0.28);   // G5
+}
+
+// Short high beep -last 3 countdown seconds
+function playBeep() {
+  tone(880, 0, 0.09, 0.32);
+}
+
+// Quieter mid-challenge beep -every 10 seconds
+function playMidBeep() {
+  tone(880, 0, 0.09, 0.16);
+}
+
+// Two descending notes -time's up
+function playEnd() {
+  tone(523, 0,    0.22, 0.38);   // C5
+  tone(392, 0.18, 0.42, 0.38);   // G4
+}
+
+// ============================================================
+// STATE
+// ============================================================
+
+let currentChallenge = null;   // 'story' | 'tongue' | 'topic' | 'plot' | 'articulation' | 'articulation2'
+let usedPromptText   = '';
+
+// Articulation 2 state
+let artLineHeight  = 0;    // px height of one rendered line
+let artTotalLines  = 0;    // total tappable lines in passage
+let artLineIdx     = 0;    // current line (0-based)
+let artScrollEl    = null; // reference to the scroll container
+
+let prepTimeEnabled     = false;
+let prepTimerRunning    = false;
+let prepTimerRemaining  = 30;
+let prepTimerTotal      = 30;
+let prepTimerStartWall  = null;
+let prepTimerRAF        = null;
+let prepBeepsPlayed     = new Set();     // saved for time's up screen
+
+let timerTotal      = 0;
+let timerRemaining  = 0;       // seconds left when timer was last started/resumed
+let timerStartWall  = null;    // performance.now() of last start/resume
+let timerRAF        = null;
+let timerRunning    = false;
+let beepsPlayed     = new Set();
+let midBeepsPlayed  = new Set();
+let wordFadeTimeout = null;
+let prepFadeTimeout = null;
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function scheduleWordFade() {
+  clearTimeout(wordFadeTimeout);
+  const list = document.querySelector('.words-list');
+  if (list) list.classList.remove('faded');
+  wordFadeTimeout = setTimeout(() => {
+    const l = document.querySelector('.words-list');
+    if (l) l.classList.add('faded');
+  }, 3000);
+}
+
+function cancelWordFade() {
+  clearTimeout(wordFadeTimeout);
+  wordFadeTimeout = null;
+  const list = document.querySelector('.words-list');
+  if (list) list.classList.remove('faded');
+}
+
+function schedulePrepFade() {
+  clearPrepFade();
+  const el = document.getElementById('prep-prompt-display');
+  if (el) el.style.opacity = '1';
+  prepFadeTimeout = setTimeout(() => {
+    const e = document.getElementById('prep-prompt-display');
+    if (e) e.style.opacity = '0.35';
+  }, 3000);
+}
+
+function clearPrepFade() {
+  clearTimeout(prepFadeTimeout);
+  prepFadeTimeout = null;
+  const el = document.getElementById('prep-prompt-display');
+  if (el) el.style.opacity = '';
+}
+
+function pickRandom(arr, n) {
+  const copy = [...arr].sort(() => Math.random() - 0.5);
+  return copy.slice(0, n);
+}
+
+function animateTap(el, cb, ms = 350) {
+  el.classList.remove('tapping');
+  void el.offsetWidth;          // force reflow to restart animation
+  el.classList.add('tapping');
+  setTimeout(() => {
+    el.classList.remove('tapping');
+    if (cb) cb();
+  }, ms);
+}
+
+// ============================================================
+// CAMERA
+// ============================================================
+
+const cameraEl = document.getElementById('camera');
+let cameraReady = false;
+
+async function initCamera() {
+  if (cameraReady) return;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1080 }, height: { ideal: 1920 } }
+    });
+    cameraEl.srcObject = stream;
+    cameraReady = true;
+    // Show camera on whichever screen is currently active
+    cameraEl.classList.add('visible');
+  } catch (e) {
+    console.warn('Camera unavailable:', e);
+  }
+}
+
+// Kick off camera immediately on load -permission prompt happens now,
+// so by the time the user picks a challenge the feed is already running
+initCamera();
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+
+  // Camera shows on every screen once it's been initialised
+  if (cameraReady) {
+    cameraEl.classList.add('visible');
+  }
+}
+
+// ============================================================
+// TIMER -SVG PIE
+// ============================================================
+
+const timerPie = document.getElementById('timer-pie');
+const timerNum = document.getElementById('timer-num');
+
+function piePath(fraction) {
+  if (fraction <= 0) return '';
+  if (fraction >= 1) return 'M50,50 L50,0 A50,50 0 1,1 49.9999,0 Z';
+  const a = (1 - fraction) * 2 * Math.PI;
+  const x = 50 + 50 * Math.sin(a);
+  const y = 50 - 50 * Math.cos(a);
+  const large = fraction > 0.5 ? 1 : 0;
+  return `M50,50 L${x},${y} A50,50 0 ${large},1 50,0 Z`;
+}
+
+function renderTimer(left) {
+  timerPie.setAttribute('d', piePath(left / timerTotal));
+  timerNum.textContent = left >= 1 ? Math.ceil(left) : '';
+}
+
+function timerTick() {
+  const elapsed = (performance.now() - timerStartWall) / 1000;
+  const left = Math.max(0, timerRemaining - elapsed);
+
+  // Mid-challenge beeps every 10 seconds
+  for (const t of [50, 40, 30, 20, 10]) {
+    if (left <= t && !midBeepsPlayed.has(t)) {
+      midBeepsPlayed.add(t);
+      playMidBeep();
+    }
+  }
+
+  // Countdown beeps for last 3 seconds
+  for (const t of [3, 2, 1]) {
+    if (left <= t && !beepsPlayed.has(t)) {
+      beepsPlayed.add(t);
+      playBeep();
+    }
+  }
+
+  renderTimer(left);
+
+  if (left > 0) {
+    timerRAF = requestAnimationFrame(timerTick);
+  } else {
+    timerRunning = false;
+    timerRemaining = 0;
+    timerPie.setAttribute('d', '');
+    timerNum.textContent = '';
+    cancelWordFade();
+    playEnd();
+    setTimeout(showTimesUp, 350);
+  }
+}
+
+function startTimer() {
+  timerStartWall  = performance.now();
+  timerRunning    = true;
+  beepsPlayed     = new Set();
+  midBeepsPlayed  = new Set();
+  timerRAF        = requestAnimationFrame(timerTick);
+}
+
+function pauseTimer() {
+  if (!timerRunning) return;
+  const elapsed = (performance.now() - timerStartWall) / 1000;
+  timerRemaining = Math.max(0, timerRemaining - elapsed);
+  cancelAnimationFrame(timerRAF);
+  timerRunning  = false;
+  timerStartWall = null;
+}
+
+function resumeTimer() {
+  timerStartWall = performance.now();
+  timerRunning   = true;
+  timerRAF       = requestAnimationFrame(timerTick);
+}
+
+function stopTimer() {
+  cancelAnimationFrame(timerRAF);
+  timerRunning   = false;
+  timerStartWall = null;
+  timerRemaining = 0;
+  cancelWordFade();
+}
+
+// ============================================================
+// PREP TIMER
+// ============================================================
+
+const prepTimerPie = document.getElementById('prep-timer-pie');
+const prepTimerNum = document.getElementById('prep-timer-num');
+
+function renderPrepTimer(left) {
+  prepTimerPie.setAttribute('d', piePath(left / prepTimerTotal));
+  prepTimerNum.textContent = left >= 1 ? Math.ceil(left) : '';
+}
+
+function showReadySetGo(word, isGo) {
+  const overlay = document.getElementById('ready-set-go-overlay');
+  const text    = document.getElementById('ready-set-go-text');
+  text.textContent = word;
+  text.className   = 'ready-set-go-text' + (isGo ? ' go' : '');
+  overlay.classList.add('visible');
+  document.querySelector('.prep-timer-outer').style.visibility = 'hidden';
+}
+
+function hideReadySetGo() {
+  document.getElementById('ready-set-go-overlay').classList.remove('visible');
+  document.querySelector('.prep-timer-outer').style.visibility = 'visible';
+}
+
+function triggerReadySetGo(onDone) {
+  showReadySetGo('Ready', false); playBeep();
+  setTimeout(() => { showReadySetGo('Set', false);  playBeep(); }, 1000);
+  setTimeout(() => { showReadySetGo('Go',   true);  playBeep(); }, 2000);
+  setTimeout(() => { hideReadySetGo(); if (onDone) onDone(); }, 2700);
+}
+
+function prepTimerTick() {
+  const elapsed = (performance.now() - prepTimerStartWall) / 1000;
+  const left    = Math.max(0, prepTimerRemaining - elapsed);
+
+  // Show Ready/Set/Go words on last 3 seconds (replaces beeps)
+  if (left <= 3 && left > 2 && !prepBeepsPlayed.has(3)) {
+    prepBeepsPlayed.add(3);
+    prepTimerPie.setAttribute('d', '');
+    prepTimerNum.textContent = '';
+    showReadySetGo('Ready', false); playBeep();
+  }
+  if (left <= 2 && left > 1 && !prepBeepsPlayed.has(2)) {
+    prepBeepsPlayed.add(2);
+    showReadySetGo('Set', false); playBeep();
+  }
+  if (left <= 1 && !prepBeepsPlayed.has(1)) {
+    prepBeepsPlayed.add(1);
+    showReadySetGo('Go', true); playBeep();
+  }
+
+  if (left > 3) renderPrepTimer(left);
+
+  if (left > 0) {
+    prepTimerRAF = requestAnimationFrame(prepTimerTick);
+  } else {
+    prepTimerRunning = false;
+    setTimeout(() => { hideReadySetGo(); playStart(); startActiveChallenge(); }, 700);
+  }
+}
+
+function startPrepTimer() {
+  prepTimerRemaining = 30;
+  prepTimerTotal     = 30;
+  prepTimerStartWall = performance.now();
+  prepTimerRunning   = true;
+  prepBeepsPlayed    = new Set();
+  prepTimerRAF       = requestAnimationFrame(prepTimerTick);
+}
+
+function pausePrepTimer() {
+  if (!prepTimerRunning) return;
+  const elapsed      = (performance.now() - prepTimerStartWall) / 1000;
+  prepTimerRemaining = Math.max(0, prepTimerRemaining - elapsed);
+  cancelAnimationFrame(prepTimerRAF);
+  prepTimerRunning   = false;
+  prepTimerStartWall = null;
+}
+
+function resumePrepTimer() {
+  prepTimerStartWall = performance.now();
+  prepTimerRunning   = true;
+  prepTimerRAF       = requestAnimationFrame(prepTimerTick);
+}
+
+function stopPrepTimer() {
+  cancelAnimationFrame(prepTimerRAF);
+  prepTimerRunning   = false;
+  prepTimerStartWall = null;
+  prepTimerRemaining = 30;
+  prepTimerTotal     = 30;
+  hideReadySetGo();
+  prepTimerPie.setAttribute('d', '');
+  prepTimerNum.textContent = '';
+}
+
+function startActiveChallenge() {
+  clearPrepFade();
+  timerRemaining = timerTotal;
+  showScreen('screen-active');
+  // Hide reroll for challenges where it doesn't apply
+  document.getElementById('reroll-btn').style.display =
+    (currentChallenge === 'gratitude' || currentChallenge === 'articulation2') ? 'none' : '';
+  startTimer();
+  if (currentChallenge === 'story' || currentChallenge === 'selfknowledge' || currentChallenge === 'gratitude') scheduleWordFade();
+}
+
+// ============================================================
+// PROMPT RENDERING
+// ============================================================
+
+function renderStoryWords(words) {
+  const d = document.getElementById('prompt-display');
+  document.getElementById('prompt-label').textContent = 'Your 3 words';
+  d.innerHTML = `<div class="words-list">${
+    words.map(w => `<div class="word-item">${w}</div>`).join('')
+  }</div>`;
+}
+
+function renderTwister(twister) {
+  const d = document.getElementById('prompt-display');
+  document.getElementById('prompt-label').textContent = 'Tongue twister';
+  d.innerHTML = `<p class="twister-text">"${twister}"</p>`;
+}
+
+function renderTopic(topic) {
+  const d = document.getElementById('prompt-display');
+  document.getElementById('prompt-label').textContent = 'Your topic';
+  d.innerHTML = `<div class="word-item">${topic}</div>`;
+}
+
+function renderPlot(plot) {
+  const d = document.getElementById('prompt-display');
+  document.getElementById('prompt-label').textContent = 'Your story';
+  d.innerHTML = `<p class="plot-text">${plot}</p>`;
+}
+
+function renderArticulation(item) {
+  const d = document.getElementById('prompt-display');
+  document.getElementById('prompt-label').textContent = item.name;
+  d.innerHTML = `<div class="articulation-scroll"><p class="articulation-text">${item.text}</p></div>`;
+}
+
+// Articulation 2 helpers
+
+function renderArticulation2(item) {
+  document.getElementById('prompt-label').textContent = item.name;
+  document.getElementById('prompt-display').innerHTML =
+    `<div class="art2-scroll" id="art2-scroll"><p class="art2-text" id="art2-text">${item.text}</p></div>`;
+
+  // Reset state
+  artLineIdx    = 0;
+  artScrollEl   = null;
+  artLineHeight = 0;
+  artTotalLines = 0;
+
+  // Step 1: measure the rendered line height
+  requestAnimationFrame(() => {
+    const container = document.getElementById('art2-scroll');
+    const textEl    = document.getElementById('art2-text');
+    if (!container || !textEl) return;
+
+    const computed = getComputedStyle(textEl);
+    const lhVal    = computed.lineHeight;
+    artLineHeight  = lhVal === 'normal'
+      ? parseFloat(computed.fontSize) * 1.4
+      : parseFloat(lhVal);
+
+    // Container shows 3 line-heights: faint above + clear current + faint below
+    container.style.height = `${artLineHeight * 3}px`;
+
+    // Pad so line 1 starts in the centre (clear) zone, not at the top
+    textEl.style.paddingTop    = `${artLineHeight}px`;
+    // Pad bottom so the last line can also scroll to centre
+    textEl.style.paddingBottom = `${artLineHeight}px`;
+
+    // Step 2: re-measure after padding is applied
+    requestAnimationFrame(() => {
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      artTotalLines   = Math.max(1, Math.round(maxScroll / artLineHeight) + 1);
+      artScrollEl     = container;
+    });
+  });
+}
+
+function art2Advance(dir) {
+  if (!artScrollEl || artLineHeight === 0) return;
+  const next = artLineIdx + dir;
+  if (next < 0 || next >= artTotalLines) return;
+  artLineIdx = next;
+  artScrollEl.scrollTop = artLineIdx * artLineHeight;
+}
+
+
+// ============================================================
+// HELP OVERLAY
+// ============================================================
+
+let helpPausedMain = false;
+let helpPausedPrep = false;
+
+function openHelp() {
+  helpPausedMain = timerRunning;
+  helpPausedPrep = prepTimerRunning;
+  if (timerRunning)     pauseTimer();
+  if (prepTimerRunning) pausePrepTimer();
+
+  const tips = TIPS[currentChallenge];
+  if (tips) {
+    document.getElementById('help-title').textContent = tips.title;
+    document.getElementById('help-list').innerHTML =
+      tips.items.map(t => `<li>${t}</li>`).join('');
+  } else {
+    document.getElementById('help-title').textContent = 'Tips';
+    document.getElementById('help-list').innerHTML = '';
+  }
+
+  document.getElementById('help-overlay').classList.add('visible');
+}
+
+function closeHelp() {
+  document.getElementById('help-overlay').classList.remove('visible');
+  if (helpPausedMain) resumeTimer();
+  if (helpPausedPrep) resumePrepTimer();
+  helpPausedMain = false;
+  helpPausedPrep = false;
+}
+
+document.getElementById('help-close').onclick   = closeHelp;
+document.getElementById('intro-help').onclick    = openHelp;
+document.getElementById('active-help').onclick   = openHelp;
+document.getElementById('prep-help').onclick     = openHelp;
+document.getElementById('timesup-help').onclick  = openHelp;
+
+// Close if tapping the dark backdrop (outside the box)
+document.getElementById('help-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('help-overlay')) closeHelp();
+});
+
+// ============================================================
+// SCREEN FLOWS
+// ============================================================
+
+// -Selection screen —
+
+function setToggleVisibility(show) {
+  document.getElementById('prep-toggle-wrap').style.display = show ? 'flex' : 'none';
+  if (!show) {
+    document.getElementById('prep-toggle-input').checked = false;
+    prepTimeEnabled = false;
+  }
+}
+
+document.getElementById('btn-story').onclick = () => {
+  playPop();
+  animateTap(document.getElementById('btn-story'), () => {
+    currentChallenge = 'story';
+    document.getElementById('intro-label').textContent = 'Storytelling';
+    document.getElementById('intro-desc').textContent =
+      "You'll get 3 random words and 60 seconds to tell a story using them";
+    setToggleVisibility(true);
+    showScreen('screen-intro');
+  });
+};
+
+document.getElementById('btn-tongue').onclick = () => {
+  playPop();
+  animateTap(document.getElementById('btn-tongue'), () => {
+    currentChallenge = 'tongue';
+    document.getElementById('intro-label').textContent = 'Tongue Twister';
+    document.getElementById('intro-desc').textContent =
+      "You'll get a tongue twister to repeat as many times as you can in 30 seconds";
+    setToggleVisibility(true);
+    showScreen('screen-intro');
+  });
+};
+
+document.getElementById('btn-articulation').onclick = () => {
+  playPop();
+  animateTap(document.getElementById('btn-articulation'), () => {
+    currentChallenge = 'articulation';
+    document.getElementById('intro-label').textContent = 'Articulation';
+    document.getElementById('intro-desc').textContent =
+      "You'll get a tongue-twisting passage -read as far as you can in 30 seconds. Scroll with your finger to follow along";
+    setToggleVisibility(true);
+    showScreen('screen-intro');
+  });
+};
+
+document.getElementById('btn-articulation2').onclick = () => {
+  playPop();
+  animateTap(document.getElementById('btn-articulation2'), () => {
+    currentChallenge = 'articulation2';
+    document.getElementById('intro-label').textContent = 'Articulation';
+    document.getElementById('intro-desc').textContent =
+      'Read as far as you can in 30 seconds. Tap anywhere on the screen to move to the next line';
+    setToggleVisibility(false);
+    showScreen('screen-intro');
+  });
+};
+
+document.getElementById('btn-selfknowledge').onclick = () => {
+  playPop();
+  animateTap(document.getElementById('btn-selfknowledge'), () => {
+    currentChallenge = 'selfknowledge';
+    document.getElementById('intro-label').textContent = 'Self-Knowledge';
+    document.getElementById('intro-desc').textContent =
+      "You'll get a reflective prompt and 60 seconds to answer";
+    setToggleVisibility(true);
+    showScreen('screen-intro');
+  });
+};
+
+document.getElementById('btn-interview').onclick = () => {
+  playPop();
+  animateTap(document.getElementById('btn-interview'), () => {
+    currentChallenge = 'interview';
+    document.getElementById('intro-label').textContent = 'Interview Practice';
+    document.getElementById('intro-desc').textContent =
+      "You'll get a common interview question and 60 seconds to answer";
+    setToggleVisibility(true);
+    showScreen('screen-intro');
+  });
+};
+
+document.getElementById('btn-gratitude').onclick = () => {
+  playPop();
+  animateTap(document.getElementById('btn-gratitude'), () => {
+    currentChallenge = 'gratitude';
+    document.getElementById('intro-label').textContent = 'Daily Gratitude';
+    document.getElementById('intro-desc').textContent =
+      "You'll have 60 seconds to share 3 things you're grateful for";
+    setToggleVisibility(true);
+    showScreen('screen-intro');
+  });
+};
+
+document.getElementById('btn-plot').onclick = () => {
+  playPop();
+  animateTap(document.getElementById('btn-plot'), () => {
+    currentChallenge = 'plot';
+    document.getElementById('intro-label').textContent = 'Story Plot';
+    document.getElementById('intro-desc').textContent =
+      "You'll get a story setup and have 60 seconds to bring it to life -make it as vivid as you can";
+    setToggleVisibility(true);
+    showScreen('screen-intro');
+  });
+};
+
+document.getElementById('btn-topic').onclick = () => {
+  playPop();
+  animateTap(document.getElementById('btn-topic'), () => {
+    currentChallenge = 'topic';
+    document.getElementById('intro-label').textContent = 'Random Topic';
+    document.getElementById('intro-desc').textContent =
+      "You'll get a random topic and have to talk about it non-stop for 60 seconds - no pausing, no hesitation!";
+    setToggleVisibility(true);
+    showScreen('screen-intro');
+  });
+};
+
+// -Intro screen —
+
+document.getElementById('intro-back').onclick = () => {
+  setToggleVisibility(true);
+  showScreen('screen-select');
+};
+
+// -Prep screen —
+
+document.getElementById('prep-back').onclick = () => {
+  stopPrepTimer();
+  showScreen('screen-intro');
+};
+
+document.getElementById('prep-skip').onclick = () => {
+  stopPrepTimer();
+  triggerReadySetGo(() => { playStart(); startActiveChallenge(); });
+};
+
+document.getElementById('prep-reroll').onclick = () => {
+  let wordsHTML;
+  if (currentChallenge === 'story') {
+    const words = pickRandom(WORDS, 3);
+    usedPromptText = words.join(', ');
+    wordsHTML = `<div class="words-list">${words.map(w => `<div class="word-item">${w}</div>`).join('')}</div>`;
+    document.getElementById('prompt-label').textContent = 'Your 3 words';
+    document.getElementById('prep-prompt-label').textContent = 'Your 3 words';
+  } else if (currentChallenge === 'topic') {
+    const topic = pickRandom(TOPICS, 1)[0];
+    usedPromptText = topic;
+    wordsHTML = `<div class="word-item">${topic}</div>`;
+    document.getElementById('prompt-label').textContent = 'Your topic';
+    document.getElementById('prep-prompt-label').textContent = 'Your topic';
+  } else if (currentChallenge === 'plot') {
+    const plot = pickRandom(PLOTS, 1)[0];
+    usedPromptText = plot;
+    wordsHTML = `<p class="plot-text">${plot}</p>`;
+    document.getElementById('prompt-label').textContent = 'Your story';
+    document.getElementById('prep-prompt-label').textContent = 'Your story';
+  }
+  if (wordsHTML) {
+    document.getElementById('prompt-display').innerHTML = wordsHTML;
+    document.getElementById('prep-prompt-display').innerHTML = wordsHTML;
+  }
+};
+
+document.getElementById('prep-plus').onclick = () => {
+  hideReadySetGo();
+  if (!prepTimerRunning) {
+    // Timer ended but +10 pressed -restart it
+    prepTimerRemaining = 10;
+    prepTimerTotal     = 10;
+    prepTimerStartWall = performance.now();
+    prepTimerRunning   = true;
+    prepBeepsPlayed    = new Set();
+    prepTimerRAF       = requestAnimationFrame(prepTimerTick);
+    return;
+  }
+  const elapsed = (performance.now() - prepTimerStartWall) / 1000;
+  prepTimerRemaining = Math.max(0, prepTimerRemaining - elapsed) + 10;
+  prepTimerTotal     = prepTimerRemaining;
+  prepTimerStartWall = performance.now();
+  prepBeepsPlayed    = new Set();
+};
+
+document.getElementById('prep-toggle-input').onchange = (e) => {
+  prepTimeEnabled = e.target.checked;
+};
+
+document.getElementById('go-btn').onclick = () => {
+  const goEl = document.getElementById('go-btn');
+  playStart();
+  animateTap(goEl, () => {
+    launchChallenge();
+  });
+};
+
+function launchChallenge() {
+  if (currentChallenge === 'story') {
+    const words = pickRandom(WORDS, 3);
+    usedPromptText = words.join(', ');
+    const wordsHTML = `<div class="words-list">${words.map(w => `<div class="word-item">${w}</div>`).join('')}</div>`;
+    // Render to active screen
+    document.getElementById('prompt-label').textContent = 'Your 3 words';
+    document.getElementById('prompt-display').innerHTML = wordsHTML;
+    timerTotal = 60;
+
+    if (prepTimeEnabled) {
+      // Also render to prep screen and go there first
+      document.getElementById('prep-prompt-label').textContent = 'Your 3 words';
+      document.getElementById('prep-prompt-display').innerHTML = wordsHTML;
+      showScreen('screen-prep');
+      startPrepTimer();
+      schedulePrepFade();
+      return;
+    }
+
+    timerRemaining = timerTotal;
+    showScreen('screen-active');
+    startTimer();
+    scheduleWordFade();
+    return;
+  } else if (currentChallenge === 'topic') {
+    const topic = pickRandom(TOPICS, 1)[0];
+    usedPromptText = topic;
+    const topicHTML = `<div class="word-item">${topic}</div>`;
+    document.getElementById('prompt-label').textContent = 'Your topic';
+    document.getElementById('prompt-display').innerHTML = topicHTML;
+    timerTotal = 60;
+    if (prepTimeEnabled) {
+      document.getElementById('prep-prompt-label').textContent = 'Your topic';
+      document.getElementById('prep-prompt-display').innerHTML = topicHTML;
+      showScreen('screen-prep');
+      startPrepTimer();
+      schedulePrepFade();
+      return;
+    }
+    timerRemaining = timerTotal;
+    showScreen('screen-active');
+    startTimer();
+    return;
+  } else if (currentChallenge === 'plot') {
+    const plot = pickRandom(PLOTS, 1)[0];
+    usedPromptText = plot;
+    const plotHTML = `<p class="plot-text">${plot}</p>`;
+    document.getElementById('prompt-label').textContent = 'Your story';
+    document.getElementById('prompt-display').innerHTML = plotHTML;
+    timerTotal = 60;
+    if (prepTimeEnabled) {
+      document.getElementById('prep-prompt-label').textContent = 'Your story';
+      document.getElementById('prep-prompt-display').innerHTML = plotHTML;
+      showScreen('screen-prep');
+      startPrepTimer();
+      schedulePrepFade();
+      return;
+    }
+    timerRemaining = timerTotal;
+    showScreen('screen-active');
+    startTimer();
+    return;
+  } else if (currentChallenge === 'selfknowledge') {
+    const prompt = pickRandom(SELF_KNOWLEDGE, 1)[0];
+    usedPromptText = prompt;
+    document.getElementById('prompt-label').textContent = 'Your prompt';
+    document.getElementById('prompt-display').innerHTML =
+      `<div class="words-list"><p class="twister-text">${prompt}</p></div>`;
+    timerTotal = 60;
+    if (prepTimeEnabled) {
+      document.getElementById('prep-prompt-label').textContent = 'Your prompt';
+      document.getElementById('prep-prompt-display').innerHTML =
+        `<p class="twister-text">${prompt}</p>`;
+      showScreen('screen-prep');
+      startPrepTimer();
+      schedulePrepFade();
+      return;
+    }
+    timerRemaining = timerTotal;
+    document.getElementById('reroll-btn').style.display = '';
+    showScreen('screen-active');
+    startTimer();
+    scheduleWordFade();
+    return;
+  } else if (currentChallenge === 'interview') {
+    const q = pickRandom(INTERVIEW_QUESTIONS, 1)[0];
+    usedPromptText = q;
+    document.getElementById('prompt-label').textContent = 'Your question';
+    document.getElementById('prompt-display').innerHTML = `<p class="twister-text">${q}</p>`;
+    timerTotal = 60;
+    if (prepTimeEnabled) {
+      document.getElementById('prep-prompt-label').textContent = 'Your question';
+      document.getElementById('prep-prompt-display').innerHTML = `<p class="twister-text">${q}</p>`;
+      showScreen('screen-prep');
+      startPrepTimer();
+      schedulePrepFade();
+      return;
+    }
+    timerRemaining = timerTotal;
+    document.getElementById('reroll-btn').style.display = '';
+    showScreen('screen-active');
+    startTimer();
+    return;
+  } else if (currentChallenge === 'gratitude') {
+    usedPromptText = GRATITUDE_PROMPT;
+    document.getElementById('prompt-label').textContent = '';
+    document.getElementById('prompt-display').innerHTML =
+      `<div class="words-list"><div class="word-item">3 things I'm grateful for</div></div>`;
+    timerTotal = 60;
+    if (prepTimeEnabled) {
+      document.getElementById('prep-prompt-label').textContent = '';
+      document.getElementById('prep-prompt-display').innerHTML =
+        `<div class="word-item">3 things I'm grateful for</div>`;
+      showScreen('screen-prep');
+      startPrepTimer();
+      schedulePrepFade();
+      return;
+    }
+    timerRemaining = timerTotal;
+    document.getElementById('reroll-btn').style.display = 'none';
+    showScreen('screen-active');
+    startTimer();
+    scheduleWordFade();
+    return;
+  } else if (currentChallenge === 'tongue') {
+    const tw = pickRandom(TWISTERS, 1)[0];
+    usedPromptText = tw;
+    renderTwister(tw);
+    timerTotal = 30;
+  } else if (currentChallenge === 'articulation') {
+    const item = pickRandom(ARTICULATIONS, 1)[0];
+    usedPromptText = item.name;
+    renderArticulation(item);
+    timerTotal = 30;
+  } else if (currentChallenge === 'articulation2') {
+    const item = pickRandom(ARTICULATIONS, 1)[0];
+    usedPromptText = item.name;
+    renderArticulation2(item);
+    timerTotal = 30;
+  }
+
+  // Prep time for fall-through challenges (tongue, articulation, articulation2)
+  if (prepTimeEnabled) {
+    const prepLabels = {
+      tongue: 'Your twister', articulation: usedPromptText, articulation2: usedPromptText,
+    };
+    document.getElementById('prep-prompt-label').textContent = prepLabels[currentChallenge] || '';
+    document.getElementById('prep-prompt-display').innerHTML =
+      document.getElementById('prompt-display').innerHTML;
+    showScreen('screen-prep');
+    startPrepTimer();
+    schedulePrepFade();
+    return;
+  }
+
+  timerRemaining = timerTotal;
+  document.getElementById('reroll-btn').style.display =
+    (currentChallenge === 'gratitude' || currentChallenge === 'articulation2') ? 'none' : '';
+  showScreen('screen-active');
+  startTimer();
+  if (currentChallenge === 'story') scheduleWordFade();
+}
+
+// -Active screen —
+
+document.getElementById('active-back').onclick = () => {
+  pauseTimer();
+  document.getElementById('modal-confirm').classList.add('visible');
+};
+
+document.getElementById('active-skip').onclick = () => {
+  stopTimer();
+  showTimesUp();
+};
+
+// Tap anywhere on the active screen (not on a button) advances art2 one line
+document.getElementById('screen-active').addEventListener('click', e => {
+  if (currentChallenge === 'articulation2' && !e.target.closest('button')) {
+    art2Advance(1);
+  }
+});
+
+document.getElementById('reroll-btn').onclick = () => {
+  if (currentChallenge === 'story') {
+    const words = pickRandom(WORDS, 3);
+    usedPromptText = words.join(', ');
+    renderStoryWords(words);
+    scheduleWordFade();
+  } else if (currentChallenge === 'tongue') {
+    const tw = pickRandom(TWISTERS, 1)[0];
+    usedPromptText = tw;
+    renderTwister(tw);
+  } else if (currentChallenge === 'topic') {
+    const topic = pickRandom(TOPICS, 1)[0];
+    usedPromptText = topic;
+    renderTopic(topic);
+  } else if (currentChallenge === 'plot') {
+    const plot = pickRandom(PLOTS, 1)[0];
+    usedPromptText = plot;
+    renderPlot(plot);
+  } else if (currentChallenge === 'articulation') {
+    const item = pickRandom(ARTICULATIONS, 1)[0];
+    usedPromptText = item.name;
+    renderArticulation(item);
+  } else if (currentChallenge === 'articulation2') {
+    const item = pickRandom(ARTICULATIONS, 1)[0];
+    usedPromptText = item.name;
+    renderArticulation2(item);
+  } else if (currentChallenge === 'selfknowledge') {
+    const prompt = pickRandom(SELF_KNOWLEDGE, 1)[0];
+    usedPromptText = prompt;
+    document.getElementById('prompt-label').textContent = 'Your prompt';
+    document.getElementById('prompt-display').innerHTML =
+      `<div class="words-list"><p class="twister-text">${prompt}</p></div>`;
+    scheduleWordFade();
+  } else if (currentChallenge === 'interview') {
+    const q = pickRandom(INTERVIEW_QUESTIONS, 1)[0];
+    usedPromptText = q;
+    document.getElementById('prompt-label').textContent = 'Your question';
+    document.getElementById('prompt-display').innerHTML = `<p class="twister-text">${q}</p>`;
+  }
+  // Gratitude: no reroll -static prompt
+};
+
+// -Confirm modal —
+
+document.getElementById('confirm-quit').onclick = () => {
+  document.getElementById('modal-confirm').classList.remove('visible');
+  stopTimer();
+  showScreen('screen-select');
+};
+
+document.getElementById('confirm-keep').onclick = () => {
+  document.getElementById('modal-confirm').classList.remove('visible');
+  resumeTimer();
+};
+
+// -Time's up screen —
+
+function showTimesUp() {
+  const title      = document.querySelector('.timesup-title');
+  const sub        = document.querySelector('.timesup-sub');
+  const completion = document.getElementById('timesup-completion');
+  const prompt     = document.getElementById('timesup-prompt');
+
+  // Reset to defaults (overridden per-challenge below)
+  title.textContent = "Time's up!";
+  title.className   = 'timesup-title';
+  document.getElementById('screen-timesup').classList.remove('art2-mode');
+
+  // Always hide the art2 score section; shown only for articulation2
+  const scoreSection = document.getElementById('art2-score-section');
+  scoreSection.classList.remove('visible');
+
+  if (currentChallenge === 'articulation2') {
+    const reached = artLineIdx + 1;
+    const pct = artTotalLines > 0 ? Math.round((reached / artTotalLines) * 100) : 0;
+
+    // Move title to top bar, pull inner content up
+    title.className = 'timesup-title timesup-title-compact';
+    document.getElementById('screen-timesup').classList.add('art2-mode');
+
+    sub.style.display        = 'none';
+    prompt.style.display     = 'none';
+    completion.style.display = 'none';
+
+    // Show score section
+    scoreSection.classList.add('visible');
+
+    // Progress bar — no track, pct floats just off the right edge of the fill
+    const fill  = document.getElementById('art2-progress-fill');
+    const pctEl = document.getElementById('art2-progress-pct');
+    fill.style.width  = '0%';
+    pctEl.textContent = `${pct}%`;
+
+    if (pct > 80) {
+      // Put pct inside the fill, right-aligned, black text
+      pctEl.classList.add('inside');
+      pctEl.style.left = '';
+    } else {
+      // Position pct just off the right edge of where the fill will end
+      pctEl.classList.remove('inside');
+      pctEl.style.left = `${pct}%`;
+    }
+
+    setTimeout(() => { fill.style.width = `${pct}%`; }, 60);
+
+    // Generate star rows (reset each time; currentColor picks up CSS colour)
+    ['art2-stars-accuracy', 'art2-stars-flow'].forEach(id => {
+      const container = document.getElementById(id);
+      container.innerHTML = '';
+      for (let i = 1; i <= 5; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'art2-star';
+        btn.setAttribute('data-value', i);
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+        btn.onclick = () => {
+          const val = parseInt(btn.getAttribute('data-value'));
+          container.querySelectorAll('.art2-star').forEach((s, idx) => {
+            s.classList.toggle('filled', idx < val);
+          });
+        };
+        container.appendChild(btn);
+      }
+    });
+
+  } else if (currentChallenge === 'selfknowledge') {
+    sub.textContent          = 'How did you find that?';
+    sub.style.display        = '';
+    prompt.style.display     = 'none';
+    completion.style.display = 'none';
+  } else if (currentChallenge === 'interview') {
+    sub.textContent          = 'How did you do?';
+    sub.style.display        = '';
+    prompt.style.display     = 'none';
+    completion.style.display = 'none';
+  } else if (currentChallenge === 'gratitude') {
+    title.textContent        = "That's time";
+    sub.style.display        = 'none';
+    prompt.innerHTML         = `<span class="timesup-quote-text">“Enjoy the little things for one day you may look back and realise they were the big things”</span><span class="timesup-quote-attr">&mdash; Charles Dickens</span>`;
+    prompt.style.display     = '';
+    completion.style.display = 'none';
+  } else {
+    sub.textContent          = 'How did you do?';
+    sub.style.display        = '';
+    prompt.style.display     = 'none';
+    completion.style.display = 'none';
+  }
+
+  showScreen('screen-timesup');
+}
+
+document.getElementById('again-btn').onclick = () => {
+  // Return to the intro screen for the same challenge (currentChallenge stays set)
+  showScreen('screen-intro');
+};
+
+document.getElementById('menu-btn').onclick = () => {
+  showScreen('screen-select');
+};
+
+// ============================================================
+// APPLY CONFIG
+// ============================================================
+
+(function applyConfig() {
+  const map = {
+    story:         'btn-story',
+    tongue:        'btn-tongue',
+    topic:         'btn-topic',
+    plot:          'btn-plot',
+    selfknowledge: 'btn-selfknowledge',
+    interview:     'btn-interview',
+    gratitude:     'btn-gratitude',
+    articulation:  'btn-articulation',
+    articulation2: 'btn-articulation2',
+  };
+  for (const [key, btnId] of Object.entries(map)) {
+    if (!CONFIG[key]?.enabled) {
+      const el = document.getElementById(btnId);
+      if (el) el.style.display = 'none';
+    }
+  }
+})();
+
+</script>
+</body>
+</html>
