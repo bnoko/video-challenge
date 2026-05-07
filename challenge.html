@@ -1092,6 +1092,11 @@ body {
   text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 
+/* Shrink prep prompt when framework guidance is also visible — prevents overlap */
+#screen-prep.has-framework .prompt-text {
+  font-size: clamp(13px, 2.1vh, 17px);
+}
+
 /* Prep screen framework preview — non-interactive */
 #framework-prep-wrap {
   position: absolute;
@@ -3755,7 +3760,6 @@ function launchChallenge() {
         `<p class="prompt-text">${getPrepDesc()}</p>`;
       showScreen('screen-prep');
       startPrepTimer();
-      schedulePrepFade();
       return;
     }
     startActiveChallenge();
@@ -3885,7 +3889,7 @@ function showTimesUp() {
 
   // Always hide the art2 score section; shown only for articulation2
   const scoreSection = document.getElementById('art2-score-section');
-  scoreSection.classList.remove('visible');
+  scoreSection.style.display = 'none';
 
   // Render framework zone and challenge ratings (generic, data-driven)
   renderFrameworkZone();
@@ -3899,7 +3903,7 @@ function showTimesUp() {
     sub.style.display        = 'none';
     prompt.style.display     = 'none';
     completion.style.display = 'none';
-    scoreSection.classList.add('visible');
+    scoreSection.style.display = 'flex';
 
     // Progress bar — no track, pct floats just off the right edge of the fill
     const fill  = document.getElementById('art2-progress-fill');
