@@ -1091,11 +1091,6 @@ body {
   text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 
-.fwk-boxes-row {
-  display: flex;
-  gap: clamp(5px, 1vw, 8px);
-}
-
 /* Prep screen framework preview — non-interactive */
 #framework-prep-wrap {
   position: absolute;
@@ -1114,8 +1109,15 @@ body {
   font-size: clamp(22px, 4vh, 34px);
 }
 
+.fwk-boxes-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(5px, 1vw, 8px);
+}
+
 .fwk-box {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 52px;
   min-height: clamp(44px, 7.5vh, 60px);
   background: rgba(0,0,0,0.35);
   border: 1.5px solid rgba(255,255,255,0.25);
@@ -1125,22 +1127,37 @@ body {
   align-items: center;
   justify-content: center;
   gap: 3px;
+  padding: 4px 6px;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
 }
 
+/* Parallel mode: tapped */
 .fwk-box.tapped {
   background: rgba(255,255,255,0.12);
   border-color: rgba(255,255,255,0.4);
 }
 
-.fwk-box.current {
+/* Sequential mode states */
+.fwk-box.seq-active {
   background: rgba(234,179,8,0.22);
   border-color: rgba(234,179,8,0.7);
+}
+
+.fwk-box.seq-done {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.3);
+  opacity: 0.6;
+}
+
+.fwk-box.seq-locked {
+  opacity: 0.28;
+  cursor: default;
+  pointer-events: none;
 }
 
 .fwk-box-emoji {
@@ -1157,8 +1174,34 @@ body {
 }
 
 .fwk-box.tapped .fwk-box-label,
-.fwk-box.current .fwk-box-label {
+.fwk-box.seq-active .fwk-box-label {
   color: white;
+}
+
+.fwk-box.seq-done .fwk-box-label {
+  color: rgba(255,255,255,0.7);
+}
+
+/* Per-step hint text */
+.fwk-box-hint {
+  color: rgba(255,255,255,0.55);
+  font-size: clamp(8px, 1.2vh, 10px);
+  font-weight: 400;
+  text-align: center;
+  line-height: 1.3;
+  padding: 0 2px;
+  margin-top: 1px;
+  display: none;
+}
+
+.fwk-box.seq-active .fwk-box-hint {
+  display: block;
+}
+
+/* Prep screen: always show hints */
+#framework-prep-wrap .fwk-box-hint {
+  display: block;
+  color: rgba(255,255,255,0.5);
 }
 
 /* Counter mode */
@@ -1206,44 +1249,60 @@ body {
   margin-bottom: clamp(10px, 1.8vh, 16px);
 }
 
+/* Time-distribution: color bar */
 .fwk-dist-bar {
-  height: clamp(28px, 4.8vh, 40px);
+  height: clamp(26px, 4.4vh, 36px);
   width: 100%;
   display: flex;
   border-radius: 6px;
   overflow: hidden;
   gap: 2px;
-  margin-bottom: 6px;
 }
 
 .fwk-dist-seg {
   height: 100%;
-  border-radius: 4px;
   min-width: 2px;
-  transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: width 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.fwk-dist-labels {
+/* Time-distribution: legend below bar */
+.fwk-dist-legend {
   display: flex;
-  gap: 2px;
+  flex-direction: column;
+  gap: clamp(5px, 0.9vh, 8px);
   width: 100%;
+  margin-top: clamp(8px, 1.4vh, 12px);
 }
 
-.fwk-dist-label {
-  color: rgba(255,255,255,0.6);
-  font-size: clamp(9px, 1.5vh, 12px);
-  font-weight: 500;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.fwk-dist-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.fwk-dist-label-untapped {
-  color: rgba(255,255,255,0.25);
-  text-decoration: line-through;
+.fwk-dist-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
   flex-shrink: 0;
-  width: auto !important;
+}
+
+.fwk-dist-legend-label {
+  color: rgba(255,255,255,0.75);
+  font-size: clamp(11px, 1.8vh, 14px);
+  font-weight: 500;
+  flex: 1;
+}
+
+.fwk-dist-legend-time {
+  color: rgba(255,255,255,0.5);
+  font-size: clamp(10px, 1.6vh, 13px);
+  font-variant-numeric: tabular-nums;
+}
+
+.fwk-dist-legend-item.unreached .fwk-dist-legend-label,
+.fwk-dist-legend-item.unreached .fwk-dist-legend-time {
+  color: rgba(255,255,255,0.2);
 }
 
 /* Completion-timed mode: label + check + elapsed time per element */
@@ -1888,13 +1947,12 @@ const FRAMEWORKS = {
     {
       id: 'what-why-impact',
       name: 'What / Why / Impact',
-      description: 'Name what you\'re grateful for, explain why it matters, then say what impact it\'s had. Tap each section as you move into it.',
-      mode: 'parallel',
-      timeTracked: true,
+      description: 'Name what you\'re grateful for, explain why it matters, then say what impact it\'s had. Tap to move to the next section.',
+      mode: 'sequential',
       elements: [
-        { label: 'What',   emoji: '🎯', flex: 1 },
-        { label: 'Why',    emoji: '💭', flex: 1 },
-        { label: 'Impact', emoji: '✨', flex: 1 },
+        { label: 'What',   emoji: '🎯', hint: 'Name the specific thing' },
+        { label: 'Why',    emoji: '💭', hint: 'Why does it matter to you?' },
+        { label: 'Impact', emoji: '✨', hint: 'How has it affected you?' },
       ],
       postChallenge: { type: 'time-distribution' },
     },
@@ -2283,6 +2341,7 @@ let prepFadeTimeout = null;
 let currentFramework      = null;  // selected framework object, or null
 let fwkElementTaps        = [];    // first-tap timestamp per element (null = not tapped)
 let fwkTapCount           = 0;     // counter mode: total taps
+let fwkCurrentStep        = 0;     // sequential mode: index of active step
 let fwkChallengeStartTime = 0;     // performance.now() when challenge started
 let fwkChallengeEndTime   = 0;     // performance.now() when challenge ended
 
@@ -2787,8 +2846,9 @@ function clearFrameworkOverlay() {
   const wrap = document.getElementById('framework-active-wrap');
   wrap.innerHTML = '';
   wrap.style.display = 'none';
-  fwkElementTaps = [];
-  fwkTapCount    = 0;
+  fwkElementTaps  = [];
+  fwkTapCount     = 0;
+  fwkCurrentStep  = 0;
   document.getElementById('screen-active').classList.remove('has-framework');
   document.getElementById('screen-prep').classList.remove('has-framework');
   const prepWrap = document.getElementById('framework-prep-wrap');
@@ -2806,10 +2866,12 @@ function renderFrameworkPrepOverlay() {
   wrap.style.display = 'flex';
   document.getElementById('screen-prep').classList.add('has-framework');
 
-  if (currentFramework.mode === 'parallel') {
-    const guidanceText = currentFramework.timeTracked
-      ? 'You will tap to track your progress'
-      : 'You will tap each one as you complete it';
+  const showEmoji = currentFramework.elements && currentFramework.elements.length <= 4;
+
+  if (currentFramework.mode === 'parallel' || currentFramework.mode === 'sequential') {
+    const guidanceText = currentFramework.mode === 'sequential'
+      ? 'You will tap to move to the next section'
+      : (currentFramework.timeTracked ? 'You will tap to track your progress' : 'You will tap each one as you complete it');
     const guidance = document.createElement('div');
     guidance.className = 'framework-guidance-label';
     guidance.textContent = guidanceText;
@@ -2821,9 +2883,9 @@ function renderFrameworkPrepOverlay() {
     currentFramework.elements.forEach(el => {
       const box = document.createElement('div');
       box.className = 'fwk-box';
-      box.style.flex = el.flex || 1;
-      box.innerHTML = (el.emoji ? `<span class="fwk-box-emoji">${el.emoji}</span>` : '')
-        + `<span class="fwk-box-label">${el.label}</span>`;
+      box.innerHTML = (showEmoji && el.emoji ? `<span class="fwk-box-emoji">${el.emoji}</span>` : '')
+        + `<span class="fwk-box-label">${el.label}</span>`
+        + (el.hint ? `<span class="fwk-box-hint">${el.hint}</span>` : '');
       row.appendChild(box);
     });
 
@@ -2850,10 +2912,56 @@ function renderFrameworkOverlay() {
   wrap.style.display = 'flex';
   document.getElementById('screen-active').classList.add('has-framework');
 
-  if (currentFramework.mode === 'parallel') {
+  const showEmoji = currentFramework.elements && currentFramework.elements.length <= 4;
+
+  if (currentFramework.mode === 'sequential') {
+    fwkElementTaps  = currentFramework.elements.map(() => null);
+    fwkCurrentStep  = 0;
+
+    const guidance = document.createElement('div');
+    guidance.className = 'framework-guidance-label';
+    guidance.textContent = 'Tap to move to the next section';
+    wrap.appendChild(guidance);
+
+    const row = document.createElement('div');
+    row.className = 'fwk-boxes-row';
+    const boxes = [];
+
+    const updateBoxStates = () => {
+      boxes.forEach((b, idx) => {
+        b.classList.remove('seq-active', 'seq-done', 'seq-locked');
+        if (idx < fwkCurrentStep)      b.classList.add('seq-done');
+        else if (idx === fwkCurrentStep) b.classList.add('seq-active');
+        else                             b.classList.add('seq-locked');
+      });
+    };
+
+    currentFramework.elements.forEach((el, i) => {
+      const box = document.createElement('button');
+      box.className = 'fwk-box seq-locked';
+      box.innerHTML = (showEmoji && el.emoji ? `<span class="fwk-box-emoji">${el.emoji}</span>` : '')
+        + `<span class="fwk-box-label">${el.label}</span>`
+        + (el.hint ? `<span class="fwk-box-hint">${el.hint}</span>` : '');
+
+      box.onclick = () => {
+        if (i !== fwkCurrentStep) return;
+        playPop();
+        fwkElementTaps[i] = performance.now();
+        fwkCurrentStep = Math.min(fwkCurrentStep + 1, currentFramework.elements.length - 1);
+        updateBoxStates();
+      };
+
+      boxes.push(box);
+      row.appendChild(box);
+    });
+
+    updateBoxStates();
+    wrap.appendChild(row);
+
+  } else if (currentFramework.mode === 'parallel') {
     fwkElementTaps = currentFramework.elements.map(() => null);
 
-    // Guidance label — text varies by mode
+    // Guidance label
     const guidanceText = currentFramework.timeTracked
       ? 'Tap to track your progress'
       : 'Tap each one as you complete it';
@@ -2862,27 +2970,23 @@ function renderFrameworkOverlay() {
     guidance.textContent = guidanceText;
     wrap.appendChild(guidance);
 
-    // Boxes row
     const row = document.createElement('div');
     row.className = 'fwk-boxes-row';
 
     currentFramework.elements.forEach((el, i) => {
       const box = document.createElement('button');
       box.className = 'fwk-box';
-      box.style.flex = el.flex || 1;
-      box.innerHTML = (el.emoji ? `<span class="fwk-box-emoji">${el.emoji}</span>` : '')
+      box.innerHTML = (showEmoji && el.emoji ? `<span class="fwk-box-emoji">${el.emoji}</span>` : '')
         + `<span class="fwk-box-label">${el.label}</span>`;
 
       box.onclick = () => {
         playPop();
         if (currentFramework.timeTracked) {
-          // Non-reversible: first tap records time, stays tapped independently
           if (!box.classList.contains('tapped')) {
             fwkElementTaps[i] = performance.now();
             box.classList.add('tapped');
           }
         } else {
-          // Reversible toggle for completion mode (e.g. gratitude)
           const wasTapped = box.classList.contains('tapped');
           box.classList.toggle('tapped', !wasTapped);
           fwkElementTaps[i] = wasTapped ? null : performance.now();
@@ -2924,64 +3028,96 @@ function renderFrameworkZone() {
   const pc = currentFramework.postChallenge;
 
   if (pc.type === 'time-distribution') {
-    const totalMs = fwkChallengeEndTime - fwkChallengeStartTime;
+    const SEG_COLORS = ['#eab308', '#60a5fa', '#f472b6', '#34d399', '#fb923c', '#a78bfa', '#38bdf8'];
+    const elements   = currentFramework.elements;
+    const totalMs    = fwkChallengeEndTime - fwkChallengeStartTime;
+    const segments   = []; // { el, durMs, reached, color }
 
-    // Build tapped elements sorted by tap time
-    const tapped = fwkElementTaps
-      .map((t, i) => ({ i, t }))
-      .filter(x => x.t !== null)
-      .sort((a, b) => a.t - b.t);
+    if (currentFramework.mode === 'sequential') {
+      // Sequential: tap[i] = when step i ENDED; step 0 starts at challengeStart
+      for (let i = 0; i < elements.length; i++) {
+        const startMs = i === 0 ? fwkChallengeStartTime : fwkElementTaps[i - 1];
+        if (startMs === null) {
+          // Previous step was never tapped — this step never started
+          segments.push({ el: elements[i], durMs: 0, reached: false, color: SEG_COLORS[i % SEG_COLORS.length] });
+        } else if (fwkElementTaps[i] !== null) {
+          // Step completed (tapped to move on)
+          segments.push({ el: elements[i], durMs: fwkElementTaps[i] - startMs, reached: true, color: SEG_COLORS[i % SEG_COLORS.length] });
+        } else {
+          // Final active step — ran to challenge end
+          segments.push({ el: elements[i], durMs: fwkChallengeEndTime - startMs, reached: true, color: SEG_COLORS[i % SEG_COLORS.length] });
+          for (let j = i + 1; j < elements.length; j++) {
+            segments.push({ el: elements[j], durMs: 0, reached: false, color: SEG_COLORS[j % SEG_COLORS.length] });
+          }
+          break;
+        }
+      }
+    } else {
+      // Parallel: taps sorted by time; each tap's duration = time to next tap (or challenge end)
+      const tapped = fwkElementTaps
+        .map((t, i) => ({ i, t }))
+        .filter(x => x.t !== null)
+        .sort((a, b) => a.t - b.t);
 
-    if (tapped.length === 0) return; // nothing tapped — skip zone
+      if (tapped.length === 0) return;
 
-    // Compute durations: each segment runs from this tap to next tap (or challenge end)
-    const segments = tapped.map((tap, k) => {
-      const segEnd   = k + 1 < tapped.length ? tapped[k + 1].t : fwkChallengeEndTime;
-      const durMs    = segEnd - tap.t;
-      const pct      = totalMs > 0 ? Math.max(1, Math.round((durMs / totalMs) * 100)) : 0;
-      const el       = currentFramework.elements[tap.i];
-      return { el, pct, tappedIdx: tap.i };
-    });
+      const tappedSet = new Set(tapped.map(x => x.i));
+      tapped.forEach((tap, k) => {
+        const segEnd = k + 1 < tapped.length ? tapped[k + 1].t : fwkChallengeEndTime;
+        segments.push({ el: elements[tap.i], durMs: segEnd - tap.t, reached: true, color: SEG_COLORS[k % SEG_COLORS.length] });
+      });
+      elements.forEach((el, i) => {
+        if (!tappedSet.has(i)) segments.push({ el, durMs: 0, reached: false, color: SEG_COLORS[segments.length % SEG_COLORS.length] });
+      });
+    }
 
-    const tappedSet = new Set(tapped.map(x => x.i));
-    const untapped  = currentFramework.elements
-      .map((el, i) => ({ el, i }))
-      .filter(x => !tappedSet.has(x.i));
+    const reachedSegs  = segments.filter(s => s.reached && s.durMs > 0);
+    const reachedTotal = reachedSegs.reduce((sum, s) => sum + s.durMs, 0);
 
-    // Bar
-    const barWrap   = document.createElement('div');
-    const bar       = document.createElement('div');
-    const labelsRow = document.createElement('div');
-    bar.className       = 'fwk-dist-bar';
-    labelsRow.className = 'fwk-dist-labels';
+    if (reachedSegs.length === 0) return;
 
-    const segColors = ['#eab308', '#f59e0b', '#fbbf24', '#fcd34d'];
-    segments.forEach((seg, k) => {
+    // Color bar
+    const bar = document.createElement('div');
+    bar.className = 'fwk-dist-bar';
+    reachedSegs.forEach(seg => {
+      const pct   = reachedTotal > 0 ? Math.max(1, Math.round((seg.durMs / reachedTotal) * 100)) : 0;
       const segEl = document.createElement('div');
-      segEl.className       = 'fwk-dist-seg';
-      segEl.style.width     = '0%';
-      segEl.style.background = segColors[k % segColors.length];
+      segEl.className        = 'fwk-dist-seg';
+      segEl.style.width      = '0%';
+      segEl.style.background = seg.color;
       bar.appendChild(segEl);
-      setTimeout(() => { segEl.style.width = `${seg.pct}%`; }, 60);
+      setTimeout(() => { segEl.style.width = `${pct}%`; }, 60);
+    });
 
-      const lbl = document.createElement('div');
-      lbl.className   = 'fwk-dist-label';
-      lbl.style.width = `${seg.pct}%`;
+    // Legend
+    const legend = document.createElement('div');
+    legend.className = 'fwk-dist-legend';
+    segments.forEach(seg => {
+      const item = document.createElement('div');
+      item.className = 'fwk-dist-legend-item' + (seg.reached && seg.durMs > 0 ? '' : ' unreached');
+
+      const swatch = document.createElement('span');
+      swatch.className        = 'fwk-dist-legend-swatch';
+      swatch.style.background = seg.color;
+
+      const lbl = document.createElement('span');
+      lbl.className   = 'fwk-dist-legend-label';
       lbl.textContent = (seg.el.emoji ? seg.el.emoji + ' ' : '') + seg.el.label;
-      labelsRow.appendChild(lbl);
+
+      const time = document.createElement('span');
+      time.className   = 'fwk-dist-legend-time';
+      time.textContent = seg.reached && seg.durMs > 0
+        ? Math.round(seg.durMs / 1000) + 's'
+        : '—';
+
+      item.appendChild(swatch);
+      item.appendChild(lbl);
+      item.appendChild(time);
+      legend.appendChild(item);
     });
 
-    // Untapped elements shown as struck-through labels
-    untapped.forEach(({ el }) => {
-      const lbl = document.createElement('div');
-      lbl.className   = 'fwk-dist-label fwk-dist-label-untapped';
-      lbl.textContent = (el.emoji ? el.emoji + ' ' : '') + el.label;
-      labelsRow.appendChild(lbl);
-    });
-
-    barWrap.appendChild(bar);
-    barWrap.appendChild(labelsRow);
-    zone.appendChild(barWrap);
+    zone.appendChild(bar);
+    zone.appendChild(legend);
     zone.style.display = 'block';
 
   } else if (pc.type === 'completion') {
