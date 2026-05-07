@@ -1185,7 +1185,23 @@ body {
   color: rgba(255,255,255,0.5);
 }
 
-/* Sequential mode: progress strip + next button */
+/* Sequential mode: overlay starts higher since header lives inside it */
+#screen-active.has-seq-framework .framework-active-wrap {
+  top: max(70px, 12%);
+}
+
+/* Sequential mode: progress strip + action row */
+.fwk-seq-header {
+  font-size: clamp(9px, 1.4vh, 12px);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.65);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+  text-align: center;
+  line-height: 1.3;
+}
+
 .fwk-seq-strip {
   display: flex;
   width: 100%;
@@ -1197,71 +1213,76 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: clamp(4px, 0.7vh, 6px) 4px;
+  gap: 4px;
+  padding: clamp(5px, 0.9vh, 8px) 6px;
   transition: opacity 0.2s;
   pointer-events: none;
 }
 
-.fwk-seq-step.seq-locked { opacity: 0.55; }
+.fwk-seq-step.seq-locked { opacity: 0.5; }
 .fwk-seq-step.seq-active { opacity: 1; }
-.fwk-seq-step.seq-done   { opacity: 0.35; }
+.fwk-seq-step.seq-done   { opacity: 0.4; }
 
-.fwk-seq-emoji { font-size: clamp(26px, 4.4vh, 36px); line-height: 1; }
+.fwk-seq-emoji { font-size: clamp(20px, 3.5vh, 28px); line-height: 1; }
 
 .fwk-seq-label {
-  font-size: clamp(18px, 3.2vh, 26px);
-  font-weight: 600;
+  font-size: clamp(13px, 2.2vh, 18px);
   text-align: center;
   color: rgba(255,255,255,0.8);
   line-height: 1.2;
 }
 
-.fwk-seq-step.seq-active .fwk-seq-label { color: #fcd34d; }
-.fwk-seq-step.seq-done  .fwk-seq-label  { color: rgba(255,255,255,0.7); }
+.fwk-seq-step.seq-active .fwk-seq-label { color: white;                   font-weight: 700; }
+.fwk-seq-step.seq-done   .fwk-seq-label { color: rgba(255,255,255,0.65);  font-weight: 700; }
+.fwk-seq-step.seq-locked .fwk-seq-label { color: rgba(255,255,255,0.45);  font-weight: 400; }
 
 .fwk-seq-check {
-  font-size: clamp(14px, 2.4vh, 18px);
+  font-size: clamp(11px, 1.9vh, 15px);
   color: rgba(255,255,255,0.35);
   visibility: hidden;
 }
 
 .fwk-seq-step.seq-done .fwk-seq-check { visibility: visible; }
 
+/* Action row: hint text left + arrow button right */
+.fwk-seq-action-row {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.8vw, 14px);
+  width: 100%;
+}
+
 .fwk-seq-hint {
+  flex: 1;
   color: rgba(255,255,255,0.9);
-  font-size: clamp(20px, 3.5vh, 30px);
+  font-size: clamp(18px, 3.2vh, 27px);
   font-weight: 600;
-  text-align: center;
+  text-align: left;
   line-height: 1.3;
   text-shadow: 0 2px 12px rgba(0,0,0,0.9);
 }
 
-.fwk-seq-next {
-  width: 100%;
-  min-height: clamp(44px, 7.5vh, 58px);
-  background: rgba(0,0,0,0.35);
+.fwk-seq-arrow-btn {
+  flex-shrink: 0;
+  width: clamp(44px, 7.5vw, 52px);
+  height: clamp(44px, 7.5vh, 52px);
+  background: rgba(255,255,255,0.1);
   border: 1.5px solid rgba(255,255,255,0.28);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
   color: rgba(255,255,255,0.85);
-  font-size: clamp(13px, 2.2vh, 17px);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: clamp(18px, 3vh, 24px);
   transition: background 0.1s, border-color 0.1s;
 }
 
-.fwk-seq-next:active {
-  background: rgba(234,179,8,0.22);
-  border-color: rgba(234,179,8,0.7);
+.fwk-seq-arrow-btn:active {
+  background: rgba(255,255,255,0.22);
+  border-color: rgba(255,255,255,0.6);
 }
 
 /* Counter result sentence */
@@ -1350,7 +1371,8 @@ body {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: clamp(6px, 1.2vw, 10px) clamp(10px, 2vw, 16px);
+  row-gap: clamp(8px, 1.5vh, 14px);
+  column-gap: clamp(22px, 4.5vw, 34px);
   width: 100%;
   margin-top: clamp(8px, 1.4vh, 12px);
 }
@@ -3007,33 +3029,48 @@ function renderFrameworkOverlay() {
 
   if (currentFramework.mode === 'sequential') {
     document.getElementById('screen-active').classList.add('has-seq-framework');
+    document.getElementById('prompt-display').innerHTML = ''; // header lives in overlay instead
     fwkElementTaps = currentFramework.elements.map(() => null);
     fwkCurrentStep = 0;
     const n = currentFramework.elements.length;
+
+    // Challenge name + framework name header
+    const CHALLENGE_DISPLAY_NAMES = {
+      gratitude: 'Daily Gratitude', story: 'Storytelling', topic: 'Random Topic',
+      plot: 'Story Plot', selfknowledge: 'Self-Knowledge', interview: 'Interview Practice',
+    };
+    const headerEl = document.createElement('div');
+    headerEl.className = 'fwk-seq-header';
+    headerEl.textContent = `${CHALLENGE_DISPLAY_NAMES[currentChallenge] || currentChallenge}: ${currentFramework.name}`;
 
     // Progress strip — non-interactive indicators
     const strip = document.createElement('div');
     strip.className = 'fwk-seq-strip';
     const stepEls = [];
 
-    currentFramework.elements.forEach((el) => {
+    currentFramework.elements.forEach((el, i) => {
       const step = document.createElement('div');
       step.className = 'fwk-seq-step seq-locked';
       step.innerHTML = (showEmoji && el.emoji ? `<span class="fwk-seq-emoji">${el.emoji}</span>` : '')
-        + `<span class="fwk-seq-label">${el.label}</span>`
+        + `<span class="fwk-seq-label">${i + 1}. ${el.label}</span>`
         + `<span class="fwk-seq-check">✓</span>`;
       stepEls.push(step);
       strip.appendChild(step);
     });
 
-    // Hint line for current step
+    // Action row: hint text (left-aligned) + compact arrow button (right)
+    const actionRow = document.createElement('div');
+    actionRow.className = 'fwk-seq-action-row';
+
     const hintEl = document.createElement('p');
     hintEl.className = 'fwk-seq-hint';
 
-    // Next button
-    const nextBtn = document.createElement('button');
-    nextBtn.className = 'fwk-seq-next';
-    nextBtn.innerHTML = 'Next &rarr;';
+    const arrowBtn = document.createElement('button');
+    arrowBtn.className = 'fwk-seq-arrow-btn';
+    arrowBtn.innerHTML = '&rarr;';
+
+    actionRow.appendChild(hintEl);
+    actionRow.appendChild(arrowBtn);
 
     const updateSeqState = () => {
       stepEls.forEach((s, idx) => {
@@ -3043,18 +3080,12 @@ function renderFrameworkOverlay() {
         else                              s.classList.add('seq-locked');
       });
       const currentEl = currentFramework.elements[fwkCurrentStep];
-      hintEl.textContent = currentEl?.hint || '';
+      hintEl.textContent = `${fwkCurrentStep + 1}. ${currentEl?.hint || ''}`;
       const allDone = fwkElementTaps.every(t => t !== null);
-      if (allDone) {
-        nextBtn.style.display = 'none';
-      } else {
-        nextBtn.style.display = '';
-        const onLastStep = fwkCurrentStep === n - 1;
-        nextBtn.innerHTML   = onLastStep ? 'Done ✓' : 'Next &rarr;';
-      }
+      arrowBtn.style.display = allDone ? 'none' : '';
     };
 
-    nextBtn.onclick = () => {
+    arrowBtn.onclick = () => {
       if (fwkElementTaps[fwkCurrentStep] !== null) return;
       playPop();
       fwkElementTaps[fwkCurrentStep] = challengeNow();
@@ -3071,9 +3102,9 @@ function renderFrameworkOverlay() {
     };
 
     updateSeqState();
+    wrap.appendChild(headerEl);
     wrap.appendChild(strip);
-    wrap.appendChild(hintEl);
-    wrap.appendChild(nextBtn);
+    wrap.appendChild(actionRow);
 
   } else if (currentFramework.mode === 'parallel') {
     fwkElementTaps = currentFramework.elements.map(() => null);
