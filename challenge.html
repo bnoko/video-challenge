@@ -1083,21 +1083,12 @@ body {
 }
 
 .framework-guidance-label {
-  color: rgba(255,255,255,0.45);
+  color: rgba(255,255,255,0.85);
   font-size: clamp(9px, 1.4vh, 11px);
   font-weight: 600;
   letter-spacing: 0.10em;
   text-transform: uppercase;
   text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-}
-
-/* On the active screen, guidance label starts bright and fades to dim */
-#screen-active .framework-guidance-label {
-  animation: guidance-label-fade 4s ease-out forwards;
-}
-@keyframes guidance-label-fade {
-  0%   { color: rgba(255,255,255,0.9); }
-  100% { color: rgba(255,255,255,0.45); }
 }
 
 .fwk-boxes-row {
@@ -2569,7 +2560,6 @@ function startActiveChallenge() {
   fwkChallengeStartTime = performance.now();
   renderFrameworkOverlay();
   startTimer();
-  if (currentChallenge === 'story' || currentChallenge === 'selfknowledge' || currentChallenge === 'gratitude') scheduleWordFade();
 }
 
 // ============================================================
@@ -3422,7 +3412,6 @@ document.getElementById('reroll-btn').onclick = () => {
     const words = pickRandom(WORDS, 3);
     usedPromptText = words.join(', ');
     renderStoryWords(words);
-    scheduleWordFade();
   } else if (currentChallenge === 'tongue') {
     const tw = pickRandom(TWISTERS, 1)[0];
     usedPromptText = tw;
@@ -3449,7 +3438,6 @@ document.getElementById('reroll-btn').onclick = () => {
     document.getElementById('prompt-label').textContent = 'Your prompt';
     document.getElementById('prompt-display').innerHTML =
       `<div class="words-list"><p class="twister-text">${prompt}</p></div>`;
-    scheduleWordFade();
   } else if (currentChallenge === 'interview') {
     const q = pickRandom(INTERVIEW_QUESTIONS, 1)[0];
     usedPromptText = q;
