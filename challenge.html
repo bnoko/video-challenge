@@ -3029,9 +3029,14 @@ function renderFrameworkOverlay() {
       });
       const currentEl = currentFramework.elements[fwkCurrentStep];
       hintEl.textContent = currentEl?.hint || '';
-      // Hide Next button once all steps are tapped
       const allDone = fwkElementTaps.every(t => t !== null);
-      nextBtn.style.display = allDone ? 'none' : '';
+      if (allDone) {
+        nextBtn.style.display = 'none';
+      } else {
+        nextBtn.style.display = '';
+        const onLastStep = fwkCurrentStep === n - 1;
+        nextBtn.innerHTML   = onLastStep ? 'Done ✓' : 'Next &rarr;';
+      }
     };
 
     nextBtn.onclick = () => {
