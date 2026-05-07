@@ -3294,7 +3294,7 @@ function renderFrameworkZone() {
 
       const lbl = document.createElement('span');
       lbl.className   = 'fwk-dist-legend-label';
-      lbl.textContent = (seg.el.emoji ? seg.el.emoji + ' ' : '') + seg.el.label;
+      lbl.textContent = seg.el.label;
 
       const time = document.createElement('span');
       time.className   = 'fwk-dist-legend-time';
@@ -3318,7 +3318,7 @@ function renderFrameworkZone() {
     currentFramework.elements.forEach((el, i) => {
       const box = document.createElement('div');
       box.className = 'fwk-completion-box' + (fwkElementTaps[i] !== null ? ' tapped' : '');
-      box.innerHTML = (el.emoji ? `<span>${el.emoji}</span>` : '') + `<span>${el.label}</span>`;
+      box.innerHTML = `<span>${el.label}</span>`;
       row.appendChild(box);
     });
     zone.appendChild(row);
@@ -3353,12 +3353,6 @@ function renderFrameworkZone() {
       const tapped = fwkElementTaps[i] !== null;
       const item = document.createElement('div');
       item.className = 'fwk-ct-item' + (tapped ? ' tapped' : '');
-      if (el.emoji) {
-        const emo = document.createElement('div');
-        emo.className = 'fwk-ct-emoji';
-        emo.textContent = el.emoji;
-        item.appendChild(emo);
-      }
       const lbl = document.createElement('div');
       lbl.className = 'fwk-ct-label';
       lbl.textContent = el.label;
