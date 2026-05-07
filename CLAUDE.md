@@ -46,6 +46,70 @@ user from their Mac. `deploy.sh` in the workspace folder handles this.
 | plot          | Story Plot         | 60s  |                              |
 | selfknowledge | Self-Knowledge     | 60s  | prompt fades after 3s        |
 | interview     | Interview Practice | 60s  |                              |
-| gratitude     | Daily Gratitude    | 60s  | "That's time" + Dickens quote|
+| gratitude     | Daily Gratitude    | 60s  | frameworks: parallel/sequential/counter |
 | articulation  | (disabled)         | 30s  | CONFIG.articulation.enabled=false |
 | articulation2 | Articulation       | 30s  | line-by-line, tap to advance |
+
+## Framework system
+Frameworks are optional guided structures layered on top of a challenge.
+Defined in `FRAMEWORKS[challengeKey]` — an array of framework objects.
+
+### Framework object shape
+```js
+{
+  id: 'unique-id',
+  name: 'Display Name',           // shown in pill + picker
+  description: 'Picker text',     // shown in the framework picker only
+  promptText: 'Share one thing…', // SINGLE SOURCE OF TRUTH for the prompt —
+                                  // flows to intro, prep, and active screens
+  mode: 'parallel' | 'sequential' | 'counter',
+  disablePrepTime: true,          // optional — hides prep toggle for this framework
+  timeOverride: 30,               // optional — overrides challenge default time
+  elements: [...],                // for parallel/sequential; each has label, emoji, hint
+  buttonLabel: '…',              // counter mode only
+  prepButtonLabel: '…',          // counter mode prep preview (optional)
+  postChallenge: { type: '…' },  // 'time-distribution' | 'completion-timed' | 'counter'
+}
+```
+
+### Prompt flow — always use promptText as the source
+- **Intro screen**: `getIntroDesc()` → `"You'll get X seconds to [lowercase gerund phrase]."`
+  - Time comes from `framework.timeOverride || CHALLENGE_DEFAULT_TIMES[challenge]`
+  - `updateFrameworkPill()` calls `getIntroDesc()` whenever framework selection changes
+- **Prep screen**: `getPrepDesc()` → `"Prep time for [gerund phrase]."`
+  - Uses `toGerund(firstVerb)` — drops silent trailing 'e' then adds '-ing' (share→sharing,
+    reflect→reflecting). Exceptions: see→seeing, agree→agreeing, etc.
+- **Active screen**: overlay renders `promptText` directly as `.fwk-overlay-prompt` inside
+  the framework wrap — never via `#prompt-display`
+
+### Overlay ownership rule (prevents all prompt overlap bugs)
+When any framework is active, **the overlay owns the content area**:
+- `#prompt-display` is always cleared (`innerHTML = ''`)
+- The prompt is rendered inside `#framework-active-wrap` as a `.fwk-overlay-prompt` element
+- This is structural — prompt length can never cause overlap with framework UI
+
+### Screen-active classes (set/cleared by renderFrameworkOverlay / clearFrameworkOverlay)
+- `has-framework` — any framework active
+- `has-seq-framework` — sequential mode (overlay starts at 12%)
+- `has-counter-framework` — counter mode (overlay starts at 12%)
+- `has-parallel-framework` — parallel mode (overlay starts at 12%)
+- All four must be in the `classList.remove()` call in `clearFrameworkOverlay()`
+
+### Sequential mode UX
+- Numbered list; active item is large/bold with inline `→` button; done items collapse
+- Arrow button: full white, `font-weight: 700`, larger font, same text-shadow as active text
+- Tapping `→` on the last step ends the challenge (calls `stopTimer()` + `showTimesUp()`)
+
+### Times-up page — emoji rule
+- **time-distribution legend**: no emojis (color swatch already identifies the segment)
+- **completion / completion-timed cards**: emojis kept (add warmth, no confusion)
+
+### disablePrepTime flag
+Set `disablePrepTime: true` on frameworks where prep time makes no sense (e.g. Gratitude
+Blitz counter). `updateFrameworkPill()` hides the prep toggle directly (not via
+`setToggleVisibility`, to avoid a circular call through `setFrameworkPillVisibility`).
+The launch code also guards: `if (prepTimeEnabled && !currentFramework?.disablePrepTime)`.
+
+### Fallback constants
+- `CHALLENGE_DEFAULT_DESCS` — base prompt text per challenge (no framework selected)
+- `CHALLENGE_DEFAULT_TIMES` — base time per challenge used by `getIntroDesc()`
