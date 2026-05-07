@@ -22,14 +22,16 @@ Articulation (Art2): fix intro screen phrasing only — no rebuild needed. Plot 
 
 ### Parallel mode post-challenge — standard pattern
 
-Parallel mode now works as follows (applies to all parallel frameworks including Person/Place/Feeling):
-- **One-tap only** — once tapped, an element cannot be untapped
-- **Auto-complete** — when all elements are tapped, challenge ends immediately (same behaviour as tapping → on the last sequential step)
-- **Times-up display** — show elements **in the order the user tapped them**, not the defined order. If timer runs out before all tapped, show tapped items first (in tap order) then untapped items greyed out at the end
-- **Time shown** = actual time spent on each element (time between consecutive taps, or between last tap and challenge end)
-- Use **completion cards** (not time distribution bar) for all parallel frameworks — consistent with the one-tap model
+The `completion-timed` post-challenge type (already used by Person/Place/Feeling) is the standard for all parallel frameworks. Behaviour:
 
-*This needs to be applied to Person/Place/Feeling before building any new parallel frameworks.*
+- **One-tap only** — once tapped, an element cannot be untapped
+- **Auto-complete** — when all elements are tapped, challenge ends immediately (same as → on the last sequential step)
+- **Times-up display** — elements shown **in the order the user tapped them**, not the defined order. Tapped items show a tick + duration spent on that slot. Untapped items shown last, in red with a cross and no time.
+- **Duration** = time between consecutive taps (or between last tap and challenge end). Not absolute elapsed time — the actual seconds spent on each part.
+
+Two changes needed on Person/Place/Feeling before building any new parallel frameworks:
+1. Render in tap order (currently renders in defined order)
+2. Show duration per slot (currently shows absolute elapsed time)
 
 ---
 
@@ -39,8 +41,8 @@ Prompt type: single random topic (unchanged).
 
 | Framework | Mode | Post-challenge |
 |---|---|---|
-| Rule of Three | Parallel — Point 1, Point 2, Point 3 | Completion cards in tap order |
-| Opinion + Justify | Parallel — 2 boxes, visually sized ~¼ Opinion / ~¾ Justify | Completion cards in tap order |
+| Rule of Three | Parallel — Point 1, Point 2, Point 3 | Completion-timed cards in tap order |
+| Opinion + Justify | Parallel — 2 boxes, visually sized ~¼ Opinion / ~¾ Justify | Completion-timed cards in tap order |
 | PREP | Sequential — Point → Reason → Example → Point (callback) | Time distribution bar, 4 segments |
 | Specific Detail | Counter — tap each time you land a specific detail | Count result |
 
