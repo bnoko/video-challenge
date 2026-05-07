@@ -332,6 +332,7 @@ body {
   left: 0;
   right: 0;
   padding: 0 clamp(18px, 5%, 36px);
+  text-align: left;
 }
 
 /* Prompt label — hidden; prompt content alone is sufficient */
@@ -442,10 +443,7 @@ body {
   text-shadow: 0 1px 10px rgba(0,0,0,0.9) !important;
 }
 
-/* When art2 times-up is shown, push content below the top-bar title */
-#screen-timesup.art2-mode .timesup-inner {
-  padding-top: clamp(100px, 18%, 136px);
-}
+/* art2-mode: used only to show the art2-score-section */
 
 /* Art2 self-scoring section */
 .art2-score-section {
@@ -564,7 +562,6 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: clamp(10px, 2vh, 18px);
   background: none;
   border: none;
   -webkit-appearance: none;
@@ -614,7 +611,7 @@ body {
 
 .timesup-inner {
   text-align: center;
-  padding: clamp(64px, 12%, 110px) 10% 0;
+  padding: clamp(100px, 18%, 136px) 10% 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1063,12 +1060,44 @@ body {
 /* In-challenge framework overlay (tappable boxes) */
 .framework-active-wrap {
   position: absolute;
-  top: clamp(48px, 8.5%, 68px);
+  top: clamp(130px, 22%, 175px);
   left: max(16px, 4%);
   right: max(16px, 4%);
   display: flex;
-  gap: clamp(5px, 1vw, 8px);
+  flex-direction: column;
+  gap: clamp(5px, 1vh, 8px);
   touch-action: manipulation;
+}
+
+.framework-guidance-label {
+  color: rgba(255,255,255,0.38);
+  font-size: clamp(9px, 1.4vh, 11px);
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+}
+
+.fwk-boxes-row {
+  display: flex;
+  gap: clamp(5px, 1vw, 8px);
+}
+
+/* Prep screen framework preview — non-interactive, faded */
+#framework-prep-wrap {
+  position: absolute;
+  top: clamp(130px, 22%, 175px);
+  left: max(16px, 4%);
+  right: max(16px, 4%);
+  flex-direction: column;
+  gap: clamp(5px, 1vh, 8px);
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* When framework active on active screen, shrink prompt text to make room */
+#screen-active.has-framework .word-item {
+  font-size: clamp(22px, 4vh, 34px);
 }
 
 .fwk-box {
@@ -1440,6 +1469,8 @@ body {
       <button class="reroll-btn" id="prep-reroll"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
     </div>
 
+    <div id="framework-prep-wrap" style="display:none;"></div>
+
     <div class="prep-timer-outer">
       <svg id="prep-timer-svg" viewBox="0 0 100 100" width="84" height="84">
         <path id="prep-timer-pie" fill="white" d=""/>
@@ -1459,6 +1490,7 @@ body {
     <button class="back-btn" id="active-back"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
 
     <div class="prep-top-right">
+      <button class="reroll-btn" id="reroll-btn"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
       <button class="help-btn" id="active-help"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
       <button class="prep-skip-btn" id="active-skip"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 6 11 12 5 18"/><polyline points="13 6 19 12 13 18"/></svg></button>
     </div>
@@ -1466,7 +1498,6 @@ body {
     <p class="prompt-label" id="prompt-label"></p>
     <div class="prompt-area">
       <div id="prompt-display"></div>
-      <button class="reroll-btn" id="reroll-btn"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
     </div>
 
     <div class="timer-wrap">
@@ -1775,7 +1806,7 @@ const FRAMEWORKS = {
 
 const CHALLENGE_RATINGS = {
   topic:         [{ label: 'Clarity' },   { label: 'Confidence' }],
-  gratitude:     [{ label: 'Connection' }],
+  gratitude:     [{ label: 'Feeling' }],
   story:         [{ label: 'Challenge' }, { label: 'Enjoyment' }],
   plot:          [{ label: 'Challenge' }, { label: 'Enjoyment' }],
   selfknowledge: [{ label: 'Clarity' },   { label: 'Depth' }],
@@ -2231,6 +2262,8 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 
+  if (id === 'screen-prep') renderFrameworkPrepOverlay();
+
   // Camera shows on every screen once it's been initialised
   if (cameraReady) {
     cameraEl.classList.add('visible');
@@ -2636,6 +2669,38 @@ function clearFrameworkOverlay() {
   wrap.style.display = 'none';
   fwkElementTaps = [];
   fwkTapCount    = 0;
+  document.getElementById('screen-active').classList.remove('has-framework');
+  const prepWrap = document.getElementById('framework-prep-wrap');
+  prepWrap.innerHTML = '';
+  prepWrap.style.display = 'none';
+}
+
+function renderFrameworkPrepOverlay() {
+  const wrap = document.getElementById('framework-prep-wrap');
+  wrap.innerHTML = '';
+  wrap.style.display = 'none';
+  if (!currentFramework || currentFramework.mode !== 'parallel') return;
+
+  wrap.style.display = 'flex';
+
+  const guidance = document.createElement('div');
+  guidance.className = 'framework-guidance-label';
+  guidance.textContent = currentFramework.name;
+  wrap.appendChild(guidance);
+
+  const row = document.createElement('div');
+  row.className = 'fwk-boxes-row';
+
+  currentFramework.elements.forEach(el => {
+    const box = document.createElement('div');
+    box.className = 'fwk-box';
+    box.style.flex = el.flex || 1;
+    box.innerHTML = (el.emoji ? `<span class="fwk-box-emoji">${el.emoji}</span>` : '')
+      + `<span class="fwk-box-label">${el.label}</span>`;
+    row.appendChild(box);
+  });
+
+  wrap.appendChild(row);
 }
 
 function renderFrameworkOverlay() {
@@ -2644,9 +2709,20 @@ function renderFrameworkOverlay() {
 
   const wrap = document.getElementById('framework-active-wrap');
   wrap.style.display = 'flex';
+  document.getElementById('screen-active').classList.add('has-framework');
 
   if (currentFramework.mode === 'parallel') {
     fwkElementTaps = currentFramework.elements.map(() => null);
+
+    // Guidance label
+    const guidance = document.createElement('div');
+    guidance.className = 'framework-guidance-label';
+    guidance.textContent = 'Tap to track your progress';
+    wrap.appendChild(guidance);
+
+    // Boxes row
+    const row = document.createElement('div');
+    row.className = 'fwk-boxes-row';
 
     currentFramework.elements.forEach((el, i) => {
       const box = document.createElement('button');
@@ -2658,28 +2734,23 @@ function renderFrameworkOverlay() {
       box.onclick = () => {
         playPop();
         if (currentFramework.timeTracked) {
-          // Non-reversible: record first tap, stay tapped
-          if (!box.classList.contains('tapped') && !box.classList.contains('current')) {
-            if (fwkElementTaps[i] === null) fwkElementTaps[i] = performance.now();
-            // Mark previous as tapped (done), this one as current
-            wrap.querySelectorAll('.fwk-box').forEach((b, idx) => {
-              if (idx < i) b.classList.add('tapped');
-            });
-            wrap.querySelectorAll('.fwk-box.current').forEach(b => b.classList.remove('current'));
-            box.classList.add('current');
+          // Non-reversible: first tap records time, stays tapped independently
+          if (!box.classList.contains('tapped')) {
+            fwkElementTaps[i] = performance.now();
+            box.classList.add('tapped');
           }
         } else {
-          // Toggle for non-timed (e.g. gratitude completion)
+          // Reversible toggle for completion mode (e.g. gratitude)
           const wasTapped = box.classList.contains('tapped');
           box.classList.toggle('tapped', !wasTapped);
-          box.classList.toggle('current', wasTapped ? false : false); // no current state for completion mode
-          if (!wasTapped && fwkElementTaps[i] === null) fwkElementTaps[i] = performance.now();
-          else if (wasTapped) fwkElementTaps[i] = null; // allow un-tap
+          fwkElementTaps[i] = wasTapped ? null : performance.now();
         }
       };
 
-      wrap.appendChild(box);
+      row.appendChild(box);
     });
+
+    wrap.appendChild(row);
 
   } else if (currentFramework.mode === 'counter') {
     fwkTapCount = 0;
@@ -3282,9 +3353,9 @@ function showTimesUp() {
   const completion = document.getElementById('timesup-completion');
   const prompt     = document.getElementById('timesup-prompt');
 
-  // Reset to defaults (overridden per-challenge below)
-  title.textContent = "Time's up!";
-  title.className   = 'timesup-title';
+  // Always use compact header title for all challenges
+  title.textContent = “Time's up!”;
+  title.className   = 'timesup-title timesup-title-compact';
   document.getElementById('screen-timesup').classList.remove('art2-mode');
 
   // Always hide the art2 score section; shown only for articulation2
@@ -3299,15 +3370,10 @@ function showTimesUp() {
     const reached = artLineIdx + 1;
     const pct = artTotalLines > 0 ? Math.round((reached / artTotalLines) * 100) : 0;
 
-    // Move title to top bar, pull inner content up
-    title.className = 'timesup-title timesup-title-compact';
     document.getElementById('screen-timesup').classList.add('art2-mode');
-
     sub.style.display        = 'none';
     prompt.style.display     = 'none';
     completion.style.display = 'none';
-
-    // Show score section
     scoreSection.classList.add('visible');
 
     // Progress bar — no track, pct floats just off the right edge of the fill
@@ -3317,11 +3383,9 @@ function showTimesUp() {
     pctEl.textContent = `${pct}%`;
 
     if (pct > 80) {
-      // Put pct inside the fill, right-aligned, black text
       pctEl.classList.add('inside');
       pctEl.style.left = '';
     } else {
-      // Position pct just off the right edge of where the fill will end
       pctEl.classList.remove('inside');
       pctEl.style.left = `${pct}%`;
     }
@@ -3336,7 +3400,7 @@ function showTimesUp() {
         const btn = document.createElement('button');
         btn.className = 'art2-star';
         btn.setAttribute('data-value', i);
-        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+        btn.innerHTML = '<svg viewBox=”0 0 24 24” fill=”currentColor” stroke=”currentColor” stroke-width=”1.5” stroke-linecap=”round” stroke-linejoin=”round”><polygon points=”12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2”/></svg>';
         btn.onclick = () => {
           const val = parseInt(btn.getAttribute('data-value'));
           container.querySelectorAll('.art2-star').forEach((s, idx) => {
@@ -3347,12 +3411,6 @@ function showTimesUp() {
       }
     });
 
-  } else if (currentChallenge === 'gratitude') {
-    title.textContent        = "That's time";
-    sub.style.display        = 'none';
-    prompt.innerHTML         = `<span class="timesup-quote-text">“Enjoy the little things for one day you may look back and realise they were the big things”</span><span class="timesup-quote-attr">&mdash; Charles Dickens</span>`;
-    prompt.style.display     = '';
-    completion.style.display = 'none';
   } else {
     const ratings = CHALLENGE_RATINGS[currentChallenge] || [];
     sub.textContent          = ratings.length > 0 ? 'How did you do?' : 'How did you find that?';
@@ -3372,6 +3430,8 @@ document.getElementById('again-btn').onclick = () => {
 };
 
 document.getElementById('menu-btn').onclick = () => {
+  clearFrameworkOverlay();
+  currentFramework = null;
   showScreen('screen-select');
 };
 
