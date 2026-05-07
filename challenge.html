@@ -623,7 +623,7 @@ body {
 
 .timesup-inner {
   text-align: center;
-  padding: clamp(100px, 18%, 136px) 5% 0;
+  padding: clamp(100px, 18%, 136px) max(16px, 4%) 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1109,6 +1109,13 @@ body {
   font-size: clamp(22px, 4vh, 34px);
 }
 
+/* Sequential frameworks: prompt is just a subtle label, hint text takes over */
+#screen-active.has-seq-framework .word-item {
+  font-size: clamp(11px, 1.9vh, 15px);
+  color: rgba(255,255,255,0.32);
+  font-weight: 400;
+}
+
 .fwk-boxes-row {
   display: flex;
   flex-wrap: wrap;
@@ -1189,21 +1196,14 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: clamp(5px, 0.9vh, 8px) 4px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  transition: opacity 0.2s, background 0.2s, border-color 0.2s;
+  padding: clamp(4px, 0.7vh, 6px) 4px;
+  transition: opacity 0.2s;
   pointer-events: none;
 }
 
-.fwk-seq-step.seq-locked { opacity: 0.22; }
-
-.fwk-seq-step.seq-active {
-  background: rgba(234,179,8,0.12);
-  border-color: rgba(234,179,8,0.4);
-}
-
-.fwk-seq-step.seq-done { opacity: 0.45; }
+.fwk-seq-step.seq-locked { opacity: 0.55; }
+.fwk-seq-step.seq-active { opacity: 1; }
+.fwk-seq-step.seq-done   { opacity: 0.35; }
 
 .fwk-seq-emoji { font-size: clamp(13px, 2.2vh, 18px); line-height: 1; }
 
@@ -1211,12 +1211,12 @@ body {
   font-size: clamp(10px, 1.7vh, 13px);
   font-weight: 600;
   text-align: center;
-  color: rgba(255,255,255,0.75);
+  color: rgba(255,255,255,0.8);
   line-height: 1.2;
 }
 
 .fwk-seq-step.seq-active .fwk-seq-label { color: #fcd34d; }
-.fwk-seq-step.seq-done  .fwk-seq-label { color: rgba(255,255,255,0.35); }
+.fwk-seq-step.seq-done  .fwk-seq-label  { color: rgba(255,255,255,0.7); }
 
 .fwk-seq-check {
   font-size: clamp(8px, 1.3vh, 10px);
@@ -1227,9 +1227,9 @@ body {
 .fwk-seq-step.seq-done .fwk-seq-check { visibility: visible; }
 
 .fwk-seq-hint {
-  color: rgba(255,255,255,0.5);
-  font-size: clamp(9px, 1.4vh, 11px);
-  font-weight: 400;
+  color: rgba(255,255,255,0.9);
+  font-size: clamp(20px, 3.5vh, 30px);
+  font-weight: 600;
   text-align: center;
   min-height: 1.3em;
   line-height: 1.3;
@@ -2942,7 +2942,7 @@ function clearFrameworkOverlay() {
   fwkElementTaps  = [];
   fwkTapCount     = 0;
   fwkCurrentStep  = 0;
-  document.getElementById('screen-active').classList.remove('has-framework');
+  document.getElementById('screen-active').classList.remove('has-framework', 'has-seq-framework');
   document.getElementById('screen-prep').classList.remove('has-framework');
   const prepWrap = document.getElementById('framework-prep-wrap');
   prepWrap.innerHTML = '';
@@ -3004,6 +3004,7 @@ function renderFrameworkOverlay() {
   const showEmoji = currentFramework.elements && currentFramework.elements.length <= 4;
 
   if (currentFramework.mode === 'sequential') {
+    document.getElementById('screen-active').classList.add('has-seq-framework');
     fwkElementTaps = currentFramework.elements.map(() => null);
     fwkCurrentStep = 0;
     const n = currentFramework.elements.length;
@@ -3055,8 +3056,16 @@ function renderFrameworkOverlay() {
       if (fwkElementTaps[fwkCurrentStep] !== null) return;
       playPop();
       fwkElementTaps[fwkCurrentStep] = challengeNow();
-      if (fwkCurrentStep < n - 1) fwkCurrentStep++;
-      updateSeqState();
+      const wasLastStep = fwkCurrentStep === n - 1;
+      if (!wasLastStep) {
+        fwkCurrentStep++;
+        updateSeqState();
+      } else {
+        updateSeqState();
+        stopTimer();
+        playEnd();
+        setTimeout(showTimesUp, 350);
+      }
     };
 
     updateSeqState();
