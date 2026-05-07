@@ -2037,6 +2037,7 @@ const FRAMEWORKS = {
       id: 'person-place-feeling',
       name: 'Person / Place / Feeling',
       description: 'Mention one person, one place, and one feeling you\'re grateful for. Tap each as you cover it.',
+      promptText: 'Share your gratitude for a person, a place, and a feeling.',
       mode: 'parallel',
       timeTracked: false,
       elements: [
@@ -2062,11 +2063,13 @@ const FRAMEWORKS = {
       id: 'gratitude-blitz',
       name: 'Gratitude Blitz',
       description: 'Name as many different things you\'re grateful for as you can. Tap each time you think of a new one.',
+      promptText: 'Name as many things you\'re grateful for as you can.',
+      introDesc: 'You\'ll have 30 seconds — name as many things you\'re grateful for as you can.',
       mode: 'counter',
       timeTracked: false,
       timeOverride: 30,
-      buttonLabel: 'Tap here as you say each new thing you\'re grateful for',
-      prepButtonLabel: 'When the challenge begins, just tap here as you say each new thing you\'re grateful for',
+      buttonLabel: 'Tap here as you say each new thing',
+      prepButtonLabel: 'When the challenge begins, tap here as you say each new thing.',
       postChallenge: { type: 'counter', resultSentence: '{count} things you\'re grateful for' },
     },
   ],
@@ -2909,6 +2912,10 @@ document.getElementById('help-overlay').addEventListener('click', e => {
 // FRAMEWORK SYSTEM
 // ============================================================
 
+const CHALLENGE_DEFAULT_DESCS = {
+  gratitude: "You'll have 60 seconds to speak about anything you're grateful for",
+};
+
 function updateFrameworkPill() {
   const pill = document.getElementById('framework-pill-btn');
   if (currentFramework) {
@@ -2917,6 +2924,12 @@ function updateFrameworkPill() {
   } else {
     pill.textContent = 'Add framework';
     pill.classList.remove('selected');
+  }
+  // Update intro-desc when a framework has its own description (e.g. Gratitude Blitz overrides the 60s copy)
+  const defaultDesc = CHALLENGE_DEFAULT_DESCS[currentChallenge];
+  if (defaultDesc !== undefined) {
+    const descEl = document.getElementById('intro-desc');
+    if (descEl) descEl.textContent = currentFramework?.introDesc || defaultDesc;
   }
 }
 
@@ -3669,15 +3682,16 @@ function launchChallenge() {
     startActiveChallenge();
     return;
   } else if (currentChallenge === 'gratitude') {
-    usedPromptText = GRATITUDE_PROMPT;
+    const promptText = currentFramework?.promptText || GRATITUDE_PROMPT;
+    usedPromptText = promptText;
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prompt-display').innerHTML =
-      `<div class="words-list"><div class="word-item">${GRATITUDE_PROMPT}</div></div>`;
+      `<div class="words-list"><div class="word-item">${promptText}</div></div>`;
     timerTotal = 60;
     if (prepTimeEnabled) {
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML =
-        `<div class="word-item">${GRATITUDE_PROMPT}</div>`;
+        `<div class="word-item">${promptText}</div>`;
       showScreen('screen-prep');
       startPrepTimer();
       schedulePrepFade();
