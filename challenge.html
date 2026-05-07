@@ -1095,8 +1095,9 @@ body {
   opacity: 0.45;
 }
 
-/* When framework active on active screen, shrink prompt text to make room */
-#screen-active.has-framework .word-item {
+/* When framework active, shrink prompt text to make room — both screens */
+#screen-active.has-framework .word-item,
+#screen-prep.has-framework .word-item {
   font-size: clamp(22px, 4vh, 34px);
 }
 
@@ -1230,6 +1231,66 @@ body {
   text-decoration: line-through;
   flex-shrink: 0;
   width: auto !important;
+}
+
+/* Completion-timed mode: label + check + elapsed time per element */
+.fwk-ct-row {
+  display: flex;
+  gap: clamp(6px, 1.2vw, 10px);
+  width: 100%;
+  margin-bottom: clamp(6px, 1.2vh, 10px);
+}
+
+.fwk-ct-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: clamp(8px, 1.4vh, 12px) 4px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.08);
+}
+
+.fwk-ct-item.tapped {
+  background: rgba(234,179,8,0.12);
+  border-color: rgba(234,179,8,0.35);
+}
+
+.fwk-ct-emoji {
+  font-size: clamp(14px, 2.4vh, 20px);
+  line-height: 1;
+}
+
+.fwk-ct-label {
+  color: rgba(255,255,255,0.35);
+  font-size: clamp(9px, 1.4vh, 11px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fwk-ct-item.tapped .fwk-ct-label {
+  color: rgba(255,255,255,0.65);
+}
+
+.fwk-ct-check {
+  font-size: clamp(20px, 3.4vh, 28px);
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(255,255,255,0.18);
+}
+
+.fwk-ct-item.tapped .fwk-ct-check {
+  color: #fcd34d;
+}
+
+.fwk-ct-time {
+  color: rgba(255,255,255,0.65);
+  font-size: clamp(10px, 1.6vh, 13px);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Completion mode (e.g. gratitude) */
@@ -1458,6 +1519,7 @@ body {
   <div class="screen" id="screen-prep">
     <button class="back-btn" id="prep-back"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="prep-top-right">
+      <button class="reroll-btn" id="prep-reroll"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
       <button class="help-btn" id="prep-help"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
       <button class="prep-plus-btn" id="prep-plus">+10</button>
       <button class="prep-skip-btn" id="prep-skip"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 6 11 12 5 18"/><polyline points="13 6 19 12 13 18"/></svg></button>
@@ -1466,7 +1528,6 @@ body {
     <p class="prompt-label" id="prep-prompt-label"></p>
     <div class="prompt-area">
       <div id="prep-prompt-display"></div>
-      <button class="reroll-btn" id="prep-reroll"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
     </div>
 
     <div id="framework-prep-wrap" style="display:none;"></div>
@@ -1709,12 +1770,24 @@ TIPS.interview = {
 };
 
 TIPS.gratitude = {
-  title: 'Gratitude tips',
-  items: [
-    '<strong>Go specific</strong> - "the smell of coffee this morning" beats "health and family". Specificity makes it real.',
-    '<strong>Include one small thing</strong> - noticing tiny moments builds the habit better than only big things.',
-    '<strong>Say why</strong> - briefly explaining what you\'re grateful for deepens the reflection.',
-    '<strong>Don\'t filter</strong> - whatever genuinely comes to mind, however odd, is the right answer.',
+  title: 'Daily Gratitude',
+  sections: [
+    {
+      heading: 'How it works',
+      items: [
+        'You\'ll have 60 seconds to speak about anything you\'re grateful for.',
+        'There\'s no wrong answer — a feeling, a person, a moment, a small thing you noticed today.',
+      ]
+    },
+    {
+      heading: 'Tips',
+      items: [
+        '<strong>Go specific</strong> — "the smell of coffee this morning" beats "health and family". Specificity makes it real.',
+        '<strong>Include one small thing</strong> — noticing tiny moments builds the habit better than only big things.',
+        '<strong>Say why</strong> — briefly explaining what you\'re grateful for deepens the reflection.',
+        '<strong>Don\'t filter</strong> — whatever genuinely comes to mind, however odd, is the right answer.',
+      ]
+    }
   ]
 };
 
@@ -1793,7 +1866,7 @@ const FRAMEWORKS = {
         { label: 'Place',   emoji: '📍', flex: 1 },
         { label: 'Feeling', emoji: '💛', flex: 1 },
       ],
-      postChallenge: { type: 'completion' },
+      postChallenge: { type: 'completion-timed' },
     },
   ],
 };
@@ -1806,7 +1879,7 @@ const FRAMEWORKS = {
 
 const CHALLENGE_RATINGS = {
   topic:         [{ label: 'Clarity' },   { label: 'Confidence' }],
-  gratitude:     [{ label: 'Feeling' }],
+  gratitude:     [],
   story:         [{ label: 'Challenge' }, { label: 'Enjoyment' }],
   plot:          [{ label: 'Challenge' }, { label: 'Enjoyment' }],
   selfknowledge: [{ label: 'Clarity' },   { label: 'Depth' }],
@@ -2006,7 +2079,7 @@ const INTERVIEW_QUESTIONS = [
   "Do you have any questions for us?",
 ];
 
-const GRATITUDE_PROMPT = "Share three things you're grateful for right now. They can be big or small.";
+const GRATITUDE_PROMPT = "What are you grateful for?";
 
 
 const TOPICS = [
@@ -2262,7 +2335,11 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 
-  if (id === 'screen-prep') renderFrameworkPrepOverlay();
+  if (id === 'screen-prep') {
+    renderFrameworkPrepOverlay();
+    document.getElementById('prep-reroll').style.display =
+      (currentChallenge === 'gratitude' || currentChallenge === 'articulation2') ? 'none' : '';
+  }
 
   // Camera shows on every screen once it's been initialised
   if (cameraReady) {
@@ -2570,23 +2647,29 @@ function openHelp() {
   if (prepTimerRunning) pausePrepTimer();
 
   const tips = TIPS[currentChallenge];
+  let listHTML = '';
   if (tips) {
     document.getElementById('help-title').textContent = tips.title;
     if (tips.sections) {
-      // Multi-section format: heading rows + item rows
-      document.getElementById('help-list').innerHTML = tips.sections.map(sec =>
+      listHTML = tips.sections.map(sec =>
         `<li class="help-section-heading">${sec.heading}</li>` +
         sec.items.map(t => `<li>${t}</li>`).join('')
       ).join('');
     } else {
-      document.getElementById('help-list').innerHTML =
-        tips.items.map(t => `<li>${t}</li>`).join('');
+      listHTML = tips.items.map(t => `<li>${t}</li>`).join('');
     }
   } else {
     document.getElementById('help-title').textContent = 'Tips';
-    document.getElementById('help-list').innerHTML = '';
   }
 
+  // Auto-inject generic frameworks blurb for any challenge that supports them
+  if (FRAMEWORKS[currentChallenge]) {
+    listHTML += '<li class="help-section-heading">Frameworks</li>'
+      + '<li>Tap <strong>Add framework</strong> on the intro screen to add structure to your challenge. '
+      + 'Tap each element as you reach it — you\'ll see a breakdown on the results screen.</li>';
+  }
+
+  document.getElementById('help-list').innerHTML = listHTML;
   document.getElementById('help-overlay').classList.add('visible');
 }
 
@@ -2670,6 +2753,7 @@ function clearFrameworkOverlay() {
   fwkElementTaps = [];
   fwkTapCount    = 0;
   document.getElementById('screen-active').classList.remove('has-framework');
+  document.getElementById('screen-prep').classList.remove('has-framework');
   const prepWrap = document.getElementById('framework-prep-wrap');
   prepWrap.innerHTML = '';
   prepWrap.style.display = 'none';
@@ -2679,13 +2763,18 @@ function renderFrameworkPrepOverlay() {
   const wrap = document.getElementById('framework-prep-wrap');
   wrap.innerHTML = '';
   wrap.style.display = 'none';
+  document.getElementById('screen-prep').classList.remove('has-framework');
   if (!currentFramework || currentFramework.mode !== 'parallel') return;
 
   wrap.style.display = 'flex';
+  document.getElementById('screen-prep').classList.add('has-framework');
 
+  const guidanceText = currentFramework.timeTracked
+    ? 'You will tap to track your progress'
+    : 'You will tap each one as you complete it';
   const guidance = document.createElement('div');
   guidance.className = 'framework-guidance-label';
-  guidance.textContent = currentFramework.name;
+  guidance.textContent = guidanceText;
   wrap.appendChild(guidance);
 
   const row = document.createElement('div');
@@ -2714,10 +2803,13 @@ function renderFrameworkOverlay() {
   if (currentFramework.mode === 'parallel') {
     fwkElementTaps = currentFramework.elements.map(() => null);
 
-    // Guidance label
+    // Guidance label — text varies by mode
+    const guidanceText = currentFramework.timeTracked
+      ? 'Tap to track your progress'
+      : 'Tap each one as you complete it';
     const guidance = document.createElement('div');
     guidance.className = 'framework-guidance-label';
-    guidance.textContent = 'Tap to track your progress';
+    guidance.textContent = guidanceText;
     wrap.appendChild(guidance);
 
     // Boxes row
@@ -2856,6 +2948,40 @@ function renderFrameworkZone() {
     wrap.innerHTML = `<span class="fwk-counter-result-num">${fwkTapCount}</span>`
       + `<span class="fwk-counter-result-label">${pc.label || 'Count'}</span>`;
     zone.appendChild(wrap);
+    zone.style.display = 'block';
+
+  } else if (pc.type === 'completion-timed') {
+    // Row of cards: always in defined element order; tapped = elapsed time + ✓; untapped = ✗
+    const row = document.createElement('div');
+    row.className = 'fwk-ct-row';
+    currentFramework.elements.forEach((el, i) => {
+      const tapped = fwkElementTaps[i] !== null;
+      const item = document.createElement('div');
+      item.className = 'fwk-ct-item' + (tapped ? ' tapped' : '');
+      if (el.emoji) {
+        const emo = document.createElement('div');
+        emo.className = 'fwk-ct-emoji';
+        emo.textContent = el.emoji;
+        item.appendChild(emo);
+      }
+      const lbl = document.createElement('div');
+      lbl.className = 'fwk-ct-label';
+      lbl.textContent = el.label;
+      item.appendChild(lbl);
+      const check = document.createElement('div');
+      check.className = 'fwk-ct-check';
+      check.textContent = tapped ? '✓' : '✗';
+      item.appendChild(check);
+      if (tapped) {
+        const elapsed = Math.max(0, Math.round((fwkElementTaps[i] - fwkChallengeStartTime) / 1000));
+        const timeEl = document.createElement('div');
+        timeEl.className = 'fwk-ct-time';
+        timeEl.textContent = elapsed + 's';
+        item.appendChild(timeEl);
+      }
+      row.appendChild(item);
+    });
+    zone.appendChild(row);
     zone.style.display = 'block';
   }
 }
@@ -2998,7 +3124,7 @@ document.getElementById('btn-gratitude').onclick = () => {
     currentChallenge = 'gratitude';
     document.getElementById('intro-label').textContent = 'Daily Gratitude';
     document.getElementById('intro-desc').textContent =
-      "You'll have 60 seconds to share 3 things you're grateful for";
+      "You'll have 60 seconds to speak about anything you're grateful for";
     setToggleVisibility(true);
     showScreen('screen-intro');
   });
@@ -3125,10 +3251,7 @@ function launchChallenge() {
       return;
     }
 
-    timerRemaining = timerTotal;
-    showScreen('screen-active');
-    startTimer();
-    scheduleWordFade();
+    startActiveChallenge();
     return;
   } else if (currentChallenge === 'topic') {
     const topic = pickRandom(TOPICS, 1)[0];
@@ -3145,9 +3268,7 @@ function launchChallenge() {
       schedulePrepFade();
       return;
     }
-    timerRemaining = timerTotal;
-    showScreen('screen-active');
-    startTimer();
+    startActiveChallenge();
     return;
   } else if (currentChallenge === 'plot') {
     const plot = pickRandom(PLOTS, 1)[0];
@@ -3164,9 +3285,7 @@ function launchChallenge() {
       schedulePrepFade();
       return;
     }
-    timerRemaining = timerTotal;
-    showScreen('screen-active');
-    startTimer();
+    startActiveChallenge();
     return;
   } else if (currentChallenge === 'selfknowledge') {
     const prompt = pickRandom(SELF_KNOWLEDGE, 1)[0];
@@ -3184,11 +3303,7 @@ function launchChallenge() {
       schedulePrepFade();
       return;
     }
-    timerRemaining = timerTotal;
-    document.getElementById('reroll-btn').style.display = '';
-    showScreen('screen-active');
-    startTimer();
-    scheduleWordFade();
+    startActiveChallenge();
     return;
   } else if (currentChallenge === 'interview') {
     const q = pickRandom(INTERVIEW_QUESTIONS, 1)[0];
@@ -3204,31 +3319,24 @@ function launchChallenge() {
       schedulePrepFade();
       return;
     }
-    timerRemaining = timerTotal;
-    document.getElementById('reroll-btn').style.display = '';
-    showScreen('screen-active');
-    startTimer();
+    startActiveChallenge();
     return;
   } else if (currentChallenge === 'gratitude') {
     usedPromptText = GRATITUDE_PROMPT;
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prompt-display').innerHTML =
-      `<div class="words-list"><div class="word-item">3 things I'm grateful for</div></div>`;
+      `<div class="words-list"><div class="word-item">${GRATITUDE_PROMPT}</div></div>`;
     timerTotal = 60;
     if (prepTimeEnabled) {
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML =
-        `<div class="word-item">3 things I'm grateful for</div>`;
+        `<div class="word-item">${GRATITUDE_PROMPT}</div>`;
       showScreen('screen-prep');
       startPrepTimer();
       schedulePrepFade();
       return;
     }
-    timerRemaining = timerTotal;
-    document.getElementById('reroll-btn').style.display = 'none';
-    showScreen('screen-active');
-    startTimer();
-    scheduleWordFade();
+    startActiveChallenge();
     return;
   } else if (currentChallenge === 'tongue') {
     const tw = pickRandom(TWISTERS, 1)[0];
@@ -3261,12 +3369,7 @@ function launchChallenge() {
     return;
   }
 
-  timerRemaining = timerTotal;
-  document.getElementById('reroll-btn').style.display =
-    (currentChallenge === 'gratitude' || currentChallenge === 'articulation2') ? 'none' : '';
-  showScreen('screen-active');
-  startTimer();
-  if (currentChallenge === 'story') scheduleWordFade();
+  startActiveChallenge();
 }
 
 // -Active screen —
@@ -3413,7 +3516,9 @@ function showTimesUp() {
 
   } else {
     const ratings = CHALLENGE_RATINGS[currentChallenge] || [];
-    sub.textContent          = ratings.length > 0 ? 'How did you do?' : 'How did you find that?';
+    title.textContent        = currentChallenge === 'gratitude' ? "That's time" : "Time's up!";
+    sub.textContent          = (currentChallenge === 'gratitude' || ratings.length === 0)
+                               ? 'How did you find that?' : 'How did you do?';
     sub.style.display        = '';
     prompt.style.display     = 'none';
     completion.style.display = 'none';
