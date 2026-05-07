@@ -1886,6 +1886,19 @@ const FRAMEWORKS = {
       postChallenge: { type: 'completion-timed' },
     },
     {
+      id: 'what-why-impact',
+      name: 'What / Why / Impact',
+      description: 'Name what you\'re grateful for, explain why it matters, then say what impact it\'s had. Tap each section as you move into it.',
+      mode: 'parallel',
+      timeTracked: true,
+      elements: [
+        { label: 'What',   emoji: '🎯', flex: 1 },
+        { label: 'Why',    emoji: '💭', flex: 1 },
+        { label: 'Impact', emoji: '✨', flex: 1 },
+      ],
+      postChallenge: { type: 'time-distribution' },
+    },
+    {
       id: 'gratitude-blitz',
       name: 'Gratitude Blitz',
       description: 'Name as many different things you\'re grateful for as you can. Tap each time you think of a new one.',
@@ -2788,32 +2801,45 @@ function renderFrameworkPrepOverlay() {
   wrap.innerHTML = '';
   wrap.style.display = 'none';
   document.getElementById('screen-prep').classList.remove('has-framework');
-  if (!currentFramework || currentFramework.mode !== 'parallel') return;
+  if (!currentFramework) return;
 
   wrap.style.display = 'flex';
   document.getElementById('screen-prep').classList.add('has-framework');
 
-  const guidanceText = currentFramework.timeTracked
-    ? 'You will tap to track your progress'
-    : 'You will tap each one as you complete it';
-  const guidance = document.createElement('div');
-  guidance.className = 'framework-guidance-label';
-  guidance.textContent = guidanceText;
-  wrap.appendChild(guidance);
+  if (currentFramework.mode === 'parallel') {
+    const guidanceText = currentFramework.timeTracked
+      ? 'You will tap to track your progress'
+      : 'You will tap each one as you complete it';
+    const guidance = document.createElement('div');
+    guidance.className = 'framework-guidance-label';
+    guidance.textContent = guidanceText;
+    wrap.appendChild(guidance);
 
-  const row = document.createElement('div');
-  row.className = 'fwk-boxes-row';
+    const row = document.createElement('div');
+    row.className = 'fwk-boxes-row';
 
-  currentFramework.elements.forEach(el => {
-    const box = document.createElement('div');
-    box.className = 'fwk-box';
-    box.style.flex = el.flex || 1;
-    box.innerHTML = (el.emoji ? `<span class="fwk-box-emoji">${el.emoji}</span>` : '')
-      + `<span class="fwk-box-label">${el.label}</span>`;
-    row.appendChild(box);
-  });
+    currentFramework.elements.forEach(el => {
+      const box = document.createElement('div');
+      box.className = 'fwk-box';
+      box.style.flex = el.flex || 1;
+      box.innerHTML = (el.emoji ? `<span class="fwk-box-emoji">${el.emoji}</span>` : '')
+        + `<span class="fwk-box-label">${el.label}</span>`;
+      row.appendChild(box);
+    });
 
-  wrap.appendChild(row);
+    wrap.appendChild(row);
+
+  } else if (currentFramework.mode === 'counter') {
+    const guidance = document.createElement('div');
+    guidance.className = 'framework-guidance-label';
+    guidance.textContent = 'You will tap each time you think of something new';
+    wrap.appendChild(guidance);
+
+    const btn = document.createElement('div');
+    btn.className = 'fwk-counter-btn';
+    btn.innerHTML = `<span class="fwk-counter-label">${currentFramework.postChallenge.label || 'Count'}</span>`;
+    wrap.appendChild(btn);
+  }
 }
 
 function renderFrameworkOverlay() {
@@ -2870,14 +2896,18 @@ function renderFrameworkOverlay() {
 
   } else if (currentFramework.mode === 'counter') {
     fwkTapCount = 0;
+
+    const guidance = document.createElement('div');
+    guidance.className = 'framework-guidance-label';
+    guidance.textContent = 'Tap each time you think of something new';
+    wrap.appendChild(guidance);
+
     const btn = document.createElement('button');
     btn.className = 'fwk-counter-btn';
-    btn.innerHTML = `<span class="fwk-counter-label">${currentFramework.postChallenge.label || 'Count'}</span>`
-      + `<span class="fwk-counter-num" id="fwk-counter-num">0</span>`;
+    btn.innerHTML = `<span class="fwk-counter-label">${currentFramework.postChallenge.label || 'Count'}</span>`;
     btn.onclick = () => {
       playPop();
       fwkTapCount++;
-      document.getElementById('fwk-counter-num').textContent = fwkTapCount;
       btn.classList.add('fwk-counter-bump');
       setTimeout(() => btn.classList.remove('fwk-counter-bump'), 200);
     };
