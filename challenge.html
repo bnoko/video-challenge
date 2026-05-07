@@ -286,11 +286,26 @@ body {
   text-shadow: 0 1px 14px rgba(0,0,0,0.95), 0 2px 4px rgba(0,0,0,0.7);
 }
 
-/* GO circle — same position and size as the active timer circle */
-.go-circle {
+/* Intro bottom row — two-column layout: GO circle left, pill+toggle right */
+#intro-bottom-row {
   position: absolute;
   bottom: calc(max(20px, 3%) + env(safe-area-inset-bottom, 0px));
   left: max(20px, 5%);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+#intro-right-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* GO circle */
+.go-circle {
   width: 84px;
   height: 84px;
   background: #22c55e;
@@ -305,14 +320,11 @@ body {
   user-select: none;
   box-shadow: 0 6px 30px rgba(0,0,0,0.5);
   letter-spacing: -0.02em;
+  flex-shrink: 0;
 }
 
-/* Prep toggle — sits to the right of the GO circle at the same height */
+/* Prep toggle — bottom row of right group */
 #prep-toggle-wrap {
-  position: absolute;
-  bottom: calc(max(20px, 3%) + env(safe-area-inset-bottom, 0px));
-  left: calc(max(20px, 5%) + 100px);
-  height: 84px;
   align-items: center;
   margin-top: 0;
 }
@@ -633,6 +645,10 @@ body {
   text-shadow: 0 1px 10px rgba(0,0,0,0.9);
 }
 
+/* Gratitude timesup: sub question appears after the framework cards */
+#screen-timesup.gratitude-mode .timesup-sub    { order: 3; }
+#screen-timesup.gratitude-mode #framework-zone { order: 2; }
+
 .timesup-prompt {
   color: rgba(255,255,255,0.55);
   font-size: clamp(13px, 2.1vh, 18px);
@@ -928,11 +944,8 @@ body {
    FRAMEWORK SYSTEM
    ============================================================ */
 
-/* Framework pill on intro screen */
+/* Framework pill on intro screen — top row of right group */
 #framework-pill-wrap {
-  position: absolute;
-  bottom: calc(max(20px, 3%) + env(safe-area-inset-bottom, 0px) + 96px);
-  left: calc(max(20px, 5%) + 100px);
 }
 
 .framework-pill-btn {
@@ -1070,7 +1083,7 @@ body {
 }
 
 .framework-guidance-label {
-  color: rgba(255,255,255,0.38);
+  color: rgba(255,255,255,0.45);
   font-size: clamp(9px, 1.4vh, 11px);
   font-weight: 600;
   letter-spacing: 0.10em;
@@ -1078,12 +1091,21 @@ body {
   text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 
+/* On the active screen, guidance label starts bright and fades to dim */
+#screen-active .framework-guidance-label {
+  animation: guidance-label-fade 4s ease-out forwards;
+}
+@keyframes guidance-label-fade {
+  0%   { color: rgba(255,255,255,0.9); }
+  100% { color: rgba(255,255,255,0.45); }
+}
+
 .fwk-boxes-row {
   display: flex;
   gap: clamp(5px, 1vw, 8px);
 }
 
-/* Prep screen framework preview — non-interactive, faded */
+/* Prep screen framework preview — non-interactive */
 #framework-prep-wrap {
   position: absolute;
   top: clamp(130px, 22%, 175px);
@@ -1092,7 +1114,7 @@ body {
   flex-direction: column;
   gap: clamp(5px, 1vh, 8px);
   pointer-events: none;
-  opacity: 0.45;
+  opacity: 0.72;
 }
 
 /* When framework active, shrink prompt text to make room — both screens */
@@ -1502,16 +1524,20 @@ body {
     <div class="intro-inner">
       <p class="intro-desc" id="intro-desc"></p>
     </div>
-    <div class="go-circle" id="go-btn">GO</div>
-    <label class="prep-toggle" id="prep-toggle-wrap" style="display:none;">
-      <input type="checkbox" id="prep-toggle-input">
-      <span class="prep-toggle-track">
-        <span class="prep-toggle-thumb"></span>
-      </span>
-      <span class="prep-toggle-label">Add prep time</span>
-    </label>
-    <div id="framework-pill-wrap" style="display:none;">
-      <button class="framework-pill-btn" id="framework-pill-btn">Add framework</button>
+    <div id="intro-bottom-row">
+      <div class="go-circle" id="go-btn">GO</div>
+      <div id="intro-right-group">
+        <div id="framework-pill-wrap" style="display:none;">
+          <button class="framework-pill-btn" id="framework-pill-btn">Add framework</button>
+        </div>
+        <label class="prep-toggle" id="prep-toggle-wrap" style="display:none;">
+          <input type="checkbox" id="prep-toggle-input">
+          <span class="prep-toggle-track">
+            <span class="prep-toggle-thumb"></span>
+          </span>
+          <span class="prep-toggle-label">Add prep time</span>
+        </label>
+      </div>
     </div>
   </div>
 
@@ -1776,7 +1802,7 @@ TIPS.gratitude = {
       heading: 'How it works',
       items: [
         'You\'ll have 60 seconds to speak about anything you\'re grateful for.',
-        'There\'s no wrong answer — a feeling, a person, a moment, a small thing you noticed today.',
+        'If you\'ve selected a framework, follow the suggested structure — tap each section as you reach it. If not, feel free to speak in whatever way feels right.',
       ]
     },
     {
@@ -3459,7 +3485,9 @@ function showTimesUp() {
   // Always use compact header title for all challenges
   title.textContent = "Time's up!";
   title.className   = 'timesup-title timesup-title-compact';
-  document.getElementById('screen-timesup').classList.remove('art2-mode');
+  const timesupScreen = document.getElementById('screen-timesup');
+  timesupScreen.classList.remove('art2-mode');
+  timesupScreen.classList.remove('gratitude-mode');
 
   // Always hide the art2 score section; shown only for articulation2
   const scoreSection = document.getElementById('art2-score-section');
@@ -3519,6 +3547,7 @@ function showTimesUp() {
     title.textContent        = currentChallenge === 'gratitude' ? "That's time" : "Time's up!";
     sub.textContent          = (currentChallenge === 'gratitude' || ratings.length === 0)
                                ? 'How did you find that?' : 'How did you do?';
+    if (currentChallenge === 'gratitude') timesupScreen.classList.add('gratitude-mode');
     sub.style.display        = '';
     prompt.style.display     = 'none';
     completion.style.display = 'none';
