@@ -2589,6 +2589,17 @@ function startTimer() {
   timerRAF        = requestAnimationFrame(timerTick);
 }
 
+// Virtual clock that only advances while the timer is running.
+// Using this for framework taps means paused time (e.g. help overlay) is excluded
+// from section durations on the results screen.
+function challengeNow() {
+  if (timerStartWall === null) {
+    return (timerTotal - timerRemaining) * 1000;
+  }
+  const elapsedSinceResume = performance.now() - timerStartWall;
+  return Math.min(timerTotal * 1000, (timerTotal - timerRemaining) * 1000 + elapsedSinceResume);
+}
+
 function pauseTimer() {
   if (!timerRunning) return;
   const elapsed = (performance.now() - timerStartWall) / 1000;
@@ -2718,7 +2729,7 @@ function startActiveChallenge() {
   // Hide reroll for challenges where it doesn't apply
   document.getElementById('reroll-btn').style.display =
     (currentChallenge === 'gratitude' || currentChallenge === 'articulation2') ? 'none' : '';
-  fwkChallengeStartTime = performance.now();
+  fwkChallengeStartTime = challengeNow();
   renderFrameworkOverlay();
   startTimer();
 }
@@ -3042,7 +3053,7 @@ function renderFrameworkOverlay() {
     nextBtn.onclick = () => {
       if (fwkElementTaps[fwkCurrentStep] !== null) return;
       playPop();
-      fwkElementTaps[fwkCurrentStep] = performance.now();
+      fwkElementTaps[fwkCurrentStep] = challengeNow();
       if (fwkCurrentStep < n - 1) fwkCurrentStep++;
       updateSeqState();
     };
@@ -3077,13 +3088,13 @@ function renderFrameworkOverlay() {
         playPop();
         if (currentFramework.timeTracked) {
           if (!box.classList.contains('tapped')) {
-            fwkElementTaps[i] = performance.now();
+            fwkElementTaps[i] = challengeNow();
             box.classList.add('tapped');
           }
         } else {
           const wasTapped = box.classList.contains('tapped');
           box.classList.toggle('tapped', !wasTapped);
-          fwkElementTaps[i] = wasTapped ? null : performance.now();
+          fwkElementTaps[i] = wasTapped ? null : challengeNow();
         }
       };
 
@@ -3740,7 +3751,7 @@ document.getElementById('confirm-keep').onclick = () => {
 // -Time's up screen —
 
 function showTimesUp() {
-  fwkChallengeEndTime = performance.now();
+  fwkChallengeEndTime = challengeNow();
 
   const title      = document.querySelector('.timesup-title');
   const sub        = document.querySelector('.timesup-sub');
