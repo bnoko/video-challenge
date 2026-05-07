@@ -1185,6 +1185,22 @@ body {
   top: max(70px, 12%);
 }
 
+/* Counter / parallel mode: overlay starts higher to make room for prompt inside */
+#screen-active.has-counter-framework .framework-active-wrap,
+#screen-active.has-parallel-framework .framework-active-wrap {
+  top: max(70px, 12%);
+}
+
+/* Prompt rendered inside framework overlay (counter + parallel modes) */
+.fwk-overlay-prompt {
+  color: white;
+  font-size: clamp(16px, 2.7vh, 22px);
+  font-weight: 400;
+  line-height: 1.4;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.7);
+  margin-bottom: clamp(6px, 1.2vh, 10px);
+}
+
 /* Sequential mode: numbered list layout */
 .fwk-seq-header {
   font-size: clamp(9px, 1.4vh, 12px);
@@ -2033,8 +2049,9 @@ const FRAMEWORKS = {
       id: 'gratitude-blitz',
       name: 'Gratitude Blitz',
       description: 'Name as many different things you\'re grateful for as you can. Tap each time you think of a new one.',
-      promptText: 'Name as many things you\'re grateful for as you can in 30 seconds.',
+      promptText: 'Name as many things you\'re grateful for as you can.',
       mode: 'counter',
+      disablePrepTime: true,
       timeTracked: false,
       timeOverride: 30,
       buttonLabel: 'Tap here as you say each new thing',
@@ -2885,6 +2902,22 @@ const CHALLENGE_DEFAULT_DESCS = {
   gratitude: "Reflect on something you're grateful for.",
 };
 
+const CHALLENGE_DEFAULT_TIMES = {
+  gratitude: 60, story: 60, topic: 60, plot: 60,
+  selfknowledge: 60, interview: 60, tongue: 30, articulation2: 30,
+};
+
+// Returns "You will get X seconds to [lowercase prompt]." for the intro screen.
+function getIntroDesc() {
+  const rawPrompt = currentFramework?.promptText || CHALLENGE_DEFAULT_DESCS[currentChallenge];
+  if (!rawPrompt) return '';
+  const seconds = currentFramework?.timeOverride || CHALLENGE_DEFAULT_TIMES[currentChallenge] || 60;
+  const lower = rawPrompt.charAt(0).toLowerCase() + rawPrompt.slice(1);
+  // Ensure sentence ends with period, then strip it for the template
+  const stripped = lower.replace(/[.!?]+$/, '');
+  return `You will get ${seconds} seconds to ${stripped}.`;
+}
+
 function updateFrameworkPill() {
   const pill = document.getElementById('framework-pill-btn');
   if (currentFramework) {
@@ -2894,11 +2927,24 @@ function updateFrameworkPill() {
     pill.textContent = 'Add framework';
     pill.classList.remove('selected');
   }
-  // Sync intro-desc with the framework's promptText (or the challenge default)
+  // Sync intro-desc using computed sentence
   const defaultDesc = CHALLENGE_DEFAULT_DESCS[currentChallenge];
   if (defaultDesc !== undefined) {
     const descEl = document.getElementById('intro-desc');
-    if (descEl) descEl.textContent = currentFramework?.promptText || defaultDesc;
+    if (descEl) descEl.textContent = getIntroDesc();
+  }
+  // Hide prep toggle if the selected framework disables prep time
+  const disablePrep = currentFramework?.disablePrepTime === true;
+  const toggleWrap = document.getElementById('prep-toggle-wrap');
+  if (disablePrep) {
+    toggleWrap.style.display = 'none';
+    document.getElementById('prep-toggle-input').checked = false;
+    prepTimeEnabled = false;
+  } else {
+    // Restore display only if it was previously shown (challenge supports prep time)
+    // setToggleVisibility controls the baseline; we only need to restore here
+    const challengeShowsToggle = currentChallenge !== 'articulation2';
+    if (challengeShowsToggle) toggleWrap.style.display = 'flex';
   }
 }
 
@@ -2948,7 +2994,7 @@ function clearFrameworkOverlay() {
   fwkElementTaps  = [];
   fwkTapCount     = 0;
   fwkCurrentStep  = 0;
-  document.getElementById('screen-active').classList.remove('has-framework', 'has-seq-framework');
+  document.getElementById('screen-active').classList.remove('has-framework', 'has-seq-framework', 'has-counter-framework', 'has-parallel-framework');
   document.getElementById('screen-prep').classList.remove('has-framework');
   const prepWrap = document.getElementById('framework-prep-wrap');
   prepWrap.innerHTML = '';
@@ -3087,6 +3133,18 @@ function renderFrameworkOverlay() {
   } else if (currentFramework.mode === 'parallel') {
     fwkElementTaps = currentFramework.elements.map(() => null);
 
+    // Overlay owns the content area — clear prompt-display and raise the overlay
+    document.getElementById('prompt-display').innerHTML = '';
+    document.getElementById('screen-active').classList.add('has-parallel-framework');
+
+    // Prompt rendered inside overlay
+    if (currentFramework.promptText) {
+      const promptEl = document.createElement('p');
+      promptEl.className = 'fwk-overlay-prompt';
+      promptEl.textContent = currentFramework.promptText;
+      wrap.appendChild(promptEl);
+    }
+
     // Guidance label
     const guidanceText = currentFramework.timeTracked
       ? 'Tap to track your progress'
@@ -3126,6 +3184,18 @@ function renderFrameworkOverlay() {
 
   } else if (currentFramework.mode === 'counter') {
     fwkTapCount = 0;
+
+    // Overlay owns the content area — clear prompt-display and raise the overlay
+    document.getElementById('prompt-display').innerHTML = '';
+    document.getElementById('screen-active').classList.add('has-counter-framework');
+
+    // Prompt rendered inside overlay
+    if (currentFramework.promptText) {
+      const promptEl = document.createElement('p');
+      promptEl.className = 'fwk-overlay-prompt';
+      promptEl.textContent = currentFramework.promptText;
+      wrap.appendChild(promptEl);
+    }
 
     const btn = document.createElement('button');
     btn.className = 'fwk-counter-btn';
@@ -3448,8 +3518,7 @@ document.getElementById('btn-gratitude').onclick = () => {
   animateTap(document.getElementById('btn-gratitude'), () => {
     currentChallenge = 'gratitude';
     document.getElementById('intro-label').textContent = 'Daily Gratitude';
-    document.getElementById('intro-desc').textContent =
-      "You'll have 60 seconds to speak about anything you're grateful for";
+    document.getElementById('intro-desc').textContent = getIntroDesc();
     setToggleVisibility(true);
     showScreen('screen-intro');
   });
@@ -3653,10 +3722,11 @@ function launchChallenge() {
     document.getElementById('prompt-display').innerHTML =
       `<p class="prompt-text">${promptText}</p>`;
     timerTotal = 60;
-    if (prepTimeEnabled) {
+    if (prepTimeEnabled && !currentFramework?.disablePrepTime) {
+      const prepLower = promptText.charAt(0).toLowerCase() + promptText.slice(1);
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML =
-        `<p class="prompt-text">${promptText}</p>`;
+        `<p class="prompt-text">Prep time: ${prepLower}</p>`;
       showScreen('screen-prep');
       startPrepTimer();
       schedulePrepFade();
