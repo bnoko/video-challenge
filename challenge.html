@@ -628,6 +628,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: clamp(10px, 2vh, 20px);
+  width: 100%;
 }
 
 .timesup-title {
@@ -1112,8 +1113,9 @@ body {
 /* Sequential frameworks: prompt is just a subtle label, hint text takes over */
 #screen-active.has-seq-framework .word-item {
   font-size: clamp(11px, 1.9vh, 15px);
-  color: rgba(255,255,255,0.32);
+  color: rgba(255,255,255,0.85);
   font-weight: 400;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
 }
 
 .fwk-boxes-row {
@@ -1205,10 +1207,10 @@ body {
 .fwk-seq-step.seq-active { opacity: 1; }
 .fwk-seq-step.seq-done   { opacity: 0.35; }
 
-.fwk-seq-emoji { font-size: clamp(13px, 2.2vh, 18px); line-height: 1; }
+.fwk-seq-emoji { font-size: clamp(26px, 4.4vh, 36px); line-height: 1; }
 
 .fwk-seq-label {
-  font-size: clamp(10px, 1.7vh, 13px);
+  font-size: clamp(18px, 3.2vh, 26px);
   font-weight: 600;
   text-align: center;
   color: rgba(255,255,255,0.8);
@@ -1219,7 +1221,7 @@ body {
 .fwk-seq-step.seq-done  .fwk-seq-label  { color: rgba(255,255,255,0.7); }
 
 .fwk-seq-check {
-  font-size: clamp(8px, 1.3vh, 10px);
+  font-size: clamp(14px, 2.4vh, 18px);
   color: rgba(255,255,255,0.35);
   visibility: hidden;
 }
@@ -1231,8 +1233,8 @@ body {
   font-size: clamp(20px, 3.5vh, 30px);
   font-weight: 600;
   text-align: center;
-  min-height: 1.3em;
   line-height: 1.3;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.9);
 }
 
 .fwk-seq-next {
@@ -2028,9 +2030,9 @@ const FRAMEWORKS = {
       description: 'Name what you\'re grateful for, explain why it matters, then say what impact it\'s had. Tap to move to the next section.',
       mode: 'sequential',
       elements: [
-        { label: 'What',   emoji: '🎯', hint: 'Name the specific thing' },
-        { label: 'Why',    emoji: '💭', hint: 'Why does it matter to you?' },
-        { label: 'Impact', emoji: '✨', hint: 'How has it affected you?' },
+        { label: 'What',   emoji: '🎯', hint: 'Introduce one thing you\'re grateful for' },
+        { label: 'Why',    emoji: '💭', hint: 'Briefly explain why it matters to you' },
+        { label: 'Impact', emoji: '✨', hint: 'Describe the impact it\'s had on you' },
       ],
       postChallenge: { type: 'time-distribution' },
     },
@@ -2256,7 +2258,7 @@ const INTERVIEW_QUESTIONS = [
   "Do you have any questions for us?",
 ];
 
-const GRATITUDE_PROMPT = "What are you grateful for?";
+const GRATITUDE_PROMPT = "Talk about something you're grateful for.";
 
 
 const TOPICS = [
