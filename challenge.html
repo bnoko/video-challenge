@@ -289,7 +289,7 @@ body {
 /* GO circle — same position and size as the active timer circle */
 .go-circle {
   position: absolute;
-  bottom: max(20px, 3%);
+  bottom: calc(max(20px, 3%) + env(safe-area-inset-bottom, 0px));
   left: max(20px, 5%);
   width: 84px;
   height: 84px;
@@ -310,7 +310,7 @@ body {
 /* Prep toggle — sits to the right of the GO circle at the same height */
 #prep-toggle-wrap {
   position: absolute;
-  bottom: max(20px, 3%);
+  bottom: calc(max(20px, 3%) + env(safe-area-inset-bottom, 0px));
   left: calc(max(20px, 5%) + 100px);
   height: 84px;
   align-items: center;
@@ -401,8 +401,8 @@ body {
   /* Fallback height so content is clipped before JS measures and sets the exact value */
   height: clamp(72px, 12.6vh, 104px);
   /* Aggressive fade: only the middle band (roughly 1 line) is fully visible */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.18) 33%, black 41%, black 59%, rgba(0,0,0,0.45) 67%, transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.18) 33%, black 41%, black 59%, rgba(0,0,0,0.45) 67%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.25) 33%, black 41%, black 59%, rgba(0,0,0,0.7) 67%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.25) 33%, black 41%, black 59%, rgba(0,0,0,0.7) 67%, transparent 100%);
 }
 
 .art2-text {
@@ -578,7 +578,7 @@ body {
 /* Timer -bottom left */
 .timer-wrap {
   position: absolute;
-  bottom: max(20px, 3%);
+  bottom: calc(max(20px, 3%) + env(safe-area-inset-bottom, 0px));
   left: max(20px, 5%);
   display: flex;
   align-items: center;
@@ -667,7 +667,7 @@ body {
 
 .timesup-actions {
   position: absolute;
-  bottom: max(20px, 3.5%);
+  bottom: calc(max(20px, 3.5%) + env(safe-area-inset-bottom, 0px));
   left: max(20px, 5%);
   right: max(20px, 5%);
   display: flex;
@@ -766,7 +766,7 @@ body {
 
 .prep-timer-outer {
   position: absolute;
-  bottom: max(20px, 3%);
+  bottom: calc(max(20px, 3%) + env(safe-area-inset-bottom, 0px));
   left: max(20px, 5%);
   display: flex;
   flex-direction: row;
@@ -927,6 +927,344 @@ body {
   content: none !important;
 }
 
+/* ============================================================
+   FRAMEWORK SYSTEM
+   ============================================================ */
+
+/* Framework pill on intro screen */
+#framework-pill-wrap {
+  position: absolute;
+  bottom: calc(max(20px, 3%) + env(safe-area-inset-bottom, 0px) + 96px);
+  left: calc(max(20px, 5%) + 100px);
+}
+
+.framework-pill-btn {
+  background: rgba(0,0,0,0.3);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.7);
+  font-size: clamp(11px, 1.8vh, 14px);
+  font-weight: 500;
+  padding: 6px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.framework-pill-btn.selected {
+  background: rgba(234,179,8,0.18);
+  border-color: rgba(234,179,8,0.6);
+  color: #fcd34d;
+}
+
+/* Framework picker bottom sheet */
+.framework-picker-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  align-items: flex-end;
+}
+
+.framework-picker-overlay.visible {
+  display: flex;
+}
+
+.framework-picker-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+}
+
+.framework-picker-sheet {
+  position: relative;
+  width: 100%;
+  background: rgba(20,20,24,0.97);
+  border-radius: 18px 18px 0 0;
+  padding: clamp(16px, 3vh, 24px) clamp(16px, 5%, 24px) clamp(20px, 4vh, 32px);
+  max-height: 75%;
+  overflow-y: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.framework-picker-sheet::-webkit-scrollbar { display: none; }
+
+.framework-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: clamp(12px, 2.2vh, 20px);
+}
+
+.framework-picker-title {
+  color: white;
+  font-size: clamp(14px, 2.2vh, 18px);
+  font-weight: 600;
+}
+
+.framework-picker-close {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  opacity: 0.6;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.framework-picker-close svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.framework-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.2vh, 10px);
+}
+
+.framework-picker-item {
+  padding: clamp(10px, 1.8vh, 14px) clamp(12px, 2.2vw, 16px);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.framework-picker-item.active {
+  background: rgba(234,179,8,0.15);
+  border-color: rgba(234,179,8,0.45);
+}
+
+.framework-picker-name {
+  display: block;
+  color: white;
+  font-size: clamp(13px, 2vh, 16px);
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.framework-picker-desc {
+  display: block;
+  color: rgba(255,255,255,0.5);
+  font-size: clamp(11px, 1.7vh, 13px);
+  line-height: 1.4;
+}
+
+/* In-challenge framework overlay (tappable boxes) */
+.framework-active-wrap {
+  position: absolute;
+  top: clamp(48px, 8.5%, 68px);
+  left: max(16px, 4%);
+  right: max(16px, 4%);
+  display: flex;
+  gap: clamp(5px, 1vw, 8px);
+  touch-action: manipulation;
+}
+
+.fwk-box {
+  flex: 1;
+  min-height: clamp(44px, 7.5vh, 60px);
+  background: rgba(0,0,0,0.35);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.fwk-box.tapped {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.4);
+}
+
+.fwk-box.current {
+  background: rgba(234,179,8,0.22);
+  border-color: rgba(234,179,8,0.7);
+}
+
+.fwk-box-emoji {
+  font-size: clamp(14px, 2.4vh, 20px);
+  line-height: 1;
+}
+
+.fwk-box-label {
+  color: rgba(255,255,255,0.85);
+  font-size: clamp(10px, 1.7vh, 13px);
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.fwk-box.tapped .fwk-box-label,
+.fwk-box.current .fwk-box-label {
+  color: white;
+}
+
+/* Counter mode */
+.fwk-counter-btn {
+  width: 100%;
+  min-height: clamp(44px, 7.5vh, 60px);
+  background: rgba(0,0,0,0.35);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 1.5vw, 12px);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.1s;
+}
+
+.fwk-counter-btn:active,
+.fwk-counter-btn.fwk-counter-bump {
+  background: rgba(234,179,8,0.22);
+  border-color: rgba(234,179,8,0.7);
+}
+
+.fwk-counter-label {
+  color: rgba(255,255,255,0.7);
+  font-size: clamp(11px, 1.8vh, 14px);
+  font-weight: 500;
+}
+
+.fwk-counter-num {
+  color: white;
+  font-size: clamp(18px, 3.2vh, 28px);
+  font-weight: 700;
+  min-width: 1.5em;
+  text-align: center;
+}
+
+/* Times-up: framework zone */
+.framework-zone {
+  width: 100%;
+  margin-bottom: clamp(10px, 1.8vh, 16px);
+}
+
+.fwk-dist-bar {
+  height: clamp(28px, 4.8vh, 40px);
+  width: 100%;
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.fwk-dist-seg {
+  height: 100%;
+  border-radius: 4px;
+  min-width: 2px;
+  transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.fwk-dist-labels {
+  display: flex;
+  gap: 2px;
+  width: 100%;
+}
+
+.fwk-dist-label {
+  color: rgba(255,255,255,0.6);
+  font-size: clamp(9px, 1.5vh, 12px);
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fwk-dist-label-untapped {
+  color: rgba(255,255,255,0.25);
+  text-decoration: line-through;
+  flex-shrink: 0;
+  width: auto !important;
+}
+
+/* Completion mode (e.g. gratitude) */
+.fwk-completion-row {
+  display: flex;
+  gap: clamp(6px, 1.2vw, 10px);
+  width: 100%;
+  margin-bottom: clamp(6px, 1.2vh, 10px);
+}
+
+.fwk-completion-box {
+  flex: 1;
+  padding: clamp(8px, 1.4vh, 12px) 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: rgba(255,255,255,0.3);
+  font-size: clamp(10px, 1.7vh, 13px);
+  font-weight: 500;
+}
+
+.fwk-completion-box span:first-child {
+  font-size: clamp(16px, 2.8vh, 24px);
+}
+
+.fwk-completion-box.tapped {
+  background: rgba(234,179,8,0.15);
+  border-color: rgba(234,179,8,0.45);
+  color: white;
+}
+
+/* Counter result */
+.fwk-counter-result {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(6px, 1.2vw, 10px);
+  margin-bottom: clamp(6px, 1.2vh, 10px);
+}
+
+.fwk-counter-result-num {
+  color: #fcd34d;
+  font-size: clamp(28px, 5vh, 42px);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.fwk-counter-result-label {
+  color: rgba(255,255,255,0.7);
+  font-size: clamp(13px, 2.2vh, 18px);
+  font-weight: 500;
+}
+
+/* Challenge ratings section */
+.challenge-ratings {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.8vh, 16px);
+}
+
 .prep-plus-btn {
   background: none;
   border: none;
@@ -1082,6 +1420,9 @@ body {
       </span>
       <span class="prep-toggle-label">Add prep time</span>
     </label>
+    <div id="framework-pill-wrap" style="display:none;">
+      <button class="framework-pill-btn" id="framework-pill-btn">Add framework</button>
+    </div>
   </div>
 
   <!-- ── SCREEN 2b: Prep Time ── -->
@@ -1135,6 +1476,7 @@ body {
       <span class="timer-num" id="timer-num"></span>
     </div>
 
+    <div id="framework-active-wrap" class="framework-active-wrap" style="display:none;"></div>
 
   </div>
 
@@ -1148,6 +1490,9 @@ body {
       <p class="timesup-sub">How did you do?</p>
       <p class="timesup-completion" id="timesup-completion"></p>
       <p class="timesup-prompt" id="timesup-prompt"></p>
+      <div id="framework-zone" class="framework-zone" style="display:none;"></div>
+      <div id="challenge-ratings" class="challenge-ratings" style="display:none;"></div>
+
       <div class="art2-score-section" id="art2-score-section">
         <div class="art2-metric-row">
           <span class="art2-metric-label">Progress</span>
@@ -1180,6 +1525,18 @@ body {
         <button class="modal-quit" id="confirm-quit">Quit</button>
         <button class="modal-keep" id="confirm-keep">Keep going</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Framework Picker ── -->
+  <div class="framework-picker-overlay" id="framework-picker">
+    <div class="framework-picker-backdrop" id="framework-picker-backdrop"></div>
+    <div class="framework-picker-sheet">
+      <div class="framework-picker-header">
+        <span class="framework-picker-title">Choose a framework</span>
+        <button class="framework-picker-close" id="framework-picker-close"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="framework-picker-list" id="framework-picker-list"></div>
     </div>
   </div>
 
@@ -1328,6 +1685,104 @@ TIPS.gratitude = {
     '<strong>Say why</strong> - briefly explaining what you\'re grateful for deepens the reflection.',
     '<strong>Don\'t filter</strong> - whatever genuinely comes to mind, however odd, is the right answer.',
   ]
+};
+
+// ============================================================
+// FRAMEWORKS
+// ============================================================
+// Each challenge key maps to an array of framework definitions.
+// Adding a new framework = add an entry. No rendering code changes needed.
+//
+// modes:   'parallel'  — all boxes visible at once, tap each when you reach it
+//          'counter'   — single tap counter (no elements array)
+// postChallenge.type:
+//          'time-distribution' — proportional bar of time spent per element
+//          'completion'        — show which elements were tapped
+//          'counter'           — show the total count
+
+const FRAMEWORKS = {
+  topic: [
+    {
+      id: 'rule-of-three',
+      name: 'Rule of Three',
+      description: 'Make exactly three separate points. Tap each box when you start that point.',
+      mode: 'parallel',
+      timeTracked: true,
+      elements: [
+        { label: 'Point 1', flex: 1 },
+        { label: 'Point 2', flex: 1 },
+        { label: 'Point 3', flex: 1 },
+      ],
+      postChallenge: { type: 'time-distribution' },
+    },
+    {
+      id: 'opinion-justify',
+      name: 'Opinion + Justify',
+      description: 'Lead immediately with a firm opinion, then spend the rest of the time justifying it.',
+      mode: 'parallel',
+      timeTracked: true,
+      elements: [
+        { label: 'Opinion', flex: 1 },
+        { label: 'Justify', flex: 3 },
+      ],
+      postChallenge: { type: 'time-distribution' },
+    },
+    {
+      id: 'prep',
+      name: 'PREP',
+      description: 'Point, Reason, Example, Point — work through all four parts in order.',
+      mode: 'parallel',
+      timeTracked: true,
+      elements: [
+        { label: 'Point',   flex: 1 },
+        { label: 'Reason',  flex: 1 },
+        { label: 'Example', flex: 1 },
+        { label: 'Point ↩', flex: 1 },
+      ],
+      postChallenge: { type: 'time-distribution' },
+    },
+    {
+      id: 'specific-detail',
+      name: 'Specific Detail',
+      description: 'Follow every general claim with one hyper-specific detail. Tap each time you land one.',
+      mode: 'counter',
+      timeTracked: false,
+      postChallenge: { type: 'counter', label: 'Specific details' },
+    },
+  ],
+  gratitude: [
+    {
+      id: 'person-place-feeling',
+      name: 'Person / Place / Feeling',
+      description: 'Mention one person, one place, and one feeling you\'re grateful for. Tap each as you cover it.',
+      mode: 'parallel',
+      timeTracked: false,
+      elements: [
+        { label: 'Person',  emoji: '👤', flex: 1 },
+        { label: 'Place',   emoji: '📍', flex: 1 },
+        { label: 'Feeling', emoji: '💛', flex: 1 },
+      ],
+      postChallenge: { type: 'completion' },
+    },
+  ],
+};
+
+// ============================================================
+// CHALLENGE RATINGS
+// ============================================================
+// Star rating rows shown in the challenge zone on the times-up screen.
+// articulation2 uses its own bespoke layout and is excluded here.
+
+const CHALLENGE_RATINGS = {
+  topic:         [{ label: 'Clarity' },   { label: 'Confidence' }],
+  gratitude:     [{ label: 'Connection' }],
+  story:         [{ label: 'Challenge' }, { label: 'Enjoyment' }],
+  plot:          [{ label: 'Challenge' }, { label: 'Enjoyment' }],
+  selfknowledge: [{ label: 'Clarity' },   { label: 'Depth' }],
+  interview:     [{ label: 'Relevance' }, { label: 'Confidence' }],
+  tongue:        [],
+  articulation:  [],
+  articulation2: [],
 };
 
 // ============================================================
@@ -1682,6 +2137,13 @@ let midBeepsPlayed  = new Set();
 let wordFadeTimeout = null;
 let prepFadeTimeout = null;
 
+// Framework state
+let currentFramework      = null;  // selected framework object, or null
+let fwkElementTaps        = [];    // first-tap timestamp per element (null = not tapped)
+let fwkTapCount           = 0;     // counter mode: total taps
+let fwkChallengeStartTime = 0;     // performance.now() when challenge started
+let fwkChallengeEndTime   = 0;     // performance.now() when challenge ended
+
 // ============================================================
 // HELPERS
 // ============================================================
@@ -1968,6 +2430,8 @@ function startActiveChallenge() {
   // Hide reroll for challenges where it doesn't apply
   document.getElementById('reroll-btn').style.display =
     (currentChallenge === 'gratitude' || currentChallenge === 'articulation2') ? 'none' : '';
+  fwkChallengeStartTime = performance.now();
+  renderFrameworkOverlay();
   startTimer();
   if (currentChallenge === 'story' || currentChallenge === 'selfknowledge' || currentChallenge === 'gratitude') scheduleWordFade();
 }
@@ -2113,6 +2577,264 @@ document.getElementById('help-overlay').addEventListener('click', e => {
 });
 
 // ============================================================
+// FRAMEWORK SYSTEM
+// ============================================================
+
+function updateFrameworkPill() {
+  const pill = document.getElementById('framework-pill-btn');
+  if (currentFramework) {
+    pill.textContent = currentFramework.name;
+    pill.classList.add('selected');
+  } else {
+    pill.textContent = 'Add framework';
+    pill.classList.remove('selected');
+  }
+}
+
+function setFrameworkPillVisibility() {
+  const wrap = document.getElementById('framework-pill-wrap');
+  const list = FRAMEWORKS[currentChallenge];
+  const hasFrameworks = list && list.length > 0;
+  wrap.style.display = hasFrameworks ? 'block' : 'none';
+  // If we navigated to a challenge with no frameworks, clear any selection
+  if (!hasFrameworks) currentFramework = null;
+  updateFrameworkPill();
+}
+
+function openFrameworkPicker() {
+  const listEl  = document.getElementById('framework-picker-list');
+  const fwkList = FRAMEWORKS[currentChallenge] || [];
+  listEl.innerHTML = '';
+
+  // "No framework" option
+  const noneItem = document.createElement('div');
+  noneItem.className = 'framework-picker-item' + (currentFramework === null ? ' active' : '');
+  noneItem.innerHTML = '<span class="framework-picker-name">No framework</span>'
+    + '<span class="framework-picker-desc">Just the challenge, no guided structure</span>';
+  noneItem.onclick = () => { currentFramework = null; updateFrameworkPill(); closeFrameworkPicker(); };
+  listEl.appendChild(noneItem);
+
+  fwkList.forEach(fw => {
+    const item = document.createElement('div');
+    item.className = 'framework-picker-item' + (currentFramework && currentFramework.id === fw.id ? ' active' : '');
+    item.innerHTML = `<span class="framework-picker-name">${fw.name}</span>`
+      + `<span class="framework-picker-desc">${fw.description}</span>`;
+    item.onclick = () => { currentFramework = fw; updateFrameworkPill(); closeFrameworkPicker(); };
+    listEl.appendChild(item);
+  });
+
+  document.getElementById('framework-picker').classList.add('visible');
+}
+
+function closeFrameworkPicker() {
+  document.getElementById('framework-picker').classList.remove('visible');
+}
+
+function clearFrameworkOverlay() {
+  const wrap = document.getElementById('framework-active-wrap');
+  wrap.innerHTML = '';
+  wrap.style.display = 'none';
+  fwkElementTaps = [];
+  fwkTapCount    = 0;
+}
+
+function renderFrameworkOverlay() {
+  clearFrameworkOverlay();
+  if (!currentFramework) return;
+
+  const wrap = document.getElementById('framework-active-wrap');
+  wrap.style.display = 'flex';
+
+  if (currentFramework.mode === 'parallel') {
+    fwkElementTaps = currentFramework.elements.map(() => null);
+
+    currentFramework.elements.forEach((el, i) => {
+      const box = document.createElement('button');
+      box.className = 'fwk-box';
+      box.style.flex = el.flex || 1;
+      box.innerHTML = (el.emoji ? `<span class="fwk-box-emoji">${el.emoji}</span>` : '')
+        + `<span class="fwk-box-label">${el.label}</span>`;
+
+      box.onclick = () => {
+        playPop();
+        if (currentFramework.timeTracked) {
+          // Non-reversible: record first tap, stay tapped
+          if (!box.classList.contains('tapped') && !box.classList.contains('current')) {
+            if (fwkElementTaps[i] === null) fwkElementTaps[i] = performance.now();
+            // Mark previous as tapped (done), this one as current
+            wrap.querySelectorAll('.fwk-box').forEach((b, idx) => {
+              if (idx < i) b.classList.add('tapped');
+            });
+            wrap.querySelectorAll('.fwk-box.current').forEach(b => b.classList.remove('current'));
+            box.classList.add('current');
+          }
+        } else {
+          // Toggle for non-timed (e.g. gratitude completion)
+          const wasTapped = box.classList.contains('tapped');
+          box.classList.toggle('tapped', !wasTapped);
+          box.classList.toggle('current', wasTapped ? false : false); // no current state for completion mode
+          if (!wasTapped && fwkElementTaps[i] === null) fwkElementTaps[i] = performance.now();
+          else if (wasTapped) fwkElementTaps[i] = null; // allow un-tap
+        }
+      };
+
+      wrap.appendChild(box);
+    });
+
+  } else if (currentFramework.mode === 'counter') {
+    fwkTapCount = 0;
+    const btn = document.createElement('button');
+    btn.className = 'fwk-counter-btn';
+    btn.innerHTML = `<span class="fwk-counter-label">${currentFramework.postChallenge.label || 'Count'}</span>`
+      + `<span class="fwk-counter-num" id="fwk-counter-num">0</span>`;
+    btn.onclick = () => {
+      playPop();
+      fwkTapCount++;
+      document.getElementById('fwk-counter-num').textContent = fwkTapCount;
+      btn.classList.add('fwk-counter-bump');
+      setTimeout(() => btn.classList.remove('fwk-counter-bump'), 200);
+    };
+    wrap.appendChild(btn);
+  }
+}
+
+function renderFrameworkZone() {
+  const zone = document.getElementById('framework-zone');
+  zone.innerHTML = '';
+  zone.style.display = 'none';
+  if (!currentFramework) return;
+
+  const pc = currentFramework.postChallenge;
+
+  if (pc.type === 'time-distribution') {
+    const totalMs = fwkChallengeEndTime - fwkChallengeStartTime;
+
+    // Build tapped elements sorted by tap time
+    const tapped = fwkElementTaps
+      .map((t, i) => ({ i, t }))
+      .filter(x => x.t !== null)
+      .sort((a, b) => a.t - b.t);
+
+    if (tapped.length === 0) return; // nothing tapped — skip zone
+
+    // Compute durations: each segment runs from this tap to next tap (or challenge end)
+    const segments = tapped.map((tap, k) => {
+      const segEnd   = k + 1 < tapped.length ? tapped[k + 1].t : fwkChallengeEndTime;
+      const durMs    = segEnd - tap.t;
+      const pct      = totalMs > 0 ? Math.max(1, Math.round((durMs / totalMs) * 100)) : 0;
+      const el       = currentFramework.elements[tap.i];
+      return { el, pct, tappedIdx: tap.i };
+    });
+
+    const tappedSet = new Set(tapped.map(x => x.i));
+    const untapped  = currentFramework.elements
+      .map((el, i) => ({ el, i }))
+      .filter(x => !tappedSet.has(x.i));
+
+    // Bar
+    const barWrap   = document.createElement('div');
+    const bar       = document.createElement('div');
+    const labelsRow = document.createElement('div');
+    bar.className       = 'fwk-dist-bar';
+    labelsRow.className = 'fwk-dist-labels';
+
+    const segColors = ['#eab308', '#f59e0b', '#fbbf24', '#fcd34d'];
+    segments.forEach((seg, k) => {
+      const segEl = document.createElement('div');
+      segEl.className       = 'fwk-dist-seg';
+      segEl.style.width     = '0%';
+      segEl.style.background = segColors[k % segColors.length];
+      bar.appendChild(segEl);
+      setTimeout(() => { segEl.style.width = `${seg.pct}%`; }, 60);
+
+      const lbl = document.createElement('div');
+      lbl.className   = 'fwk-dist-label';
+      lbl.style.width = `${seg.pct}%`;
+      lbl.textContent = (seg.el.emoji ? seg.el.emoji + ' ' : '') + seg.el.label;
+      labelsRow.appendChild(lbl);
+    });
+
+    // Untapped elements shown as struck-through labels
+    untapped.forEach(({ el }) => {
+      const lbl = document.createElement('div');
+      lbl.className   = 'fwk-dist-label fwk-dist-label-untapped';
+      lbl.textContent = (el.emoji ? el.emoji + ' ' : '') + el.label;
+      labelsRow.appendChild(lbl);
+    });
+
+    barWrap.appendChild(bar);
+    barWrap.appendChild(labelsRow);
+    zone.appendChild(barWrap);
+    zone.style.display = 'block';
+
+  } else if (pc.type === 'completion') {
+    const row = document.createElement('div');
+    row.className = 'fwk-completion-row';
+    currentFramework.elements.forEach((el, i) => {
+      const box = document.createElement('div');
+      box.className = 'fwk-completion-box' + (fwkElementTaps[i] !== null ? ' tapped' : '');
+      box.innerHTML = (el.emoji ? `<span>${el.emoji}</span>` : '') + `<span>${el.label}</span>`;
+      row.appendChild(box);
+    });
+    zone.appendChild(row);
+    zone.style.display = 'block';
+
+  } else if (pc.type === 'counter') {
+    const wrap = document.createElement('div');
+    wrap.className = 'fwk-counter-result';
+    wrap.innerHTML = `<span class="fwk-counter-result-num">${fwkTapCount}</span>`
+      + `<span class="fwk-counter-result-label">${pc.label || 'Count'}</span>`;
+    zone.appendChild(wrap);
+    zone.style.display = 'block';
+  }
+}
+
+function renderChallengeRatings() {
+  const ratingsEl = document.getElementById('challenge-ratings');
+  ratingsEl.innerHTML = '';
+  ratingsEl.style.display = 'none';
+  if (currentChallenge === 'articulation2') return;
+
+  const ratings = CHALLENGE_RATINGS[currentChallenge] || [];
+  if (ratings.length === 0) return;
+
+  ratings.forEach(rating => {
+    const row   = document.createElement('div');
+    row.className = 'art2-metric-row';
+
+    const label = document.createElement('span');
+    label.className   = 'art2-metric-label';
+    label.textContent = rating.label;
+    row.appendChild(label);
+
+    const stars = document.createElement('div');
+    stars.className = 'art2-stars';
+    for (let i = 1; i <= 5; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'art2-star';
+      btn.setAttribute('data-value', i);
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+      btn.onclick = () => {
+        const val = parseInt(btn.getAttribute('data-value'));
+        stars.querySelectorAll('.art2-star').forEach((s, idx) => {
+          s.classList.toggle('filled', idx < val);
+        });
+      };
+      stars.appendChild(btn);
+    }
+    row.appendChild(stars);
+    ratingsEl.appendChild(row);
+  });
+
+  ratingsEl.style.display = 'flex';
+}
+
+// Picker close handlers
+document.getElementById('framework-pill-btn').onclick = () => { playPop(); openFrameworkPicker(); };
+document.getElementById('framework-picker-close').onclick = closeFrameworkPicker;
+document.getElementById('framework-picker-backdrop').onclick = closeFrameworkPicker;
+
+// ============================================================
 // SCREEN FLOWS
 // ============================================================
 
@@ -2124,6 +2846,7 @@ function setToggleVisibility(show) {
     document.getElementById('prep-toggle-input').checked = false;
     prepTimeEnabled = false;
   }
+  setFrameworkPillVisibility();
 }
 
 document.getElementById('btn-story').onclick = () => {
@@ -2552,6 +3275,8 @@ document.getElementById('confirm-keep').onclick = () => {
 // -Time's up screen —
 
 function showTimesUp() {
+  fwkChallengeEndTime = performance.now();
+
   const title      = document.querySelector('.timesup-title');
   const sub        = document.querySelector('.timesup-sub');
   const completion = document.getElementById('timesup-completion');
@@ -2565,6 +3290,10 @@ function showTimesUp() {
   // Always hide the art2 score section; shown only for articulation2
   const scoreSection = document.getElementById('art2-score-section');
   scoreSection.classList.remove('visible');
+
+  // Render framework zone and challenge ratings (generic, data-driven)
+  renderFrameworkZone();
+  renderChallengeRatings();
 
   if (currentChallenge === 'articulation2') {
     const reached = artLineIdx + 1;
@@ -2618,16 +3347,6 @@ function showTimesUp() {
       }
     });
 
-  } else if (currentChallenge === 'selfknowledge') {
-    sub.textContent          = 'How did you find that?';
-    sub.style.display        = '';
-    prompt.style.display     = 'none';
-    completion.style.display = 'none';
-  } else if (currentChallenge === 'interview') {
-    sub.textContent          = 'How did you do?';
-    sub.style.display        = '';
-    prompt.style.display     = 'none';
-    completion.style.display = 'none';
   } else if (currentChallenge === 'gratitude') {
     title.textContent        = "That's time";
     sub.style.display        = 'none';
@@ -2635,7 +3354,8 @@ function showTimesUp() {
     prompt.style.display     = '';
     completion.style.display = 'none';
   } else {
-    sub.textContent          = 'How did you do?';
+    const ratings = CHALLENGE_RATINGS[currentChallenge] || [];
+    sub.textContent          = ratings.length > 0 ? 'How did you do?' : 'How did you find that?';
     sub.style.display        = '';
     prompt.style.display     = 'none';
     completion.style.display = 'none';
@@ -2646,6 +3366,8 @@ function showTimesUp() {
 
 document.getElementById('again-btn').onclick = () => {
   // Return to the intro screen for the same challenge (currentChallenge stays set)
+  // Keep currentFramework selected so user doesn't have to re-pick it
+  clearFrameworkOverlay();
   showScreen('screen-intro');
 };
 
