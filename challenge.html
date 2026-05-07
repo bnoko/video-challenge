@@ -1104,18 +1104,13 @@ body {
   opacity: 0.72;
 }
 
-/* When framework active, shrink prompt text to make room — both screens */
-#screen-active.has-framework .word-item,
-#screen-prep.has-framework .word-item {
-  font-size: clamp(22px, 4vh, 34px);
-}
-
-/* Sequential frameworks: prompt is just a subtle label, hint text takes over */
-#screen-active.has-seq-framework .word-item {
-  font-size: clamp(11px, 1.9vh, 15px);
-  color: rgba(255,255,255,0.85);
+/* Instructional sentence prompts — one consistent size used across all challenges */
+.prompt-text {
+  color: white;
+  font-size: clamp(18px, 3vh, 26px);
   font-weight: 400;
-  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+  line-height: 1.4;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.7);
 }
 
 .fwk-boxes-row {
@@ -2063,8 +2058,7 @@ const FRAMEWORKS = {
       id: 'gratitude-blitz',
       name: 'Gratitude Blitz',
       description: 'Name as many different things you\'re grateful for as you can. Tap each time you think of a new one.',
-      promptText: 'Name as many things you\'re grateful for as you can.',
-      introDesc: 'You\'ll have 30 seconds — name as many things you\'re grateful for as you can.',
+      promptText: 'Name as many things you\'re grateful for as you can in 30 seconds.',
       mode: 'counter',
       timeTracked: false,
       timeOverride: 30,
@@ -2283,7 +2277,7 @@ const INTERVIEW_QUESTIONS = [
   "Do you have any questions for us?",
 ];
 
-const GRATITUDE_PROMPT = "Talk about something you're grateful for.";
+const GRATITUDE_PROMPT = "Talk about anything you're grateful for.";
 
 
 const TOPICS = [
@@ -2913,7 +2907,7 @@ document.getElementById('help-overlay').addEventListener('click', e => {
 // ============================================================
 
 const CHALLENGE_DEFAULT_DESCS = {
-  gratitude: "You'll have 60 seconds to speak about anything you're grateful for",
+  gratitude: "Talk about anything you're grateful for.",
 };
 
 function updateFrameworkPill() {
@@ -2925,11 +2919,11 @@ function updateFrameworkPill() {
     pill.textContent = 'Add framework';
     pill.classList.remove('selected');
   }
-  // Update intro-desc when a framework has its own description (e.g. Gratitude Blitz overrides the 60s copy)
+  // Sync intro-desc with the framework's promptText (or the challenge default)
   const defaultDesc = CHALLENGE_DEFAULT_DESCS[currentChallenge];
   if (defaultDesc !== undefined) {
     const descEl = document.getElementById('intro-desc');
-    if (descEl) descEl.textContent = currentFramework?.introDesc || defaultDesc;
+    if (descEl) descEl.textContent = currentFramework?.promptText || defaultDesc;
   }
 }
 
@@ -3686,12 +3680,12 @@ function launchChallenge() {
     usedPromptText = promptText;
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prompt-display').innerHTML =
-      `<div class="words-list"><div class="word-item">${promptText}</div></div>`;
+      `<p class="prompt-text">${promptText}</p>`;
     timerTotal = 60;
     if (prepTimeEnabled) {
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML =
-        `<div class="word-item">${promptText}</div>`;
+        `<p class="prompt-text">${promptText}</p>`;
       showScreen('screen-prep');
       startPrepTimer();
       schedulePrepFade();
