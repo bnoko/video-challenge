@@ -3322,13 +3322,39 @@ function renderFrameworkPrepOverlay() {
 
   const showEmoji = currentFramework.elements && currentFramework.elements.length <= 4;
 
-  if (currentFramework.mode === 'parallel' || currentFramework.mode === 'sequential') {
-    const guidanceText = currentFramework.mode === 'sequential'
-      ? 'You\'ll tap to move to the next section'
-      : 'You\'ll tap each point as you make it';
+  if (currentFramework.mode === 'sequential') {
+    // Prep preview mirrors the active screen layout: header + all steps in seq-upcoming style, no arrow
+    const CHALLENGE_DISPLAY_NAMES = {
+      gratitude: 'Daily Gratitude', story: 'Storytelling', topic: 'Random Topic',
+      plot: 'Story Plot', selfknowledge: 'Self-Knowledge', interview: 'Interview Practice',
+    };
+    const headerEl = document.createElement('div');
+    headerEl.className = 'fwk-seq-header';
+    headerEl.textContent = `${CHALLENGE_DISPLAY_NAMES[currentChallenge] || currentChallenge}: ${currentFramework.name}`;
+    wrap.appendChild(headerEl);
+
     const guidance = document.createElement('div');
     guidance.className = 'framework-guidance-label';
-    guidance.textContent = guidanceText;
+    guidance.textContent = 'You\'ll tap to move to the next section';
+    wrap.appendChild(guidance);
+
+    const list = document.createElement('div');
+    list.className = 'fwk-seq-list';
+    currentFramework.elements.forEach((el, i) => {
+      const item = document.createElement('div');
+      item.className = 'fwk-seq-item seq-upcoming';
+      const textSpan = document.createElement('span');
+      textSpan.className = 'fwk-seq-item-text';
+      textSpan.textContent = `${i + 1}. ${el.label}: ${el.hint}`;
+      item.appendChild(textSpan);
+      list.appendChild(item);
+    });
+    wrap.appendChild(list);
+
+  } else if (currentFramework.mode === 'parallel') {
+    const guidance = document.createElement('div');
+    guidance.className = 'framework-guidance-label';
+    guidance.textContent = 'You\'ll tap each point as you make it';
     wrap.appendChild(guidance);
 
     const row = document.createElement('div');
@@ -3403,7 +3429,7 @@ function renderFrameworkOverlay() {
 
       const textSpan = document.createElement('span');
       textSpan.className = 'fwk-seq-item-text';
-      textSpan.textContent = `${i + 1}. ${el.hint}`;
+      textSpan.textContent = `${i + 1}. ${el.label}: ${el.hint}`;
 
       const btn = document.createElement('button');
       btn.className = 'fwk-seq-inline-btn';
