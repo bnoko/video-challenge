@@ -2108,7 +2108,7 @@ body {
   <div class="take-counter-display" id="take-counter-display"></div>
 
   <!-- ── Visibility Toggle ── -->
-  <button class="vis-toggle-btn" id="vis-toggle-btn"><svg viewBox="0 0 10 10" fill="white" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="5"/></svg></button>
+  <button class="vis-toggle-btn" id="vis-toggle-btn"></button>
 
   <!-- ── UI Restore Overlay (full-screen, shown only when UI is hidden) ── -->
   <div id="ui-restore-overlay"></div>
@@ -3803,14 +3803,22 @@ document.getElementById('take-counter-close').onclick = closeTakeSheet;
 document.getElementById('take-counter-backdrop').onclick = closeTakeSheet;
 document.getElementById('take-counter-done').onclick = closeTakeSheet;
 
+function resetTakeN() {
+  document.getElementById('take-counter-n-input').value = '1';
+}
+
+document.getElementById('take-counter-input').addEventListener('input', resetTakeN);
+
 document.getElementById('take-counter-input-clear').onclick = () => {
   document.getElementById('take-counter-input').value = '';
   document.getElementById('take-counter-input').focus();
+  resetTakeN();
 };
 
 document.getElementById('take-counter-use-template').onclick = () => {
   document.getElementById('take-counter-input').value = TAKE_COUNTER_DEFAULT;
   document.getElementById('take-counter-input').focus();
+  resetTakeN();
 };
 
 // ============================================================
