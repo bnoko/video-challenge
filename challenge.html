@@ -2268,49 +2268,50 @@ const FRAMEWORKS = {
     {
       id: 'rule-of-three',
       name: 'Rule of Three',
-      description: 'Make exactly three separate points. Tap each box when you start that point.',
+      description: 'Make exactly three separate points. Tap each box as you move to that point.',
+      promptText: 'Talk about a random topic.',
       mode: 'parallel',
-      timeTracked: true,
       elements: [
         { label: 'Point 1', flex: 1 },
         { label: 'Point 2', flex: 1 },
         { label: 'Point 3', flex: 1 },
       ],
-      postChallenge: { type: 'time-distribution' },
+      postChallenge: { type: 'completion-timed' },
     },
     {
       id: 'opinion-justify',
       name: 'Opinion + Justify',
-      description: 'Lead immediately with a firm opinion, then spend the rest of the time justifying it.',
+      description: 'Lead with a firm opinion, then spend the rest justifying it. Tap as you move to each part.',
+      promptText: 'Talk about a random topic.',
       mode: 'parallel',
-      timeTracked: true,
       elements: [
         { label: 'Opinion', flex: 1 },
         { label: 'Justify', flex: 3 },
       ],
-      postChallenge: { type: 'time-distribution' },
+      postChallenge: { type: 'completion-timed' },
     },
     {
       id: 'prep',
       name: 'PREP',
       description: 'Point, Reason, Example, Point — work through all four parts in order.',
-      mode: 'parallel',
-      timeTracked: true,
+      promptText: 'Talk about a random topic.',
+      mode: 'sequential',
       elements: [
-        { label: 'Point',   flex: 1 },
-        { label: 'Reason',  flex: 1 },
-        { label: 'Example', flex: 1 },
-        { label: 'Point ↩', flex: 1 },
+        { label: 'Point',   hint: 'State your main point clearly' },
+        { label: 'Reason',  hint: 'Explain why you believe it' },
+        { label: 'Example', hint: 'Give a specific example' },
+        { label: 'Point ↩', hint: 'Restate your point' },
       ],
       postChallenge: { type: 'time-distribution' },
     },
     {
       id: 'specific-detail',
       name: 'Specific Detail',
-      description: 'Follow every general claim with one hyper-specific detail. Tap each time you land one.',
+      description: 'Follow every general claim with a hyper-specific detail. Tap each time you land one.',
+      promptText: 'Talk about a random topic.',
       mode: 'counter',
-      timeTracked: false,
-      postChallenge: { type: 'counter', label: 'Specific details' },
+      buttonLabel: 'Tap each time you land a specific detail',
+      postChallenge: { type: 'counter', resultSentence: '{count} specific details' },
     },
   ],
   gratitude: [
@@ -2670,6 +2671,7 @@ function playEnd() {
 
 let currentChallenge = null;   // 'story' | 'topic' | 'plot' | 'selfknowledge' | 'interview' | 'gratitude' | 'articulation' | 'articulation2'
 let usedPromptText   = '';
+let currentTopicSentence = null; // "Talk about X." — set when topic is picked, cleared on new challenge
 
 // Articulation 2 state
 let artLineHeight  = 0;    // px height of one rendered line
@@ -3006,9 +3008,10 @@ function renderStoryWords(words) {
 }
 
 function renderTopic(topic) {
-  const d = document.getElementById('prompt-display');
-  document.getElementById('prompt-label').textContent = 'Your topic';
-  d.innerHTML = `<div class="word-item">${topic}</div>`;
+  currentTopicSentence = `Talk about ${topic}.`;
+  document.getElementById('prompt-label').textContent = '';
+  document.getElementById('prompt-display').innerHTML =
+    `<p class="plot-text">${currentTopicSentence}</p>`;
 }
 
 function renderPlot(plot) {
@@ -3139,6 +3142,7 @@ document.getElementById('help-overlay').addEventListener('click', e => {
 
 const CHALLENGE_DEFAULT_DESCS = {
   gratitude: "Reflect on something you're grateful for.",
+  topic:     "Talk about a random topic.",
 };
 
 const CHALLENGE_DEFAULT_TIMES = {
@@ -3158,9 +3162,17 @@ function toGerund(verb) {
   return verb + 'ing';
 }
 
+// Returns the effective prompt text for the current challenge + framework state.
+// For topic: once a topic has been picked, uses the specific "Talk about X." sentence
+// rather than the generic default or framework promptText.
+function getEffectivePromptText() {
+  if (currentChallenge === 'topic' && currentTopicSentence) return currentTopicSentence;
+  return currentFramework?.promptText || CHALLENGE_DEFAULT_DESCS[currentChallenge];
+}
+
 // Returns "Prep time for [gerund phrase]." for the prep screen.
 function getPrepDesc() {
-  const rawPrompt = currentFramework?.promptText || CHALLENGE_DEFAULT_DESCS[currentChallenge];
+  const rawPrompt = getEffectivePromptText();
   if (!rawPrompt) return '';
   const stripped = rawPrompt.replace(/[.!?]+$/, '');
   const spaceIdx = stripped.indexOf(' ');
@@ -3173,7 +3185,7 @@ function getPrepDesc() {
 
 // Returns "You will get X seconds to [lowercase prompt]." for the intro screen.
 function getIntroDesc() {
-  const rawPrompt = currentFramework?.promptText || CHALLENGE_DEFAULT_DESCS[currentChallenge];
+  const rawPrompt = getEffectivePromptText();
   if (!rawPrompt) return '';
   const seconds = currentFramework?.timeOverride || CHALLENGE_DEFAULT_TIMES[currentChallenge] || 60;
   const lower = rawPrompt.charAt(0).toLowerCase() + rawPrompt.slice(1);
@@ -3335,6 +3347,18 @@ function renderFrameworkOverlay() {
     headerEl.className = 'fwk-seq-header';
     headerEl.textContent = `${CHALLENGE_DISPLAY_NAMES[currentChallenge] || currentChallenge}: ${currentFramework.name}`;
 
+    // Optional prompt line — shown when there's specific prompt context (e.g. the actual topic)
+    const effectivePrompt = getEffectivePromptText();
+    if (effectivePrompt) {
+      const promptEl = document.createElement('p');
+      promptEl.className = 'fwk-overlay-prompt';
+      promptEl.textContent = effectivePrompt;
+      wrap.appendChild(headerEl);
+      wrap.appendChild(promptEl);
+    } else {
+      wrap.appendChild(headerEl);
+    }
+
     // Numbered list — each step shows full hint text, active item has inline → button
     const list = document.createElement('div');
     list.className = 'fwk-seq-list';
@@ -3391,7 +3415,6 @@ function renderFrameworkOverlay() {
     };
 
     updateSeqState();
-    wrap.appendChild(headerEl);
     wrap.appendChild(list);
 
   } else if (currentFramework.mode === 'parallel') {
@@ -3402,17 +3425,16 @@ function renderFrameworkOverlay() {
     document.getElementById('screen-active').classList.add('has-parallel-framework');
 
     // Prompt rendered inside overlay
-    if (currentFramework.promptText) {
+    const parallelPrompt = getEffectivePromptText();
+    if (parallelPrompt) {
       const promptEl = document.createElement('p');
       promptEl.className = 'fwk-overlay-prompt';
-      promptEl.textContent = currentFramework.promptText;
+      promptEl.textContent = parallelPrompt;
       wrap.appendChild(promptEl);
     }
 
     // Guidance label
-    const guidanceText = currentFramework.timeTracked
-      ? 'Tap to track your progress'
-      : 'Tap each one as you complete it';
+    const guidanceText = 'Tap as you move to each part';
     const guidance = document.createElement('div');
     guidance.className = 'framework-guidance-label';
     guidance.textContent = guidanceText;
@@ -3453,10 +3475,11 @@ function renderFrameworkOverlay() {
     document.getElementById('screen-active').classList.add('has-counter-framework');
 
     // Prompt rendered inside overlay
-    if (currentFramework.promptText) {
+    const counterPrompt = getEffectivePromptText();
+    if (counterPrompt) {
       const promptEl = document.createElement('p');
       promptEl.className = 'fwk-overlay-prompt';
-      promptEl.textContent = currentFramework.promptText;
+      promptEl.textContent = counterPrompt;
       wrap.appendChild(promptEl);
     }
 
@@ -4026,9 +4049,9 @@ document.getElementById('btn-topic').onclick = () => {
   playPop();
   animateTap(document.getElementById('btn-topic'), () => {
     currentChallenge = 'topic';
+    currentTopicSentence = null;
     document.getElementById('intro-label').textContent = 'Random Topic';
-    document.getElementById('intro-desc').textContent =
-      "You'll get a random topic and have to talk about it non-stop for 60 seconds - no pausing, no hesitation!";
+    document.getElementById('intro-desc').textContent = getIntroDesc();
     setToggleVisibility(true);
     showScreen('screen-intro');
   });
@@ -4064,9 +4087,12 @@ document.getElementById('prep-reroll').onclick = () => {
   } else if (currentChallenge === 'topic') {
     const topic = pickRandom(TOPICS, 1)[0];
     usedPromptText = topic;
-    wordsHTML = `<div class="word-item">${topic}</div>`;
-    document.getElementById('prompt-label').textContent = 'Your topic';
-    document.getElementById('prep-prompt-label').textContent = 'Your topic';
+    currentTopicSentence = `Talk about ${topic}.`;
+    wordsHTML = `<p class="plot-text">${currentTopicSentence}</p>`;
+    document.getElementById('prompt-label').textContent = '';
+    document.getElementById('prep-prompt-label').textContent = '';
+    document.getElementById('prep-screen-desc').innerHTML =
+      `<p class="prompt-text">${getPrepDesc()}</p>`;
   } else if (currentChallenge === 'plot') {
     const plot = pickRandom(PLOTS, 1)[0];
     usedPromptText = plot;
@@ -4135,13 +4161,16 @@ function launchChallenge() {
   } else if (currentChallenge === 'topic') {
     const topic = pickRandom(TOPICS, 1)[0];
     usedPromptText = topic;
-    const topicHTML = `<div class="word-item">${topic}</div>`;
-    document.getElementById('prompt-label').textContent = 'Your topic';
+    currentTopicSentence = `Talk about ${topic}.`;
+    const topicHTML = `<p class="plot-text">${currentTopicSentence}</p>`;
+    document.getElementById('prompt-label').textContent = '';
     document.getElementById('prompt-display').innerHTML = topicHTML;
-    timerTotal = 60;
-    if (prepTimeEnabled) {
-      document.getElementById('prep-prompt-label').textContent = 'Your topic';
+    timerTotal = currentFramework?.timeOverride || 60;
+    if (prepTimeEnabled && !currentFramework?.disablePrepTime) {
+      document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML = topicHTML;
+      document.getElementById('prep-screen-desc').innerHTML =
+        `<p class="prompt-text">${getPrepDesc()}</p>`;
       showScreen('screen-prep');
       startPrepTimer();
       return;
