@@ -289,7 +289,7 @@ body {
 /* Intro bottom row — two-column layout: GO circle left, pill+toggle right */
 #intro-bottom-row {
   position: absolute;
-  bottom: calc(max(20px, 3%) + env(safe-area-inset-bottom, 0px));
+  bottom: calc(max(42px, 6.5%) + env(safe-area-inset-bottom, 0px));
   left: max(20px, 5%);
   display: flex;
   flex-direction: row;
@@ -681,7 +681,7 @@ body {
 
 .timesup-actions {
   position: absolute;
-  bottom: calc(max(20px, 3.5%) + env(safe-area-inset-bottom, 0px));
+  bottom: calc(max(42px, 6.5%) + env(safe-area-inset-bottom, 0px));
   left: max(20px, 5%);
   right: max(20px, 5%);
   display: flex;
@@ -1638,7 +1638,7 @@ body {
 
 .take-counter-display {
   position: absolute;
-  bottom: max(8px, 1.5%);
+  bottom: calc(max(14px, 2%) + env(safe-area-inset-bottom, 0px));
   left: 0;
   right: 0;
   padding: 0 clamp(60px, 14%, 80px);
@@ -1646,7 +1646,7 @@ body {
   color: white;
   font-size: clamp(11px, 1.8vh, 14px);
   font-weight: 400;
-  opacity: 0.35;
+  opacity: 0.17;
   letter-spacing: 0.03em;
   pointer-events: none;
   z-index: 8;
@@ -1762,6 +1762,40 @@ body {
   text-decoration-color: rgba(255,255,255,0.2);
 }
 
+.take-counter-n-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: clamp(14px, 2.5vh, 20px);
+}
+
+.take-counter-n-label {
+  color: rgba(255,255,255,0.5);
+  font-size: clamp(13px, 2vh, 16px);
+}
+
+.take-counter-n-input {
+  width: 72px;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.18);
+  border-radius: 8px;
+  color: white;
+  font-size: clamp(14px, 2.2vh, 18px);
+  font-family: inherit;
+  text-align: center;
+  padding: clamp(6px, 1.2vh, 10px) 8px;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+
+.take-counter-n-input::-webkit-inner-spin-button,
+.take-counter-n-input::-webkit-outer-spin-button { opacity: 0.4; }
+
+.take-counter-n-input:focus {
+  border-color: rgba(255,255,255,0.35);
+}
+
 .take-counter-done-btn {
   width: 100%;
   background: rgba(255,255,255,0.1);
@@ -1805,8 +1839,8 @@ body {
 
 .vis-toggle-btn {
   position: absolute;
-  right: max(16px, 3.5%);
-  bottom: calc(max(10px, 1.8%) + env(safe-area-inset-bottom, 0px));
+  right: max(22px, 4%);
+  bottom: calc(max(130px, 20%) + env(safe-area-inset-bottom, 0px));
   z-index: 12;
   background: none;
   border: none;
@@ -1814,21 +1848,20 @@ body {
   cursor: pointer;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
-  opacity: 0.22;
-  /* Tall tap target — extends upward so it's reachable above bottom buttons */
+  opacity: 0.13;
+  /* Tall tap target extends downward */
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
   width: 44px;
-  min-height: 72px;
-  padding-bottom: 2px;
+  min-height: 80px;
+  padding-top: 4px;
 }
 
 .vis-toggle-btn svg {
   display: block;
-  width: clamp(18px, 3vh, 22px);
-  height: clamp(18px, 3vh, 22px);
-  filter: drop-shadow(0 1px 6px rgba(0,0,0,0.9));
+  width: 10px;
+  height: 10px;
   flex-shrink: 0;
 }
 
@@ -1851,10 +1884,19 @@ body {
   pointer-events: none !important;
 }
 
-/* Slide-out animation applied to a single screen */
-.ui-slide-out {
-  transform: translateX(-100%) !important;
+/* Slide animations — applied to children so screen background stays put */
+.ui-slide-out > * {
+  transform: translateX(-110%) !important;
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+@keyframes slideInFromLeft {
+  from { transform: translateX(-110%); }
+  to   { transform: translateX(0); }
+}
+
+.ui-slide-in > * {
+  animation: slideInFromLeft 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
 }
 
 </style>
@@ -2052,7 +2094,11 @@ body {
         <button class="take-counter-clear-btn" id="take-counter-input-clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div class="take-counter-links">
-        <button class="take-counter-link" id="take-counter-use-template">Use template</button>
+        <button class="take-counter-link" id="take-counter-use-template">Day X, Take [n]</button>
+      </div>
+      <div class="take-counter-n-row">
+        <span class="take-counter-n-label">Current take</span>
+        <input class="take-counter-n-input" id="take-counter-n-input" type="number" min="1" step="1">
       </div>
       <button class="take-counter-done-btn" id="take-counter-done">Done</button>
     </div>
@@ -2062,7 +2108,7 @@ body {
   <div class="take-counter-display" id="take-counter-display"></div>
 
   <!-- ── Visibility Toggle ── -->
-  <button class="vis-toggle-btn" id="vis-toggle-btn"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  <button class="vis-toggle-btn" id="vis-toggle-btn"><svg viewBox="0 0 10 10" fill="white" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="5"/></svg></button>
 
   <!-- ── UI Restore Overlay (full-screen, shown only when UI is hidden) ── -->
   <div id="ui-restore-overlay"></div>
@@ -3733,17 +3779,21 @@ function renderTakeDisplay() {
 }
 
 function openTakeSheet() {
-  const sheet = document.getElementById('take-counter-sheet');
-  const input = document.getElementById('take-counter-input');
-  input.value = getTakeTemplate(currentChallenge);
+  const sheet   = document.getElementById('take-counter-sheet');
+  const input   = document.getElementById('take-counter-input');
+  const nInput  = document.getElementById('take-counter-n-input');
+  input.value   = getTakeTemplate(currentChallenge);
+  nInput.value  = getTakeN(currentChallenge);
   sheet.classList.add('visible');
   setTimeout(() => input.focus(), 80);
 }
 
 function closeTakeSheet() {
-  const input = document.getElementById('take-counter-input');
-  const val = input.value.trim();
-  setTakeTemplate(currentChallenge, val);
+  const input  = document.getElementById('take-counter-input');
+  const nInput = document.getElementById('take-counter-n-input');
+  setTakeTemplate(currentChallenge, input.value.trim());
+  const n = parseInt(nInput.value, 10);
+  if (!isNaN(n) && n >= 1) setTakeN(currentChallenge, n);
   document.getElementById('take-counter-sheet').classList.remove('visible');
   renderTakeDisplay();
 }
@@ -3770,8 +3820,10 @@ document.getElementById('take-counter-use-template').onclick = () => {
 let uiHidden = false;
 let visTouchStartX = 0;
 let visTouchStartY = 0;
+let restoreTouchStartX = 0;
 let wasTimerRunning = false;
 let wasPrepTimerRunning = false;
+let slideOutScreen = null;
 
 const visBtn = document.getElementById('vis-toggle-btn');
 const appEl  = document.getElementById('app');
@@ -3786,25 +3838,40 @@ function hideUI(slideMode) {
 
   if (slideMode) {
     const activeScreen = document.querySelector('.screen.active');
+    slideOutScreen = activeScreen || null;
     if (activeScreen) {
       activeScreen.classList.add('ui-slide-out');
+      // After animation: hide app, then remove slide class (invisible, so no flicker)
       setTimeout(() => {
-        activeScreen.classList.remove('ui-slide-out');
         appEl.classList.add('ui-hidden');
+        requestAnimationFrame(() => activeScreen.classList.remove('ui-slide-out'));
       }, 350);
     } else {
       appEl.classList.add('ui-hidden');
     }
   } else {
+    slideOutScreen = null;
     appEl.classList.add('ui-hidden');
   }
   restoreOverlay.style.display = 'block';
 }
 
-function restoreUI() {
+function restoreUI(slideMode) {
   uiHidden = false;
-  appEl.classList.remove('ui-hidden');
   restoreOverlay.style.display = 'none';
+
+  if (slideMode && slideOutScreen) {
+    // Slide back in from left
+    const screen = slideOutScreen;
+    slideOutScreen = null;
+    appEl.classList.remove('ui-hidden');
+    screen.classList.add('ui-slide-in');
+    setTimeout(() => screen.classList.remove('ui-slide-in'), 360);
+  } else {
+    slideOutScreen = null;
+    appEl.classList.remove('ui-hidden');
+  }
+
   if (wasTimerRunning)     resumeTimer();
   if (wasPrepTimerRunning) resumePrepTimer();
   wasTimerRunning     = false;
@@ -3827,21 +3894,26 @@ visBtn.addEventListener('touchend', e => {
   else if (isTap)  hideUI(false);
 }, { passive: true });
 
-// Also support click for desktop testing
-visBtn.addEventListener('click', e => {
-  if (uiHidden) return;
-  // Only fires if not a touch device (touchend handles touch)
-  if (!('ontouchstart' in window)) hideUI(false);
+// Desktop fallback
+visBtn.addEventListener('click', () => {
+  if (uiHidden || ('ontouchstart' in window)) return;
+  hideUI(false);
 });
 
 restoreOverlay.addEventListener('touchstart', e => {
+  restoreTouchStartX = e.touches[0].clientX;
+}, { passive: true });
+
+restoreOverlay.addEventListener('touchend', e => {
   if (!uiHidden) return;
-  restoreUI();
+  const dx = e.changedTouches[0].clientX - restoreTouchStartX;
+  const isSwipeRight = dx > 28;
+  restoreUI(isSwipeRight);
 }, { passive: true });
 
 restoreOverlay.addEventListener('click', () => {
   if (!uiHidden) return;
-  restoreUI();
+  restoreUI(false);
 });
 
 // ============================================================
