@@ -2317,6 +2317,7 @@ const FRAMEWORKS = {
       description: '8-step arc — build a complete story with character, flaw, danger, and resolution.',
       promptText: 'Tell a story following a character arc.',
       mode: 'sequential',
+      timeOverride: 90,
       elements: [
         { label: 'Character',     hint: 'Introduce your character with 3 details' },
         { label: 'Fatal flaw',    hint: 'Name their one key weakness or flaw' },
@@ -2335,6 +2336,7 @@ const FRAMEWORKS = {
       description: 'The 7-beat structure behind every Pixar film — from "once upon a time" to "ever since then".',
       promptText: 'Tell a story using the Pixar Story Spine.',
       mode: 'sequential',
+      timeOverride: 90,
       elements: [
         { label: 'Once upon a time', hint: 'Set the scene and introduce your world' },
         { label: 'Every day',        hint: 'Describe what was normal' },
@@ -2343,6 +2345,19 @@ const FRAMEWORKS = {
         { label: 'Because of that',  hint: 'Another consequence — escalate' },
         { label: 'Until finally',    hint: 'The crisis peaks or resolves' },
         { label: 'Ever since then',  hint: 'Show how the world has changed' },
+      ],
+      postChallenge: { type: 'time-distribution' },
+    },
+    {
+      id: 'setup-conflict-resolution',
+      name: 'Setup / Conflict / Resolution',
+      description: 'The classic 3-act structure — set the scene, introduce the problem, resolve it.',
+      promptText: 'Tell a story with a clear setup, conflict, and resolution.',
+      mode: 'sequential',
+      elements: [
+        { label: 'Setup',      hint: 'Set the scene and introduce your character' },
+        { label: 'Conflict',   hint: 'Introduce the problem or obstacle' },
+        { label: 'Resolution', hint: 'Resolve it and show what changed' },
       ],
       postChallenge: { type: 'time-distribution' },
     },
@@ -3328,7 +3343,7 @@ function getEffectivePromptHTML() {
   if (currentChallenge === 'story') {
     if (currentStoryWords) return buildStoryWordsHTML(currentStoryWords);
     if (currentPlotText) return 'Tell this story: <strong class="topic-highlight">' + currentPlotText + '</strong>';
-    return '';
+    return getEffectivePromptText() || '';  // framework promptText, or "Tell a story." fallback
   }
   if (currentChallenge === 'topic' && currentTopicText) {
     return 'Talk about <strong class="topic-highlight">' + currentTopicText + '</strong>';
@@ -4441,18 +4456,15 @@ function launchChallenge() {
       usedPromptText = '';
     }
 
-    const promptHTML = currentPromptType
-      ? `<p class="prompt-text">${getEffectivePromptHTML()}</p>`
-      : '';
     document.getElementById('prompt-label').textContent = '';
-    document.getElementById('prompt-display').innerHTML = promptHTML;
+    document.getElementById('prompt-display').innerHTML =
+      `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
     timerTotal = currentFramework?.timeOverride || CHALLENGE_DEFAULT_TIMES['story'];
 
     if (prepTimeEnabled && !currentFramework?.disablePrepTime) {
       document.getElementById('prep-prompt-label').textContent = '';
-      document.getElementById('prep-prompt-display').innerHTML = currentPromptType
-        ? `<p class="prompt-text">${getPrepDescHTML()}</p>`
-        : '';
+      document.getElementById('prep-prompt-display').innerHTML =
+        `<p class="prompt-text">${getPrepDescHTML()}</p>`;
       showScreen('screen-prep');
       startPrepTimer();
       return;
