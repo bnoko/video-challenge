@@ -1925,7 +1925,6 @@ body {
       <div class="challenge-options">
         <button class="challenge-btn" id="btn-story">📖 Storytelling</button>
         <button class="challenge-btn" id="btn-topic">🎲 Random Topic</button>
-        <button class="challenge-btn" id="btn-plot">🎭 Story Plot</button>
         <button class="challenge-btn" id="btn-selfknowledge">🪞 Self-Knowledge</button>
         <button class="challenge-btn" id="btn-interview">💼 Interview Practice</button>
         <button class="challenge-btn" id="btn-gratitude">🙏 Gratitude</button>
@@ -2155,7 +2154,6 @@ body {
 const CONFIG = {
   story:         { enabled: true,  public: true  },
   topic:         { enabled: true,  public: true  },
-  plot:          { enabled: true,  public: true  },
   selfknowledge: { enabled: true,  public: true  },
   interview:     { enabled: true,  public: true  },
   gratitude:     { enabled: true,  public: true  },
@@ -2176,15 +2174,6 @@ const TIPS = {
       '<strong>Pixar formula</strong> - "Once upon a time… every day… until one day… because of that… until finally…"',
       '<strong>Start in the action</strong> - don\'t open with "So basically…", open with something happening.',
       '<strong>Yes, and…</strong> - never get stuck. Accept what you\'ve set up and keep building on it.',
-    ]
-  },
-  plot: {
-    title: 'Story Plot tips',
-    items: [
-      '<strong>Character motivation first</strong> - why does your character want something? That\'s the engine of the story.',
-      '<strong>Raise the stakes fast</strong> - the problem should get worse before it gets better.',
-      '<strong>End with a beat</strong> - a twist, a realisation, or an emotional moment. Don\'t just stop.',
-      '<strong>3-act structure</strong> - Set the scene, introduce a problem, resolve it.',
     ]
   },
   topic: {
@@ -2467,7 +2456,6 @@ const CHALLENGE_RATINGS = {
   topic:         [{ label: 'Clarity' },   { label: 'Confidence' }],
   gratitude:     [],
   story:         [{ label: 'Challenge' }, { label: 'Enjoyment' }],
-  plot:          [{ label: 'Challenge' }, { label: 'Enjoyment' }],
   selfknowledge: [{ label: 'Clarity' },   { label: 'Depth' }],
   interview:     [{ label: 'Relevance' }, { label: 'Confidence' }],
 
@@ -2768,7 +2756,7 @@ function playEnd() {
 // STATE
 // ============================================================
 
-let currentChallenge = null;   // 'story' | 'topic' | 'plot' | 'selfknowledge' | 'interview' | 'gratitude' | 'articulation' | 'articulation2'
+let currentChallenge = null;   // 'story' | 'topic' | 'selfknowledge' | 'interview' | 'gratitude' | 'articulation' | 'articulation2'
 let usedPromptText   = '';
 let currentTopicSentence = null; // "Talk about X" plain text — used by getIntroDesc/getPrepDesc
 let currentTopicText     = null; // just the topic word/phrase (lowercased) — used for bold rendering
@@ -3166,12 +3154,6 @@ function renderTopic(topic) {
     `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
 }
 
-function renderPlot(plot) {
-  const d = document.getElementById('prompt-display');
-  document.getElementById('prompt-label').textContent = 'Your story';
-  d.innerHTML = `<p class="plot-text">${plot}</p>`;
-}
-
 function renderArticulation(item) {
   const d = document.getElementById('prompt-display');
   document.getElementById('prompt-label').textContent = item.name;
@@ -3299,7 +3281,7 @@ const CHALLENGE_DEFAULT_DESCS = {
 };
 
 const CHALLENGE_DEFAULT_TIMES = {
-  gratitude: 60, story: 60, topic: 60, plot: 60,
+  gratitude: 60, story: 60, topic: 60,
   selfknowledge: 60, interview: 60, articulation2: 30,
 };
 
@@ -4317,18 +4299,6 @@ document.getElementById('btn-gratitude').onclick = () => {
   });
 };
 
-document.getElementById('btn-plot').onclick = () => {
-  playPop();
-  animateTap(document.getElementById('btn-plot'), () => {
-    currentChallenge = 'plot';
-    document.getElementById('intro-label').textContent = 'Story Plot';
-    document.getElementById('intro-desc').textContent =
-      "You'll get a story setup and have 60 seconds to bring it to life -make it as vivid as you can";
-    setToggleVisibility(true);
-    showScreen('screen-intro');
-  });
-};
-
 document.getElementById('btn-topic').onclick = () => {
   playPop();
   animateTap(document.getElementById('btn-topic'), () => {
@@ -4391,12 +4361,6 @@ document.getElementById('prep-reroll').onclick = () => {
     wordsHTML = `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prep-prompt-label').textContent = '';
-  } else if (currentChallenge === 'plot') {
-    const plot = pickRandom(PLOTS, 1)[0];
-    usedPromptText = plot;
-    wordsHTML = `<p class="plot-text">${plot}</p>`;
-    document.getElementById('prompt-label').textContent = 'Your story';
-    document.getElementById('prep-prompt-label').textContent = 'Your story';
   }
   if (wordsHTML) {
     document.getElementById('prompt-display').innerHTML = wordsHTML;
@@ -4485,22 +4449,6 @@ function launchChallenge() {
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML =
         `<p class="prompt-text">${getPrepDescHTML()}</p>`;
-      showScreen('screen-prep');
-      startPrepTimer();
-      return;
-    }
-    startActiveChallenge();
-    return;
-  } else if (currentChallenge === 'plot') {
-    const plot = pickRandom(PLOTS, 1)[0];
-    usedPromptText = plot;
-    const plotHTML = `<p class="plot-text">${plot}</p>`;
-    document.getElementById('prompt-label').textContent = 'Your story';
-    document.getElementById('prompt-display').innerHTML = plotHTML;
-    timerTotal = 60;
-    if (prepTimeEnabled) {
-      document.getElementById('prep-prompt-label').textContent = 'Your story';
-      document.getElementById('prep-prompt-display').innerHTML = plotHTML;
       showScreen('screen-prep');
       startPrepTimer();
       return;
@@ -4638,10 +4586,6 @@ document.getElementById('reroll-btn').onclick = () => {
     } else {
       renderTopic(topic);
     }
-  } else if (currentChallenge === 'plot') {
-    const plot = pickRandom(PLOTS, 1)[0];
-    usedPromptText = plot;
-    renderPlot(plot);
   } else if (currentChallenge === 'articulation') {
     const item = pickRandom(ARTICULATIONS, 1)[0];
     usedPromptText = item.name;
@@ -4783,7 +4727,6 @@ document.getElementById('menu-btn').onclick = () => {
   const map = {
     story:         'btn-story',
     topic:         'btn-topic',
-    plot:          'btn-plot',
     selfknowledge: 'btn-selfknowledge',
     interview:     'btn-interview',
     gratitude:     'btn-gratitude',
