@@ -2782,6 +2782,9 @@ if (window.visualViewport) window.visualViewport.addEventListener('resize', upda
   const el    = document.getElementById('version-display');
   if (el) el.textContent = `Updated ${day} ${month}, ${hh}:${mm}`;
 })();
+// renderTakeDisplay is called by showScreen() on navigation, but the app starts
+// on screen-select without calling showScreen(), so we call it once manually.
+renderTakeDisplay();
 
 // ============================================================
 // CAMERA
