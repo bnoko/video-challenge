@@ -1,6 +1,6 @@
 # Video Challenge App — Roadmap
 
-> Last updated: May 2026.
+> Last updated: May 2026 (session 2).
 > Single file: `challenge.html`. Live: https://bnoko.github.io/video-challenge/challenge.html
 
 ---
@@ -16,7 +16,7 @@
 
 For any challenge receiving frameworks: **build fresh using Gratitude as the template**, mining existing prompt content as needed. Don't retrofit.
 
-Articulation (Art2): fix intro screen phrasing only — no rebuild needed. Plot and Tongue Twister: **delete both**. Plot becomes a prompt type inside Storytelling; Tongue Twister is superseded by Articulation.
+Art2 is done (shipped). Plot and Tongue Twister: **delete both**. Plot becomes a prompt type inside Storytelling; Tongue Twister is superseded by Articulation.
 
 ---
 
@@ -37,7 +37,7 @@ Two changes needed on Person/Place/Feeling before building any new parallel fram
 
 ### Random Topic
 
-Prompt type: single random topic (unchanged).
+**Prompt format change needed before frameworks land:** update the launch path so the topic is wrapped in an action sentence — `"Talk about [topic]."` — rather than rendered as raw large text. This makes it consistent with all other challenges and lets it flow naturally into `getIntroDesc()` ("You'll get 60 seconds to talk about cucumbers.") and `getPrepDesc()` ("Prep time for talking about cucumbers."). The `promptText` field in the framework config should use the same sentence shape.
 
 | Framework | Mode | Post-challenge |
 |---|---|---|
@@ -70,6 +70,8 @@ Default pill text: "Add prompt type" (matches "Add framework" styling — unsele
 
 *Carousel mode abandoned — sequential numbered list (collapse on advance) is the right fit.*
 
+**Three-word display:** the current giant stacked text won't work once frameworks land — the overlay would sit right at face height. As part of this rebuild, significantly reduce the font size and reconsider the layout (words inline or at least much smaller). Whether to also adopt an action-sentence format ("Tell a story including the words X, Y and Z.") is an open decision — settle it at rebuild time. Don't lose the visual character of the words entirely; they read like a constraint, not a sentence.
+
 **Challenge zone:** Challenge ⭐ + Enjoyment ⭐
 *(Watch Challenge decrease and Enjoyment increase over time — that's the progress signal.)*
 
@@ -96,14 +98,23 @@ Review prompt pool. Frameworks TBD — assess after Interview Practice rebuild. 
 
 ---
 
-### Articulation (Art2)
+### Articulation (Art2) — deferred, low urgency
 
-Fix intro screen phrasing to match current standard: "You'll get 30 seconds to read as far as you can." Active screen and times-up screen stay as-is (bespoke layout, works well).
+Three changes needed. No prep screen (stays as-is).
+
+1. **Intro screen text:** Change to "You'll get 30 seconds to read the text clearly and effectively." Remove the "tap anywhere on the screen to move to the next line" instruction — it no longer applies.
+
+2. **Active screen — explicit next-line button:** Replace the tap-anywhere-to-advance interaction with a dedicated full-width button below the text (same pattern as Gratitude Blitz counter button). Label TBD — something like "Next line" or just a forward arrow. This resolves the conflict with the visibility toggle's restore tap and makes the interaction consistent with the rest of the app.
+
+3. **Times-up screen:** No changes needed — progress bar and star ratings stay as-is.
+
+**Why explicit button over tap-anywhere:** tap-anywhere is an outlier in the app's interaction model, conflicts with the visibility toggle restore, and would conflict with any future overlay that needs to capture taps. A large dedicated button is easy to hit by feel and consistent with Gratitude Blitz.
 
 ---
 
 ## 3. Backlog / future ideas
 
+- **Bug — vis toggle swipe flicker:** When swiping left to activate the visibility toggle, UI elements slide left correctly but then briefly flash back to their original position before disappearing. This is distinct from the dark overlay issue (already fixed). Needs investigation — likely a timing issue between the slide-out animation completing and the `ui-hidden` class being applied.
 - **Prompt type selectors for Interview Practice** — question categories by type, seniority, or industry. Defer until question pool is more developed.
 - **Session summary** — after multiple "Do it again" takes, lightweight end-of-session view showing take count and self-rating patterns over time.
 - **More storytelling prompt types / frameworks** — 3-act structure, "start with the ending", scene-based formats, etc.
@@ -122,6 +133,9 @@ Fix intro screen phrasing to match current standard: "You'll get 30 seconds to r
 - **Carousel mode abandoned.** Sequential numbered list (collapse on advance) works for storytelling frameworks with many steps.
 - **Prompt type and framework are independent dimensions.** Prompt type = what you're responding to. Framework = how you structure it. Storytelling is the first challenge to expose both selectors.
 - **Plot and Tongue Twister deleted.** Plot → Storytelling prompt type. Tongue Twister → superseded by Articulation.
+- **Prompt fades removed.** Both prep screen fade (`schedulePrepFade`) and active screen word fade (`scheduleWordFade`) are gone. Prompts stay visible for the full duration.
+- **Random Topic uses action sentence format.** "Talk about [topic]." — consistent with other challenges, feeds `getIntroDesc`/`getPrepDesc` naturally. Raw large text is gone for this challenge.
+- **Three-word display decision deferred to Storytelling rebuild.** Font size + layout must shrink significantly before frameworks can work. Action sentence format ("Tell a story including the words…") is an open question — decide at rebuild time.
 
 ---
 
@@ -136,9 +150,10 @@ Fix intro screen phrasing to match current standard: "You'll get 30 seconds to r
 - [x] Times-up challenge zone — star ratings, generic and data-driven via `CHALLENGE_RATINGS`
 - [x] Gratitude — Person / Place / Feeling (parallel + completion-timed), What / Why / Impact (sequential + time-distribution), Gratitude Blitz (counter, 30s override)
 - [x] Framework design rules documented in CLAUDE.md
-- [x] Articulation (Art2) — line-by-line navigation, tap to advance, progress bar + star ratings on times-up
+- [x] Articulation (Art2) — line-by-line navigation, tap-anywhere to advance (will become explicit button — see roadmap), progress bar + star ratings on times-up; stars bug fixed (curly quotes in SVG innerHTML)
 - [x] All base challenges — Random Topic, Storytelling, Story Plot, Self-Knowledge, Interview Practice, Plot, Tongue Twister, Gratitude
 - [x] Prep timer — toggle on intro, "Prep time for [gerund phrase]." format on prep screen
+- [x] Prompt fades removed — prep screen fade and active screen word fade both gone
 - [x] Multi-section help overlay (heading + items format)
 - [x] Do It Again / Return to Menu on times-up
 - [x] GitHub Pages deployment + deploy.sh
