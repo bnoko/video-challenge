@@ -1519,6 +1519,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: clamp(10px, 1.8vh, 16px);
+  margin-top: clamp(-8px, -1.2vh, -4px);
 }
 
 .prep-plus-btn {
@@ -2016,7 +2017,7 @@ body {
     </div>
     <div class="timesup-inner">
       <h2 class="timesup-title">Time's up!</h2>
-      <p class="timesup-sub">How did you do?</p>
+      <p class="timesup-sub" style="display:none;"></p>
       <p class="timesup-completion" id="timesup-completion"></p>
       <p class="timesup-prompt" id="timesup-prompt"></p>
       <div id="framework-zone" class="framework-zone" style="display:none;"></div>
@@ -2272,9 +2273,9 @@ const FRAMEWORKS = {
       promptText: 'Talk about a random topic, making exactly three distinct points.',
       mode: 'parallel',
       elements: [
-        { label: 'Point 1', flex: 1 },
-        { label: 'Point 2', flex: 1 },
-        { label: 'Point 3', flex: 1 },
+        { label: 'Point 1', emoji: '1️⃣', flex: 1 },
+        { label: 'Point 2', emoji: '2️⃣', flex: 1 },
+        { label: 'Point 3', emoji: '3️⃣', flex: 1 },
       ],
       postChallenge: { type: 'completion-timed' },
     },
@@ -2571,38 +2572,38 @@ const GRATITUDE_PROMPT = "Reflect on something you're grateful for.";
 
 const TOPICS = [
   // Everyday objects
-  'Scissors','Mirrors','Umbrellas','The toothbrush','Coffee mugs','Bicycles',
-  'Envelopes','Candles','Ladders','Vending machines','Bubble wrap','Escalators',
-  'Waiting rooms','Revolving doors','Supermarket self-checkouts','Shopping trolleys',
+  'scissors','mirrors','umbrellas','the toothbrush','coffee mugs','bicycles',
+  'envelopes','candles','ladders','vending machines','bubble wrap','escalators',
+  'waiting rooms','revolving doors','supermarket self-checkouts','shopping trolleys',
   // Food & drink
-  'Pizza','Avocado','Croissants','Chilli peppers','Sushi','Cheese','Cucumbers',
-  'Mangoes','Instant noodles','Ketchup','Hot sauce','Sourdough bread',
-  'Fizzy drinks','Biscuits','The perfect sandwich',
+  'pizza','avocado','croissants','chilli peppers','sushi','cheese','cucumbers',
+  'mangoes','instant noodles','ketchup','hot sauce','sourdough bread',
+  'fizzy drinks','biscuits','the perfect sandwich',
   // Animals
-  'Penguins','Octopuses','Sloths','Bees','Axolotls','Pigeons','Domesticated cats',
-  'Goldfish','Crows','Jellyfish','Pandas','Dolphins',
+  'penguins','octopuses','sloths','bees','axolotls','pigeons','domesticated cats',
+  'goldfish','crows','jellyfish','pandas','dolphins',
   // Places & spaces
-  'The moon','Antarctica','Las Vegas','The Amazon rainforest','Submarines',
-  'Airports','Car parks','Libraries','Rooftops','Lifts','The deep ocean',
-  'Deserts','Tiny islands',
+  'the moon','Antarctica','Las Vegas','the Amazon rainforest','submarines',
+  'airports','car parks','libraries','rooftops','lifts','the deep ocean',
+  'deserts','tiny islands',
   // Activities
-  'Swimming','Karaoke','Yoga','Gardening','Cooking','Dancing in public',
-  'Hiking','Online shopping','People watching','Daydreaming',
+  'swimming','karaoke','yoga','gardening','cooking','dancing in public',
+  'hiking','online shopping','people watching','daydreaming',
   // Modern life
-  'Social media','Emojis','Selfies','Streaming services','Podcasts',
-  'Working from home','Group chats','Notifications','Password fatigue',
-  'Going viral','Autocorrect fails',
+  'social media','emojis','selfies','streaming services','podcasts',
+  'working from home','group chats','notifications','password fatigue',
+  'going viral','autocorrect fails',
   // Abstract & concepts
-  'Luck','Boredom','Fame','Gravity','Money','Nostalgia','Procrastination',
-  'Coincidences','First impressions','Silence','The colour beige',
+  'luck','boredom','fame','gravity','money','nostalgia','procrastination',
+  'coincidences','first impressions','silence','the colour beige',
   // Hypotheticals
-  'If you could fly','Living on Mars','If animals could talk',
-  'A world without sleep','If you never had to eat','Time travel',
-  'Being invisible for a day','Swapping lives with a stranger',
+  'if you could fly','living on Mars','if animals could talk',
+  'a world without sleep','if you never had to eat','time travel',
+  'being invisible for a day','swapping lives with a stranger',
   // Quirky / fun
-  'Why we dream','Things found down the back of a sofa','The smell of rain',
-  'Why queuing exists','Superstitions','Conspiracy theories about mundane things',
-  'The last thing you Googled','Things that are weirdly satisfying'
+  'why we dream','things found down the back of a sofa','the smell of rain',
+  'why queuing exists','superstitions','conspiracy theories about mundane things',
+  'the last thing you Googled','things that are weirdly satisfying'
 ];
 
 
@@ -2671,7 +2672,8 @@ function playEnd() {
 
 let currentChallenge = null;   // 'story' | 'topic' | 'plot' | 'selfknowledge' | 'interview' | 'gratitude' | 'articulation' | 'articulation2'
 let usedPromptText   = '';
-let currentTopicSentence = null; // "Talk about X." — set when topic is picked, cleared on new challenge
+let currentTopicSentence = null; // "Talk about X" plain text — used by getIntroDesc/getPrepDesc
+let currentTopicText     = null; // just the topic word/phrase (lowercased) — used for bold rendering
 
 // Articulation 2 state
 let artLineHeight  = 0;    // px height of one rendered line
@@ -3008,10 +3010,11 @@ function renderStoryWords(words) {
 }
 
 function renderTopic(topic) {
-  currentTopicSentence = `Talk about ${topic}.`;
+  currentTopicText     = topic;
+  currentTopicSentence = 'Talk about ' + topic;
   document.getElementById('prompt-label').textContent = '';
   document.getElementById('prompt-display').innerHTML =
-    `<p class="prompt-text">${currentTopicSentence}</p>`;
+    `<p class="prompt-text">Talk about <strong>${topic}</strong></p>`;
 }
 
 function renderPlot(plot) {
@@ -3163,35 +3166,50 @@ function toGerund(verb) {
 }
 
 // Returns the effective prompt text for the current challenge + framework state.
-// For topic: once a topic has been picked, uses the specific "Talk about X." sentence
+// For topic: once a topic has been picked, uses the specific "Talk about X" sentence
 // rather than the generic default or framework promptText.
 function getEffectivePromptText() {
   if (currentChallenge === 'topic' && currentTopicSentence) return currentTopicSentence;
   return currentFramework?.promptText || CHALLENGE_DEFAULT_DESCS[currentChallenge];
 }
 
-// Returns "Prep time for [gerund phrase]." for the prep screen.
+// Returns HTML for the effective prompt, with the topic bolded for topic challenges.
+function getEffectivePromptHTML() {
+  if (currentChallenge === 'topic' && currentTopicText) {
+    return 'Talk about <strong>' + currentTopicText + '</strong>';
+  }
+  return getEffectivePromptText() || '';
+}
+
+// Returns "Prep time for [gerund phrase]" (no trailing period) for the prep screen.
 function getPrepDesc() {
   const rawPrompt = getEffectivePromptText();
   if (!rawPrompt) return '';
   const stripped = rawPrompt.replace(/[.!?]+$/, '');
   const spaceIdx = stripped.indexOf(' ');
-  if (spaceIdx === -1) return 'Prep time for ' + toGerund(stripped).toLowerCase() + '.';
+  if (spaceIdx === -1) return 'Prep time for ' + toGerund(stripped).toLowerCase();
   const firstWord = stripped.slice(0, spaceIdx);
   const rest = stripped.slice(spaceIdx + 1);
   const gerund = toGerund(firstWord).toLowerCase();
-  return 'Prep time for ' + gerund + ' ' + rest + '.';
+  return 'Prep time for ' + gerund + ' ' + rest;
 }
 
-// Returns "You will get X seconds to [lowercase prompt]." for the intro screen.
+// Like getPrepDesc() but with the topic bolded for topic challenges.
+function getPrepDescHTML() {
+  if (currentChallenge === 'topic' && currentTopicText) {
+    return 'Prep time for talking about <strong>' + currentTopicText + '</strong>';
+  }
+  return getPrepDesc();
+}
+
+// Returns "You'll get X seconds to [lowercase prompt]" (no trailing period) for the intro screen.
 function getIntroDesc() {
   const rawPrompt = getEffectivePromptText();
   if (!rawPrompt) return '';
   const seconds = currentFramework?.timeOverride || CHALLENGE_DEFAULT_TIMES[currentChallenge] || 60;
   const lower = rawPrompt.charAt(0).toLowerCase() + rawPrompt.slice(1);
-  // Ensure sentence ends with period, then strip it for the template
   const stripped = lower.replace(/[.!?]+$/, '');
-  return `You'll get ${seconds} seconds to ${stripped}.`;
+  return `You'll get ${seconds} seconds to ${stripped}`;
 }
 
 function updateFrameworkPill() {
@@ -3293,8 +3311,8 @@ function renderFrameworkPrepOverlay() {
 
   if (currentFramework.mode === 'parallel' || currentFramework.mode === 'sequential') {
     const guidanceText = currentFramework.mode === 'sequential'
-      ? 'You will tap to move to the next section'
-      : (currentFramework.timeTracked ? 'You will tap to track your progress' : 'You will tap each one as you complete it');
+      ? 'You\'ll tap to move to the next section'
+      : 'You\'ll tap each point as you make it';
     const guidance = document.createElement('div');
     guidance.className = 'framework-guidance-label';
     guidance.textContent = guidanceText;
@@ -3350,11 +3368,11 @@ function renderFrameworkOverlay() {
     headerEl.textContent = `${CHALLENGE_DISPLAY_NAMES[currentChallenge] || currentChallenge}: ${currentFramework.name}`;
 
     // Optional prompt line — shown when there's specific prompt context (e.g. the actual topic)
-    const effectivePrompt = getEffectivePromptText();
+    const effectivePrompt = getEffectivePromptHTML();
     if (effectivePrompt) {
       const promptEl = document.createElement('p');
       promptEl.className = 'fwk-overlay-prompt';
-      promptEl.textContent = effectivePrompt;
+      promptEl.innerHTML = effectivePrompt;
       wrap.appendChild(headerEl);
       wrap.appendChild(promptEl);
     } else {
@@ -3427,16 +3445,16 @@ function renderFrameworkOverlay() {
     document.getElementById('screen-active').classList.add('has-parallel-framework');
 
     // Prompt rendered inside overlay
-    const parallelPrompt = getEffectivePromptText();
+    const parallelPrompt = getEffectivePromptHTML();
     if (parallelPrompt) {
       const promptEl = document.createElement('p');
       promptEl.className = 'fwk-overlay-prompt';
-      promptEl.textContent = parallelPrompt;
+      promptEl.innerHTML = parallelPrompt;
       wrap.appendChild(promptEl);
     }
 
     // Guidance label
-    const guidanceText = 'Tap as you move to each part';
+    const guidanceText = 'Tap each point as you make it';
     const guidance = document.createElement('div');
     guidance.className = 'framework-guidance-label';
     guidance.textContent = guidanceText;
@@ -3477,11 +3495,11 @@ function renderFrameworkOverlay() {
     document.getElementById('screen-active').classList.add('has-counter-framework');
 
     // Prompt rendered inside overlay
-    const counterPrompt = getEffectivePromptText();
+    const counterPrompt = getEffectivePromptHTML();
     if (counterPrompt) {
       const promptEl = document.createElement('p');
       promptEl.className = 'fwk-overlay-prompt';
-      promptEl.textContent = counterPrompt;
+      promptEl.innerHTML = counterPrompt;
       wrap.appendChild(promptEl);
     }
 
@@ -4052,6 +4070,7 @@ document.getElementById('btn-topic').onclick = () => {
   animateTap(document.getElementById('btn-topic'), () => {
     currentChallenge = 'topic';
     currentTopicSentence = null;
+    currentTopicText     = null;
     document.getElementById('intro-label').textContent = 'Random Topic';
     document.getElementById('intro-desc').textContent = getIntroDesc();
     setToggleVisibility(true);
@@ -4089,8 +4108,9 @@ document.getElementById('prep-reroll').onclick = () => {
   } else if (currentChallenge === 'topic') {
     const topic = pickRandom(TOPICS, 1)[0];
     usedPromptText = topic;
-    currentTopicSentence = `Talk about ${topic}.`;
-    wordsHTML = `<p class="prompt-text">${currentTopicSentence}</p>`;
+    currentTopicText     = topic;
+    currentTopicSentence = 'Talk about ' + topic;
+    wordsHTML = `<p class="prompt-text">Talk about <strong>${topic}</strong></p>`;
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prep-prompt-label').textContent = '';
   } else if (currentChallenge === 'plot') {
@@ -4102,7 +4122,13 @@ document.getElementById('prep-reroll').onclick = () => {
   }
   if (wordsHTML) {
     document.getElementById('prompt-display').innerHTML = wordsHTML;
-    document.getElementById('prep-prompt-display').innerHTML = wordsHTML;
+    // Topic prep screen shows "Prep time for talking about X" rather than the raw sentence
+    if (currentChallenge === 'topic') {
+      document.getElementById('prep-prompt-display').innerHTML =
+        `<p class="prompt-text">${getPrepDescHTML()}</p>`;
+    } else {
+      document.getElementById('prep-prompt-display').innerHTML = wordsHTML;
+    }
   }
 };
 
@@ -4161,14 +4187,16 @@ function launchChallenge() {
   } else if (currentChallenge === 'topic') {
     const topic = pickRandom(TOPICS, 1)[0];
     usedPromptText = topic;
-    currentTopicSentence = `Talk about ${topic}.`;
-    const topicHTML = `<p class="prompt-text">${currentTopicSentence}</p>`;
+    currentTopicText     = topic;
+    currentTopicSentence = 'Talk about ' + topic;
     document.getElementById('prompt-label').textContent = '';
-    document.getElementById('prompt-display').innerHTML = topicHTML;
-    timerTotal = currentFramework?.timeOverride || 60;
+    document.getElementById('prompt-display').innerHTML =
+      `<p class="prompt-text">Talk about <strong>${topic}</strong></p>`;
+    timerTotal = currentFramework?.timeOverride || CHALLENGE_DEFAULT_TIMES[currentChallenge];
     if (prepTimeEnabled && !currentFramework?.disablePrepTime) {
       document.getElementById('prep-prompt-label').textContent = '';
-      document.getElementById('prep-prompt-display').innerHTML = topicHTML;
+      document.getElementById('prep-prompt-display').innerHTML =
+        `<p class="prompt-text">${getPrepDescHTML()}</p>`;
       showScreen('screen-prep');
       startPrepTimer();
       return;
@@ -4295,7 +4323,15 @@ document.getElementById('reroll-btn').onclick = () => {
   } else if (currentChallenge === 'topic') {
     const topic = pickRandom(TOPICS, 1)[0];
     usedPromptText = topic;
-    renderTopic(topic);
+    if (currentFramework) {
+      // Framework overlay owns the content area — update topic vars and patch the overlay prompt
+      currentTopicText     = topic;
+      currentTopicSentence = 'Talk about ' + topic;
+      const existing = document.querySelector('#framework-active-wrap .fwk-overlay-prompt');
+      if (existing) existing.innerHTML = getEffectivePromptHTML();
+    } else {
+      renderTopic(topic);
+    }
   } else if (currentChallenge === 'plot') {
     const plot = pickRandom(PLOTS, 1)[0];
     usedPromptText = plot;
@@ -4410,14 +4446,7 @@ function showTimesUp() {
     const ratings = CHALLENGE_RATINGS[currentChallenge] || [];
     title.textContent = currentChallenge === 'gratitude' ? "That's time" : "Time's up!";
     if (currentChallenge === 'gratitude') timesupScreen.classList.add('gratitude-mode');
-    const hideReflection = currentFramework?.mode === 'counter';
-    if (hideReflection) {
-      sub.style.display = 'none';
-    } else {
-      sub.textContent   = (currentChallenge === 'gratitude' || ratings.length === 0)
-                          ? 'How did you find that?' : 'How did you do?';
-      sub.style.display = '';
-    }
+    sub.style.display = 'none';
     prompt.style.display     = 'none';
     completion.style.display = 'none';
   }
