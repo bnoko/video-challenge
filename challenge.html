@@ -3886,25 +3886,29 @@ function restoreUI(slideMode) {
   wasPrepTimerRunning = false;
 }
 
-visBtn.addEventListener('touchstart', e => {
+// Touch anywhere on screen (not on interactive elements) to show/hide UI
+appEl.addEventListener('touchstart', e => {
   if (uiHidden) return;
   visTouchStartX = e.touches[0].clientX;
   visTouchStartY = e.touches[0].clientY;
 }, { passive: true });
 
-visBtn.addEventListener('touchend', e => {
+appEl.addEventListener('touchend', e => {
   if (uiHidden) return;
+  // Pass through if touch landed on any interactive element or framework overlay
+  if (e.target.closest('button, input, label, a, select, #framework-active-wrap')) return;
   const dx = e.changedTouches[0].clientX - visTouchStartX;
   const dy = e.changedTouches[0].clientY - visTouchStartY;
-  const isSwipeLeft = dx < -28 && Math.abs(dx) > Math.abs(dy) * 1.2;
+  const isSwipeLeft = dx < -40 && Math.abs(dx) > Math.abs(dy) * 1.5;
   const isTap       = Math.abs(dx) < 12 && Math.abs(dy) < 12;
   if (isSwipeLeft) hideUI(true);
   else if (isTap)  hideUI(false);
 }, { passive: true });
 
-// Desktop fallback
-visBtn.addEventListener('click', () => {
+// Desktop fallback — click on empty area
+appEl.addEventListener('click', e => {
   if (uiHidden || ('ontouchstart' in window)) return;
+  if (e.target.closest('button, input, label, a, select, #framework-active-wrap')) return;
   hideUI(false);
 });
 
