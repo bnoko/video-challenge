@@ -1110,6 +1110,13 @@ body {
   margin-top: clamp(10px, 1.8vh, 16px);
 }
 
+/* Topic word highlight — yellow + underline, used inside prompt-text and fwk-overlay-prompt */
+.topic-highlight {
+  color: #fcd34d;
+  text-decoration: underline;
+  text-decoration-color: #fcd34d;
+}
+
 /* Instructional sentence prompts — one consistent size used across all challenges */
 .prompt-text {
   color: white;
@@ -2305,7 +2312,7 @@ const FRAMEWORKS = {
         { label: 'Point',   hint: 'State your main point clearly' },
         { label: 'Reason',  hint: 'Explain why you believe it' },
         { label: 'Example', hint: 'Give a specific example' },
-        { label: 'Point ↩', hint: 'Restate your point' },
+        { label: 'Point',   hint: 'Restate your point' },
       ],
       postChallenge: { type: 'time-distribution' },
     },
@@ -2340,6 +2347,7 @@ const FRAMEWORKS = {
       description: 'Name what you\'re grateful for, explain why it matters, then say what impact it\'s had. Tap to move to the next section.',
       promptText: 'Share one thing you\'re grateful for, why it matters, and the impact it\'s had.',
       mode: 'sequential',
+      hidePrompt: true,
       elements: [
         { label: 'What',   emoji: '🎯', hint: 'Introduce one thing you\'re grateful for' },
         { label: 'Why',    emoji: '💭', hint: 'Briefly explain why it matters to you' },
@@ -3189,7 +3197,7 @@ function getEffectivePromptText() {
 // Returns HTML for the effective prompt, with the topic bolded for topic challenges.
 function getEffectivePromptHTML() {
   if (currentChallenge === 'topic' && currentTopicText) {
-    return 'Talk about <strong>' + currentTopicText + '</strong>';
+    return 'Talk about <strong class="topic-highlight">' + currentTopicText + '</strong>';
   }
   return getEffectivePromptText() || '';
 }
@@ -3210,7 +3218,7 @@ function getPrepDesc() {
 // Like getPrepDesc() but with the topic bolded for topic challenges.
 function getPrepDescHTML() {
   if (currentChallenge === 'topic' && currentTopicText) {
-    return 'Prep time for talking about <strong>' + currentTopicText + '</strong>';
+    return 'Prep time for talking about <strong class="topic-highlight">' + currentTopicText + '</strong>';
   }
   return getPrepDesc();
 }
@@ -3323,20 +3331,12 @@ function renderFrameworkPrepOverlay() {
   const showEmoji = currentFramework.elements && currentFramework.elements.length <= 4;
 
   if (currentFramework.mode === 'sequential') {
-    // Prep preview mirrors the active screen layout: header + all steps in seq-upcoming style, no arrow
-    const CHALLENGE_DISPLAY_NAMES = {
-      gratitude: 'Daily Gratitude', story: 'Storytelling', topic: 'Random Topic',
-      plot: 'Story Plot', selfknowledge: 'Self-Knowledge', interview: 'Interview Practice',
-    };
-    const headerEl = document.createElement('div');
-    headerEl.className = 'fwk-seq-header';
-    headerEl.textContent = `${CHALLENGE_DISPLAY_NAMES[currentChallenge] || currentChallenge}: ${currentFramework.name}`;
-    wrap.appendChild(headerEl);
-
-    const guidance = document.createElement('div');
-    guidance.className = 'framework-guidance-label';
-    guidance.textContent = 'You\'ll tap to move to the next section';
-    wrap.appendChild(guidance);
+    // Prep preview: all steps in seq-upcoming style, no arrows, no header, no guidance
+    // (header and guidance are shown on the active screen where they matter)
+    if (currentFramework.hidePrompt) {
+      // Framework doesn't need the prompt — clear the prep prompt display
+      document.getElementById('prep-prompt-display').innerHTML = '';
+    }
 
     const list = document.createElement('div');
     list.className = 'fwk-seq-list';
@@ -3397,26 +3397,22 @@ function renderFrameworkOverlay() {
     fwkCurrentStep = 0;
     const n = currentFramework.elements.length;
 
-    // Challenge name + framework name header
-    const CHALLENGE_DISPLAY_NAMES = {
-      gratitude: 'Daily Gratitude', story: 'Storytelling', topic: 'Random Topic',
-      plot: 'Story Plot', selfknowledge: 'Self-Knowledge', interview: 'Interview Practice',
-    };
-    const headerEl = document.createElement('div');
-    headerEl.className = 'fwk-seq-header';
-    headerEl.textContent = `${CHALLENGE_DISPLAY_NAMES[currentChallenge] || currentChallenge}: ${currentFramework.name}`;
-
-    // Optional prompt line — shown when there's specific prompt context (e.g. the actual topic)
-    const effectivePrompt = getEffectivePromptHTML();
-    if (effectivePrompt) {
-      const promptEl = document.createElement('p');
-      promptEl.className = 'fwk-overlay-prompt';
-      promptEl.innerHTML = effectivePrompt;
-      wrap.appendChild(headerEl);
-      wrap.appendChild(promptEl);
-    } else {
-      wrap.appendChild(headerEl);
+    // Optional prompt line — suppressed when framework sets hidePrompt: true
+    if (!currentFramework.hidePrompt) {
+      const effectivePrompt = getEffectivePromptHTML();
+      if (effectivePrompt) {
+        const promptEl = document.createElement('p');
+        promptEl.className = 'fwk-overlay-prompt';
+        promptEl.innerHTML = effectivePrompt;
+        wrap.appendChild(promptEl);
+      }
     }
+
+    // Guidance label — tells user how to advance at the moment it matters
+    const guidance = document.createElement('div');
+    guidance.className = 'framework-guidance-label';
+    guidance.textContent = 'Tap → to move to the next section';
+    wrap.appendChild(guidance);
 
     // Numbered list — each step shows full hint text, active item has inline → button
     const list = document.createElement('div');
