@@ -16,7 +16,7 @@
 
 For any challenge receiving frameworks: **build fresh using Gratitude as the template**, mining existing prompt content as needed. Don't retrofit.
 
-Art2 is done (shipped). Plot and Tongue Twister: **delete both**. Plot becomes a prompt type inside Storytelling; Tongue Twister is superseded by Articulation.
+Art2 is done (shipped). Tongue Twister: **deleted**. Story Plot: **keep until Storytelling rebuild** — the PLOTS array contains the prompt content that will become the "Basic plot" prompt type in the rebuilt Storytelling challenge. Delete Story Plot only once those plots have been migrated. Tongue Twister is superseded by Articulation.
 
 ---
 
@@ -132,7 +132,7 @@ Three changes needed. No prep screen (stays as-is).
 - **All parallel frameworks use completion cards.** Time distribution bar is for sequential only (strict-order steps where time-per-segment is meaningful).
 - **Carousel mode abandoned.** Sequential numbered list (collapse on advance) works for storytelling frameworks with many steps.
 - **Prompt type and framework are independent dimensions.** Prompt type = what you're responding to. Framework = how you structure it. Storytelling is the first challenge to expose both selectors.
-- **Plot and Tongue Twister deleted.** Plot → Storytelling prompt type. Tongue Twister → superseded by Articulation.
+- **Tongue Twister deleted.** Superseded by Articulation. Story Plot kept until its PLOTS content is migrated into the Storytelling rebuild as the "Basic plot" prompt type — delete it then.
 - **Prompt fades removed.** Both prep screen fade (`schedulePrepFade`) and active screen word fade (`scheduleWordFade`) are gone. Prompts stay visible for the full duration.
 - **Random Topic uses action sentence format.** "Talk about [topic]." — consistent with other challenges, feeds `getIntroDesc`/`getPrepDesc` naturally. Raw large text is gone for this challenge.
 - **Three-word display decision deferred to Storytelling rebuild.** Font size + layout must shrink significantly before frameworks can work. Action sentence format ("Tell a story including the words…") is an open question — decide at rebuild time.

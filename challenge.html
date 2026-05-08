@@ -1913,7 +1913,6 @@ body {
       <h1 class="select-title">Choose a challenge</h1>
       <div class="challenge-options">
         <button class="challenge-btn" id="btn-story">📖 Storytelling</button>
-        <button class="challenge-btn" id="btn-tongue">👅 Tongue Twister</button>
         <button class="challenge-btn" id="btn-topic">🎲 Random Topic</button>
         <button class="challenge-btn" id="btn-plot">🎭 Story Plot</button>
         <button class="challenge-btn" id="btn-selfknowledge">🪞 Self-Knowledge</button>
@@ -2126,7 +2125,6 @@ body {
 
 const CONFIG = {
   story:         { enabled: true,  public: true  },
-  tongue:        { enabled: true,  public: true  },
   topic:         { enabled: true,  public: true  },
   plot:          { enabled: true,  public: true  },
   selfknowledge: { enabled: true,  public: true  },
@@ -2167,15 +2165,6 @@ const TIPS = {
       '<strong>Rule of three</strong> - make three observations. It feels complete and fills time naturally.',
       '<strong>Lead with an opinion</strong> - "I think X is fascinating because…" is more engaging than "X is a type of…"',
       '<strong>Bridge when stuck</strong> - "What\'s interesting about this is…" buys you a moment to think.',
-    ]
-  },
-  tongue: {
-    title: 'Tongue Twister tips',
-    items: [
-      '<strong>Slow first, then build</strong> - nail it at half speed before pushing the pace.',
-      '<strong>Isolate the hard bit</strong> - say just the tricky cluster a few times on its own.',
-      '<strong>Breathe between repetitions</strong> - don\'t let it become one continuous blur.',
-      '<strong>Exaggerate</strong> - over-articulate the tricky sounds until they click.',
     ]
   },
   articulation: {
@@ -2381,7 +2370,7 @@ const CHALLENGE_RATINGS = {
   plot:          [{ label: 'Challenge' }, { label: 'Enjoyment' }],
   selfknowledge: [{ label: 'Clarity' },   { label: 'Depth' }],
   interview:     [{ label: 'Relevance' }, { label: 'Confidence' }],
-  tongue:        [],
+
   articulation:  [],
   articulation2: [],
 };
@@ -2615,38 +2604,6 @@ const TOPICS = [
   'The last thing you Googled','Things that are weirdly satisfying'
 ];
 
-const TWISTERS = [
-  "She sells seashells by the seashore",
-  "Peter Piper picked a peck of pickled peppers",
-  "How much wood would a woodchuck chuck if a woodchuck could chuck wood?",
-  "Red lorry, yellow lorry",
-  "Unique New York, you know you need unique New York",
-  "Betty Botter bought some butter, but she said the butter's bitter",
-  "I saw Susie sitting in a shoeshine shop",
-  "Fuzzy Wuzzy was a bear, Fuzzy Wuzzy had no hair",
-  "A proper copper coffee pot",
-  "Black background, brown background",
-  "Lesser leather never weathered wetter weather better",
-  "How can a clam cram in a clean cream can?",
-  "Toy boat, toy boat, toy boat",
-  "Rubber baby buggy bumpers",
-  "A skunk sat on a stump and thunk the stump stunk",
-  "Any noise annoys an oyster but a noisy noise annoys an oyster most",
-  "Whether the weather is warm or whether the weather is hot, we have to put up with the weather whether we like it or not",
-  "If a dog chews shoes, whose shoes does he choose?",
-  "The thirty-three thieves thought that they thrilled the throne throughout Thursday",
-  "Near an ear, a nearer ear, a nearly eerie ear",
-  "Double bubble gum bubbles double",
-  "Fresh French fried fish, fresh French fried fish",
-  "Six slippery snails slid slowly seaward",
-  "Which witch switched the Swiss wristwatches?",
-  "Three free throws",
-  "Selfish shellfish",
-  "Can you can a can as a canner can can a can?",
-  "Give papa a cup of proper coffee in a copper coffee cup",
-  "I scream, you scream, we all scream for ice cream",
-  "The sixth sick sheik's sixth sheep's sick"
-];
 
 // ============================================================
 // AUDIO  (Web Audio API -all synthesised, no files needed)
@@ -2711,7 +2668,7 @@ function playEnd() {
 // STATE
 // ============================================================
 
-let currentChallenge = null;   // 'story' | 'tongue' | 'topic' | 'plot' | 'articulation' | 'articulation2'
+let currentChallenge = null;   // 'story' | 'topic' | 'plot' | 'selfknowledge' | 'interview' | 'gratitude' | 'articulation' | 'articulation2'
 let usedPromptText   = '';
 
 // Articulation 2 state
@@ -3048,12 +3005,6 @@ function renderStoryWords(words) {
   }</div>`;
 }
 
-function renderTwister(twister) {
-  const d = document.getElementById('prompt-display');
-  document.getElementById('prompt-label').textContent = 'Tongue twister';
-  d.innerHTML = `<p class="twister-text">"${twister}"</p>`;
-}
-
 function renderTopic(topic) {
   const d = document.getElementById('prompt-display');
   document.getElementById('prompt-label').textContent = 'Your topic';
@@ -3192,7 +3143,7 @@ const CHALLENGE_DEFAULT_DESCS = {
 
 const CHALLENGE_DEFAULT_TIMES = {
   gratitude: 60, story: 60, topic: 60, plot: 60,
-  selfknowledge: 60, interview: 60, tongue: 30, articulation2: 30,
+  selfknowledge: 60, interview: 60, articulation2: 30,
 };
 
 // Converts a verb to its gerund (-ing) form.
@@ -3955,18 +3906,6 @@ document.getElementById('btn-story').onclick = () => {
   });
 };
 
-document.getElementById('btn-tongue').onclick = () => {
-  playPop();
-  animateTap(document.getElementById('btn-tongue'), () => {
-    currentChallenge = 'tongue';
-    document.getElementById('intro-label').textContent = 'Tongue Twister';
-    document.getElementById('intro-desc').textContent =
-      "You'll get a tongue twister to repeat as many times as you can in 30 seconds";
-    setToggleVisibility(true);
-    showScreen('screen-intro');
-  });
-};
-
 document.getElementById('btn-articulation').onclick = () => {
   playPop();
   animateTap(document.getElementById('btn-articulation'), () => {
@@ -4229,11 +4168,6 @@ function launchChallenge() {
     }
     startActiveChallenge();
     return;
-  } else if (currentChallenge === 'tongue') {
-    const tw = pickRandom(TWISTERS, 1)[0];
-    usedPromptText = tw;
-    renderTwister(tw);
-    timerTotal = 30;
   } else if (currentChallenge === 'articulation') {
     const item = pickRandom(ARTICULATIONS, 1)[0];
     usedPromptText = item.name;
@@ -4246,10 +4180,10 @@ function launchChallenge() {
     timerTotal = 30;
   }
 
-  // Prep time for fall-through challenges (tongue, articulation, articulation2)
+  // Prep time for fall-through challenges (articulation, articulation2)
   if (prepTimeEnabled) {
     const prepLabels = {
-      tongue: 'Your twister', articulation: usedPromptText, articulation2: usedPromptText,
+      articulation: usedPromptText, articulation2: usedPromptText,
     };
     document.getElementById('prep-prompt-label').textContent = prepLabels[currentChallenge] || '';
     document.getElementById('prep-prompt-display').innerHTML =
@@ -4286,10 +4220,6 @@ document.getElementById('reroll-btn').onclick = () => {
     const words = pickRandom(WORDS, 3);
     usedPromptText = words.join(', ');
     renderStoryWords(words);
-  } else if (currentChallenge === 'tongue') {
-    const tw = pickRandom(TWISTERS, 1)[0];
-    usedPromptText = tw;
-    renderTwister(tw);
   } else if (currentChallenge === 'topic') {
     const topic = pickRandom(TOPICS, 1)[0];
     usedPromptText = topic;
@@ -4445,7 +4375,6 @@ document.getElementById('menu-btn').onclick = () => {
 (function applyConfig() {
   const map = {
     story:         'btn-story',
-    tongue:        'btn-tongue',
     topic:         'btn-topic',
     plot:          'btn-plot',
     selfknowledge: 'btn-selfknowledge',
