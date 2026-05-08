@@ -2119,6 +2119,9 @@ body {
   <!-- ── Take Counter Display (shown on all screens except select) ── -->
   <div class="take-counter-display" id="take-counter-display"></div>
 
+  <!-- ── Version Display (shown on select screen only) ── -->
+  <div class="take-counter-display" id="version-display" style="display:none;"></div>
+
   <!-- ── Visibility Toggle ── -->
   <button class="vis-toggle-btn" id="vis-toggle-btn"></button>
 
@@ -2767,6 +2770,18 @@ function updateVh() {
 updateVh();
 window.addEventListener('resize', updateVh);
 if (window.visualViewport) window.visualViewport.addEventListener('resize', updateVh);
+
+// VERSION DISPLAY — format document.lastModified as "Updated 8 May, 14:23"
+(function() {
+  const d = new Date(document.lastModified);
+  if (isNaN(d.getTime())) return;
+  const day   = d.getDate();
+  const month = d.toLocaleString('en-GB', { month: 'short' });
+  const hh    = String(d.getHours()).padStart(2, '0');
+  const mm    = String(d.getMinutes()).padStart(2, '0');
+  const el    = document.getElementById('version-display');
+  if (el) el.textContent = `Updated ${day} ${month}, ${hh}:${mm}`;
+})();
 
 // ============================================================
 // CAMERA
@@ -3841,8 +3856,11 @@ function incrementTakeN(challenge) {
 
 function renderTakeDisplay() {
   const el = document.getElementById('take-counter-display');
-  // Hide on challenge select screen
+  const versionEl = document.getElementById('version-display');
   const onSelect = document.getElementById('screen-select').classList.contains('active');
+  // Version stamp visible only on the select screen
+  if (versionEl) versionEl.style.display = onSelect ? 'block' : 'none';
+  // Take counter hidden on select screen
   const template = getTakeTemplate(currentChallenge);
   if (onSelect || !template) {
     el.style.display = 'none';
