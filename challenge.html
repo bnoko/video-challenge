@@ -2269,7 +2269,7 @@ const FRAMEWORKS = {
       id: 'rule-of-three',
       name: 'Rule of Three',
       description: 'Make exactly three separate points. Tap each box as you move to that point.',
-      promptText: 'Talk about a random topic.',
+      promptText: 'Talk about a random topic, making exactly three distinct points.',
       mode: 'parallel',
       elements: [
         { label: 'Point 1', flex: 1 },
@@ -2282,7 +2282,7 @@ const FRAMEWORKS = {
       id: 'opinion-justify',
       name: 'Opinion + Justify',
       description: 'Lead with a firm opinion, then spend the rest justifying it. Tap as you move to each part.',
-      promptText: 'Talk about a random topic.',
+      promptText: 'Share a firm opinion on a random topic, then justify it.',
       mode: 'parallel',
       elements: [
         { label: 'Opinion', flex: 1 },
@@ -2294,7 +2294,7 @@ const FRAMEWORKS = {
       id: 'prep',
       name: 'PREP',
       description: 'Point, Reason, Example, Point — work through all four parts in order.',
-      promptText: 'Talk about a random topic.',
+      promptText: 'Talk about a random topic using Point, Reason, Example, Point.',
       mode: 'sequential',
       elements: [
         { label: 'Point',   hint: 'State your main point clearly' },
@@ -2308,7 +2308,7 @@ const FRAMEWORKS = {
       id: 'specific-detail',
       name: 'Specific Detail',
       description: 'Follow every general claim with a hyper-specific detail. Tap each time you land one.',
-      promptText: 'Talk about a random topic.',
+      promptText: 'Talk about a random topic, grounding every claim with a specific detail.',
       mode: 'counter',
       buttonLabel: 'Tap each time you land a specific detail',
       postChallenge: { type: 'counter', resultSentence: '{count} specific details' },
@@ -3011,7 +3011,7 @@ function renderTopic(topic) {
   currentTopicSentence = `Talk about ${topic}.`;
   document.getElementById('prompt-label').textContent = '';
   document.getElementById('prompt-display').innerHTML =
-    `<p class="plot-text">${currentTopicSentence}</p>`;
+    `<p class="prompt-text">${currentTopicSentence}</p>`;
 }
 
 function renderPlot(plot) {
@@ -3226,11 +3226,13 @@ function updateFrameworkPill() {
 
 function setFrameworkPillVisibility() {
   const wrap = document.getElementById('framework-pill-wrap');
-  const list = FRAMEWORKS[currentChallenge];
-  const hasFrameworks = list && list.length > 0;
+  const list = FRAMEWORKS[currentChallenge] || [];
+  const hasFrameworks = list.length > 0;
   wrap.style.display = hasFrameworks ? 'block' : 'none';
-  // If we navigated to a challenge with no frameworks, clear any selection
-  if (!hasFrameworks) currentFramework = null;
+  // Clear selection if no frameworks, or if the selected framework doesn't belong to this challenge
+  if (!hasFrameworks || (currentFramework && !list.find(f => f.id === currentFramework.id))) {
+    currentFramework = null;
+  }
   updateFrameworkPill();
 }
 
@@ -4088,11 +4090,9 @@ document.getElementById('prep-reroll').onclick = () => {
     const topic = pickRandom(TOPICS, 1)[0];
     usedPromptText = topic;
     currentTopicSentence = `Talk about ${topic}.`;
-    wordsHTML = `<p class="plot-text">${currentTopicSentence}</p>`;
+    wordsHTML = `<p class="prompt-text">${currentTopicSentence}</p>`;
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prep-prompt-label').textContent = '';
-    document.getElementById('prep-screen-desc').innerHTML =
-      `<p class="prompt-text">${getPrepDesc()}</p>`;
   } else if (currentChallenge === 'plot') {
     const plot = pickRandom(PLOTS, 1)[0];
     usedPromptText = plot;
@@ -4162,15 +4162,13 @@ function launchChallenge() {
     const topic = pickRandom(TOPICS, 1)[0];
     usedPromptText = topic;
     currentTopicSentence = `Talk about ${topic}.`;
-    const topicHTML = `<p class="plot-text">${currentTopicSentence}</p>`;
+    const topicHTML = `<p class="prompt-text">${currentTopicSentence}</p>`;
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prompt-display').innerHTML = topicHTML;
     timerTotal = currentFramework?.timeOverride || 60;
     if (prepTimeEnabled && !currentFramework?.disablePrepTime) {
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML = topicHTML;
-      document.getElementById('prep-screen-desc').innerHTML =
-        `<p class="prompt-text">${getPrepDesc()}</p>`;
       showScreen('screen-prep');
       startPrepTimer();
       return;
