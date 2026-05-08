@@ -1,6 +1,6 @@
 # Video Challenge App — Roadmap
 
-> Last updated: May 2026 (session 2).
+> Last updated: May 2026 (session 3).
 > Single file: `challenge.html`. Live: https://bnoko.github.io/video-challenge/challenge.html
 
 ---
@@ -16,7 +16,7 @@
 
 For any challenge receiving frameworks: **build fresh using Gratitude as the template**, mining existing prompt content as needed. Don't retrofit.
 
-Art2 is done (shipped). Tongue Twister: **deleted**. Story Plot: **keep until Storytelling rebuild** — the PLOTS array contains the prompt content that will become the "Basic plot" prompt type in the rebuilt Storytelling challenge. Delete Story Plot only once those plots have been migrated. Tongue Twister is superseded by Articulation.
+Art2 is done (shipped). Tongue Twister: **deleted**. Story Plot: **deleted** — PLOTS content migrated into the Storytelling "Basic plot" prompt type. Tongue Twister is superseded by Articulation.
 
 ---
 
@@ -35,9 +35,9 @@ Two changes needed on Person/Place/Feeling before building any new parallel fram
 
 ---
 
-### Random Topic
+### Random Topic ✅ Shipped
 
-**Prompt format change needed before frameworks land:** update the launch path so the topic is wrapped in an action sentence — `"Talk about [topic]."` — rather than rendered as raw large text. This makes it consistent with all other challenges and lets it flow naturally into `getIntroDesc()` ("You'll get 60 seconds to talk about cucumbers.") and `getPrepDesc()` ("Prep time for talking about cucumbers."). The `promptText` field in the framework config should use the same sentence shape.
+Action-sentence prompt format, yellow topic highlight (no underline), all four frameworks live.
 
 | Framework | Mode | Post-challenge |
 |---|---|---|
@@ -50,27 +50,22 @@ Two changes needed on Person/Place/Feeling before building any new parallel fram
 
 ---
 
-### Storytelling
+### Storytelling ✅ Shipped
 
-**Merged rebuild.** Retire Storytelling (3 words) and Story Plot as separate challenges. One "Storytelling" challenge with two independent selectors on the intro screen: a **prompt type pill** and a **framework pill**. Any prompt type can combine with any framework.
-
-Default pill text: "Add prompt type" (matches "Add framework" styling — unselected state).
+Merged rebuild complete. Story Plot deleted. One "Storytelling" challenge with two independent pills: **prompt type** and **framework**. Any combination works.
 
 | Prompt type | Description |
 |---|---|
 | *(none)* | No constraint — just tell a story |
-| 3 random words | Current Storytelling behaviour |
-| Basic plot | Current Story Plot behaviour |
+| 3 Random Words | "Tell a story including the words X, Y & Z" — words in yellow bold, action sentence format |
+| Basic Plot | "Tell this story: [premise]" — plot in yellow bold |
 | *(more later)* | |
 
-| Framework | Mode | Post-challenge |
-|---|---|---|
-| Character Arc | Sequential — 8 steps: Introduce character + 3 details / Fatal flaw / Everyday situation / Make it exceptional / Introduce danger / Heighten peril / Use flaw to resolve / Moral | Time distribution, 8 segments |
-| Pixar Story Spine | Sequential — 7 beats: Once upon a time / Every day / Until one day / Because of that (×2) / Until finally / Ever since then | Time distribution, 7 segments |
-
-*Carousel mode abandoned — sequential numbered list (collapse on advance) is the right fit.*
-
-**Three-word display:** the current giant stacked text won't work once frameworks land — the overlay would sit right at face height. As part of this rebuild, significantly reduce the font size and reconsider the layout (words inline or at least much smaller). Whether to also adopt an action-sentence format ("Tell a story including the words X, Y and Z.") is an open decision — settle it at rebuild time. Don't lose the visual character of the words entirely; they read like a constraint, not a sentence.
+| Framework | Time | Mode | Post-challenge |
+|---|---|---|---|
+| Setup / Conflict / Resolution | 60s | Sequential — 3 steps | Time distribution |
+| Character Arc | 90s | Sequential — 8 steps: Character + 3 details / Fatal flaw / Everyday life / Exception / Danger / Heighten / Resolve / Moral | Time distribution |
+| Pixar Story Spine | 90s | Sequential — 7 beats: Once upon a time / Every day / Until one day / Because of that (×2) / Until finally / Ever since then | Time distribution |
 
 **Challenge zone:** Challenge ⭐ + Enjoyment ⭐
 *(Watch Challenge decrease and Enjoyment increase over time — that's the progress signal.)*
@@ -115,11 +110,14 @@ Three changes needed. No prep screen (stays as-is).
 ## 3. Backlog / future ideas
 
 - **Bug — vis toggle swipe flicker:** When swiping left to activate the visibility toggle, UI elements slide left correctly but then briefly flash back to their original position before disappearing. This is distinct from the dark overlay issue (already fixed). Needs investigation — likely a timing issue between the slide-out animation completing and the `ui-hidden` class being applied.
+- **Custom duration selector** — a per-challenge duration picker on the intro screen (e.g. 30s / 60s / 90s / 2min). The `timeOverride` per framework already provides the architecture for this; a UI pill or toggle is the only missing piece. Low urgency — per-framework defaults cover most cases well.
 - **Prompt type selectors for Interview Practice** — question categories by type, seniority, or industry. Defer until question pool is more developed.
 - **Session summary** — after multiple "Do it again" takes, lightweight end-of-session view showing take count and self-rating patterns over time.
-- **More storytelling prompt types / frameworks** — 3-act structure, "start with the ending", scene-based formats, etc.
+- **More storytelling prompt types / frameworks** — "start with the ending", scene-based formats, first-line prompts, etc.
+- **Simpler storytelling framework** — a shorter entry-point framework (e.g. Hook / Build / Payoff) that stays at 60s, giving users a ramp before the 90s frameworks.
 - **Instagram layout mode** — adjusted element positions to account for in-app overlay areas on the right side.
 - **Framework library screen** — browse all frameworks across challenges in one view. Only relevant once framework count grows significantly.
+- **Integrate JSON content files** — switch from hardcoded arrays (TOPICS, PLOTS, SELF_KNOWLEDGE, INTERVIEW_QUESTIONS) to fetching from `data/*.json`. Natural moment to do this: when content generation via Codex has matured the pools sufficiently.
 
 ---
 
@@ -132,10 +130,14 @@ Three changes needed. No prep screen (stays as-is).
 - **All parallel frameworks use completion cards.** Time distribution bar is for sequential only (strict-order steps where time-per-segment is meaningful).
 - **Carousel mode abandoned.** Sequential numbered list (collapse on advance) works for storytelling frameworks with many steps.
 - **Prompt type and framework are independent dimensions.** Prompt type = what you're responding to. Framework = how you structure it. Storytelling is the first challenge to expose both selectors.
-- **Tongue Twister deleted.** Superseded by Articulation. Story Plot kept until its PLOTS content is migrated into the Storytelling rebuild as the "Basic plot" prompt type — delete it then.
+- **Tongue Twister deleted.** Superseded by Articulation.
+- **Story Plot deleted.** Content migrated into Storytelling as the "Basic plot" prompt type.
 - **Prompt fades removed.** Both prep screen fade (`schedulePrepFade`) and active screen word fade (`scheduleWordFade`) are gone. Prompts stay visible for the full duration.
-- **Random Topic uses action sentence format.** "Talk about [topic]." — consistent with other challenges, feeds `getIntroDesc`/`getPrepDesc` naturally. Raw large text is gone for this challenge.
-- **Three-word display decision deferred to Storytelling rebuild.** Font size + layout must shrink significantly before frameworks can work. Action sentence format ("Tell a story including the words…") is an open question — decide at rebuild time.
+- **Random Topic uses action sentence format.** "Talk about [topic]." — consistent with other challenges, feeds `getIntroDesc`/`getPrepDesc` naturally. Raw large text is gone.
+- **Storytelling uses action sentence format.** "Tell a story including the words X, Y & Z" / "Tell this story: [plot]" — words and plots rendered in yellow bold, no underline, no full stop.
+- **Yellow highlights have no underline.** `.topic-highlight` is yellow only — underline was removed as visually redundant.
+- **Story framework times: Character Arc and Pixar Story Spine are 90s; Setup/Conflict/Resolution is 60s.** Longer frameworks need breathing room; shorter ones stay punchy. Per-framework `timeOverride` handles this in config.
+- **Custom duration UI deferred.** Per-framework defaults are sufficient for now. Architecture already supports it via `timeOverride`.
 
 ---
 
@@ -143,18 +145,26 @@ Three changes needed. No prep screen (stays as-is).
 
 - [x] Full framework system — `FRAMEWORKS` config, parallel / sequential / counter modes, generic rendering
 - [x] Framework selector — pill on intro screen, picker sheet, live intro-desc updates on selection change
+- [x] Prompt type selector — independent pill on intro screen (currently: Storytelling only), picker sheet, concatenated intro-desc when both pills selected
 - [x] Overlay ownership rule — framework overlay always clears `#prompt-display`; overlap is structurally impossible
 - [x] Prompt system — `promptText` as single source of truth; `getIntroDesc()` ("You'll get X seconds to…"), `getPrepDesc()` ("Prep time for [gerund]…"), `toGerund()` helper; `CHALLENGE_DEFAULT_DESCS` + `CHALLENGE_DEFAULT_TIMES` fallbacks
 - [x] `disablePrepTime` flag — hides prep toggle for frameworks where prep makes no sense
+- [x] `hidePrompt` flag — suppresses overlay prompt for frameworks that don't need it (e.g. Gratitude What/Why/Impact)
+- [x] `timeOverride` per framework — overrides challenge default duration
 - [x] Times-up framework zone — time-distribution bar (no emojis in legend), completion-timed cards (emojis kept), counter result sentence
 - [x] Times-up challenge zone — star ratings, generic and data-driven via `CHALLENGE_RATINGS`
 - [x] Gratitude — Person / Place / Feeling (parallel + completion-timed), What / Why / Impact (sequential + time-distribution), Gratitude Blitz (counter, 30s override)
+- [x] Random Topic — Rule of Three, Opinion + Justify, PREP, Specific Detail; action-sentence prompt format; yellow topic highlight
+- [x] Storytelling rebuild — prompt type pill (3 Random Words, Basic Plot) + framework pill (Setup/Conflict/Resolution 60s, Character Arc 90s, Pixar Story Spine 90s); Story Plot deleted
 - [x] Framework design rules documented in CLAUDE.md
 - [x] Articulation (Art2) — line-by-line navigation, tap-anywhere to advance (will become explicit button — see roadmap), progress bar + star ratings on times-up; stars bug fixed (curly quotes in SVG innerHTML)
-- [x] All base challenges — Random Topic, Storytelling, Story Plot, Self-Knowledge, Interview Practice, Plot, Tongue Twister, Gratitude
+- [x] Base challenges — Random Topic, Storytelling, Self-Knowledge, Interview Practice, Gratitude, Articulation (Art2)
 - [x] Prep timer — toggle on intro, "Prep time for [gerund phrase]." format on prep screen
 - [x] Prompt fades removed — prep screen fade and active screen word fade both gone
 - [x] Multi-section help overlay (heading + items format)
 - [x] Do It Again / Return to Menu on times-up
 - [x] GitHub Pages deployment + deploy.sh
 - [x] iOS safe area insets on all bottom-positioned elements
+- [x] iOS camera zoom fix — `--vh` set from `visualViewport.height` to prevent layout jump on control centre open/close
+- [x] Version display on select screen — "Updated D Mon, HH:MM" derived from `document.lastModified`
+- [x] Content generation infrastructure — `data/*.json` seed files + `content-prompts/*.md` briefs for autonomous Codex generation
