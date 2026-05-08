@@ -3878,6 +3878,10 @@ appEl.addEventListener('touchend', e => {
   if (uiHidden) return;
   // Pass through if touch landed on any interactive element or framework overlay
   if (e.target.closest('button, input, label, a, select, #framework-active-wrap')) return;
+  // Only trigger in the middle vertical third of the app container
+  const rect = appEl.getBoundingClientRect();
+  const pct = (visTouchStartY - rect.top) / rect.height;
+  if (pct < 0.33 || pct > 0.67) return;
   const dx = e.changedTouches[0].clientX - visTouchStartX;
   const dy = e.changedTouches[0].clientY - visTouchStartY;
   const isSwipeLeft = dx < -40 && Math.abs(dx) > Math.abs(dy) * 1.5;
