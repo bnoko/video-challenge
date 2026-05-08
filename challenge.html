@@ -1632,6 +1632,231 @@ body {
   cursor: pointer;
 }
 
+/* ============================================================
+   TAKE COUNTER
+   ============================================================ */
+
+.take-counter-display {
+  position: absolute;
+  bottom: max(8px, 1.5%);
+  left: 0;
+  right: 0;
+  padding: 0 clamp(60px, 14%, 80px);
+  text-align: center;
+  color: white;
+  font-size: clamp(11px, 1.8vh, 14px);
+  font-weight: 400;
+  opacity: 0.35;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+  z-index: 8;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+  display: none;
+}
+
+.take-counter-sheet-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: none;
+  align-items: flex-end;
+}
+
+.take-counter-sheet-overlay.visible { display: flex; }
+
+.take-counter-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+}
+
+.take-counter-sheet {
+  position: relative;
+  width: 100%;
+  background: rgba(20,20,24,0.97);
+  border-radius: 18px 18px 0 0;
+  padding: clamp(16px, 3vh, 24px) clamp(16px, 5%, 24px) clamp(20px, 4vh, 32px);
+}
+
+.take-counter-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: clamp(14px, 2.5vh, 22px);
+}
+
+.take-counter-sheet-title {
+  color: white;
+  font-size: clamp(14px, 2.2vh, 18px);
+  font-weight: 600;
+}
+
+.take-counter-input-wrap {
+  position: relative;
+  margin-bottom: clamp(10px, 1.8vh, 14px);
+}
+
+.take-counter-input {
+  width: 100%;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.18);
+  border-radius: 10px;
+  color: white;
+  font-size: clamp(14px, 2.2vh, 18px);
+  padding: clamp(10px, 1.8vh, 14px) 40px clamp(10px, 1.8vh, 14px) clamp(12px, 2vw, 16px);
+  outline: none;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  font-family: inherit;
+}
+
+.take-counter-input::placeholder {
+  color: rgba(255,255,255,0.3);
+}
+
+.take-counter-input:focus {
+  border-color: rgba(255,255,255,0.35);
+}
+
+.take-counter-clear-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.35);
+  padding: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.take-counter-clear-btn svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.take-counter-links {
+  display: flex;
+  gap: clamp(16px, 3vw, 24px);
+  margin-bottom: clamp(16px, 3vh, 24px);
+}
+
+.take-counter-link {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: clamp(12px, 1.9vh, 14px);
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(255,255,255,0.2);
+}
+
+.take-counter-done-btn {
+  width: 100%;
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 30px;
+  color: white;
+  font-size: clamp(14px, 2.2vh, 18px);
+  font-weight: 500;
+  padding: clamp(11px, 2vh, 16px) 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+}
+
+/* Pencil icon button — same base style as help-btn */
+.take-counter-btn {
+  background: none;
+  border: none;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.take-counter-btn svg {
+  display: block;
+  width: clamp(18px, 3vh, 23px);
+  height: clamp(18px, 3vh, 23px);
+  filter: drop-shadow(0 1px 8px rgba(0,0,0,0.9));
+}
+
+/* ============================================================
+   VISIBILITY TOGGLE
+   ============================================================ */
+
+.vis-toggle-btn {
+  position: absolute;
+  right: max(16px, 3.5%);
+  bottom: calc(max(10px, 1.8%) + env(safe-area-inset-bottom, 0px));
+  z-index: 12;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0.22;
+  /* Tall tap target — extends upward so it's reachable above bottom buttons */
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 44px;
+  min-height: 72px;
+  padding-bottom: 2px;
+}
+
+.vis-toggle-btn svg {
+  display: block;
+  width: clamp(18px, 3vh, 22px);
+  height: clamp(18px, 3vh, 22px);
+  filter: drop-shadow(0 1px 6px rgba(0,0,0,0.9));
+  flex-shrink: 0;
+}
+
+#ui-restore-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 110;
+  display: none;
+}
+
+/* UI hidden state */
+#app.ui-hidden .screen,
+#app.ui-hidden .modal-overlay,
+#app.ui-hidden .framework-picker-overlay,
+#app.ui-hidden .help-overlay,
+#app.ui-hidden .take-counter-sheet-overlay,
+#app.ui-hidden .take-counter-display,
+#app.ui-hidden .vis-toggle-btn {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Slide-out animation applied to a single screen */
+.ui-slide-out {
+  transform: translateX(-100%) !important;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
 </style>
 </head>
 <body>
@@ -1663,6 +1888,7 @@ body {
     <button class="back-btn" id="intro-back"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <p class="intro-label" id="intro-label"></p>
     <div class="prep-top-right">
+      <button class="take-counter-btn" id="take-counter-btn"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
       <button class="help-btn" id="intro-help"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
     </div>
     <div class="intro-inner">
@@ -1812,6 +2038,34 @@ body {
       <ul class="help-list" id="help-list"></ul>
     </div>
   </div>
+
+  <!-- ── Take Counter Sheet ── -->
+  <div class="take-counter-sheet-overlay" id="take-counter-sheet">
+    <div class="take-counter-backdrop" id="take-counter-backdrop"></div>
+    <div class="take-counter-sheet">
+      <div class="take-counter-sheet-header">
+        <span class="take-counter-sheet-title">Take counter</span>
+        <button class="framework-picker-close" id="take-counter-close"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="take-counter-input-wrap">
+        <input class="take-counter-input" id="take-counter-input" type="text" placeholder="e.g. Day X, Take [n]" autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="take-counter-clear-btn" id="take-counter-input-clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="take-counter-links">
+        <button class="take-counter-link" id="take-counter-use-template">Use template</button>
+      </div>
+      <button class="take-counter-done-btn" id="take-counter-done">Done</button>
+    </div>
+  </div>
+
+  <!-- ── Take Counter Display (shown on all screens except select) ── -->
+  <div class="take-counter-display" id="take-counter-display"></div>
+
+  <!-- ── Visibility Toggle ── -->
+  <button class="vis-toggle-btn" id="vis-toggle-btn"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+
+  <!-- ── UI Restore Overlay (full-screen, shown only when UI is hidden) ── -->
+  <div id="ui-restore-overlay"></div>
 
 </div>
 
@@ -2512,6 +2766,7 @@ initCamera();
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  renderTakeDisplay();
 
   if (id === 'screen-prep') {
     renderFrameworkPrepOverlay();
@@ -3439,6 +3694,157 @@ document.getElementById('framework-picker-close').onclick = closeFrameworkPicker
 document.getElementById('framework-picker-backdrop').onclick = closeFrameworkPicker;
 
 // ============================================================
+// TAKE COUNTER
+// ============================================================
+
+const TAKE_COUNTER_DEFAULT = 'Day X, Take [n]';
+
+function tcTemplateKey(challenge) { return 'takeTemplate_' + (challenge || 'global'); }
+function tcNKey(challenge)        { return 'takeN_' + (challenge || 'global'); }
+
+function getTakeTemplate(challenge) {
+  return localStorage.getItem(tcTemplateKey(challenge)) || '';
+}
+function setTakeTemplate(challenge, val) {
+  localStorage.setItem(tcTemplateKey(challenge), val);
+}
+function getTakeN(challenge) {
+  return parseInt(localStorage.getItem(tcNKey(challenge)) || '1', 10);
+}
+function setTakeN(challenge, n) {
+  localStorage.setItem(tcNKey(challenge), String(n));
+}
+function incrementTakeN(challenge) {
+  setTakeN(challenge, getTakeN(challenge) + 1);
+}
+
+function renderTakeDisplay() {
+  const el = document.getElementById('take-counter-display');
+  // Hide on challenge select screen
+  const onSelect = document.getElementById('screen-select').classList.contains('active');
+  const template = getTakeTemplate(currentChallenge);
+  if (onSelect || !template) {
+    el.style.display = 'none';
+    return;
+  }
+  const n = getTakeN(currentChallenge);
+  el.textContent = template.replace(/\[n\]/gi, n);
+  el.style.display = 'block';
+}
+
+function openTakeSheet() {
+  const sheet = document.getElementById('take-counter-sheet');
+  const input = document.getElementById('take-counter-input');
+  input.value = getTakeTemplate(currentChallenge);
+  sheet.classList.add('visible');
+  setTimeout(() => input.focus(), 80);
+}
+
+function closeTakeSheet() {
+  const input = document.getElementById('take-counter-input');
+  const val = input.value.trim();
+  setTakeTemplate(currentChallenge, val);
+  document.getElementById('take-counter-sheet').classList.remove('visible');
+  renderTakeDisplay();
+}
+
+document.getElementById('take-counter-btn').onclick = openTakeSheet;
+document.getElementById('take-counter-close').onclick = closeTakeSheet;
+document.getElementById('take-counter-backdrop').onclick = closeTakeSheet;
+document.getElementById('take-counter-done').onclick = closeTakeSheet;
+
+document.getElementById('take-counter-input-clear').onclick = () => {
+  document.getElementById('take-counter-input').value = '';
+  document.getElementById('take-counter-input').focus();
+};
+
+document.getElementById('take-counter-use-template').onclick = () => {
+  document.getElementById('take-counter-input').value = TAKE_COUNTER_DEFAULT;
+  document.getElementById('take-counter-input').focus();
+};
+
+// ============================================================
+// VISIBILITY TOGGLE
+// ============================================================
+
+let uiHidden = false;
+let visTouchStartX = 0;
+let visTouchStartY = 0;
+let wasTimerRunning = false;
+let wasPrepTimerRunning = false;
+
+const visBtn = document.getElementById('vis-toggle-btn');
+const appEl  = document.getElementById('app');
+const restoreOverlay = document.getElementById('ui-restore-overlay');
+
+function hideUI(slideMode) {
+  uiHidden = true;
+  wasTimerRunning     = timerRunning;
+  wasPrepTimerRunning = prepTimerRunning;
+  if (timerRunning)     pauseTimer();
+  if (prepTimerRunning) pausePrepTimer();
+
+  if (slideMode) {
+    const activeScreen = document.querySelector('.screen.active');
+    if (activeScreen) {
+      activeScreen.classList.add('ui-slide-out');
+      setTimeout(() => {
+        activeScreen.classList.remove('ui-slide-out');
+        appEl.classList.add('ui-hidden');
+      }, 350);
+    } else {
+      appEl.classList.add('ui-hidden');
+    }
+  } else {
+    appEl.classList.add('ui-hidden');
+  }
+  restoreOverlay.style.display = 'block';
+}
+
+function restoreUI() {
+  uiHidden = false;
+  appEl.classList.remove('ui-hidden');
+  restoreOverlay.style.display = 'none';
+  if (wasTimerRunning)     resumeTimer();
+  if (wasPrepTimerRunning) resumePrepTimer();
+  wasTimerRunning     = false;
+  wasPrepTimerRunning = false;
+}
+
+visBtn.addEventListener('touchstart', e => {
+  if (uiHidden) return;
+  visTouchStartX = e.touches[0].clientX;
+  visTouchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+visBtn.addEventListener('touchend', e => {
+  if (uiHidden) return;
+  const dx = e.changedTouches[0].clientX - visTouchStartX;
+  const dy = e.changedTouches[0].clientY - visTouchStartY;
+  const isSwipeLeft = dx < -28 && Math.abs(dx) > Math.abs(dy) * 1.2;
+  const isTap       = Math.abs(dx) < 12 && Math.abs(dy) < 12;
+  if (isSwipeLeft) hideUI(true);
+  else if (isTap)  hideUI(false);
+}, { passive: true });
+
+// Also support click for desktop testing
+visBtn.addEventListener('click', e => {
+  if (uiHidden) return;
+  // Only fires if not a touch device (touchend handles touch)
+  if (!('ontouchstart' in window)) hideUI(false);
+});
+
+restoreOverlay.addEventListener('touchstart', e => {
+  if (!uiHidden) return;
+  restoreUI();
+}, { passive: true });
+
+restoreOverlay.addEventListener('click', () => {
+  if (!uiHidden) return;
+  restoreUI();
+});
+
+// ============================================================
 // SCREEN FLOWS
 // ============================================================
 
@@ -3936,11 +4342,13 @@ function showTimesUp() {
 document.getElementById('again-btn').onclick = () => {
   // Return to the intro screen for the same challenge (currentChallenge stays set)
   // Keep currentFramework selected so user doesn't have to re-pick it
+  incrementTakeN(currentChallenge);
   clearFrameworkOverlay();
   showScreen('screen-intro');
 };
 
 document.getElementById('menu-btn').onclick = () => {
+  incrementTakeN(currentChallenge);
   clearFrameworkOverlay();
   currentFramework = null;
   showScreen('screen-select');
