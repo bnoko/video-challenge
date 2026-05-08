@@ -4093,7 +4093,7 @@ document.getElementById('intro-back').onclick = () => {
 
 document.getElementById('prep-back').onclick = () => {
   stopPrepTimer();
-  showScreen('screen-intro');
+  returnToIntro();
 };
 
 document.getElementById('prep-skip').onclick = () => {
@@ -4363,6 +4363,18 @@ document.getElementById('reroll-btn').onclick = () => {
   // Gratitude: no reroll -static prompt
 };
 
+// Returns to intro screen, resetting any dynamic challenge state so the
+// intro always shows the generic description (e.g. topic, not "bubble wrap").
+function returnToIntro() {
+  if (currentChallenge === 'topic') {
+    currentTopicSentence = null;
+    currentTopicText     = null;
+  }
+  const descEl = document.getElementById('intro-desc');
+  if (descEl) descEl.textContent = getIntroDesc();
+  showScreen('screen-intro');
+}
+
 // -Confirm modal —
 
 document.getElementById('confirm-quit').onclick = () => {
@@ -4463,7 +4475,7 @@ document.getElementById('again-btn').onclick = () => {
   // Keep currentFramework selected so user doesn't have to re-pick it
   incrementTakeN(currentChallenge);
   clearFrameworkOverlay();
-  showScreen('screen-intro');
+  returnToIntro();
 };
 
 document.getElementById('menu-btn').onclick = () => {
