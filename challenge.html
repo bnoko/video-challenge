@@ -347,6 +347,13 @@ body {
   text-align: left;
 }
 
+/* Prep screen: prompt flows in column so framework preview follows it naturally */
+#screen-prep .prompt-area {
+  position: relative;
+  top: auto;
+  margin-top: max(64px, 11%);
+}
+
 /* Prompt label — hidden; prompt content alone is sufficient */
 .prompt-label {
   display: none;
@@ -1092,21 +1099,15 @@ body {
   text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 
-/* Shrink prep prompt when framework guidance is also visible — prevents overlap */
-#screen-prep.has-framework .prompt-text {
-  font-size: clamp(13px, 2.1vh, 17px);
-}
-
-/* Prep screen framework preview — non-interactive */
+/* Prep screen framework preview — non-interactive, flows below prompt in flex column */
 #framework-prep-wrap {
-  position: absolute;
-  top: clamp(130px, 22%, 175px);
-  left: max(16px, 4%);
-  right: max(16px, 4%);
+  position: relative;
+  padding: 0 max(16px, 4%);
   flex-direction: column;
   gap: clamp(5px, 1vh, 8px);
   pointer-events: none;
   opacity: 0.72;
+  margin-top: clamp(10px, 1.8vh, 16px);
 }
 
 /* Instructional sentence prompts — one consistent size used across all challenges */
@@ -1164,6 +1165,9 @@ body {
   line-height: 1.2;
 }
 
+.fwk-box-label:empty,
+.fwk-ct-label:empty { display: none; }
+
 .fwk-box.tapped .fwk-box-label {
   color: white;
 }
@@ -1199,7 +1203,7 @@ body {
 /* Prompt rendered inside framework overlay (counter + parallel modes) */
 .fwk-overlay-prompt {
   color: white;
-  font-size: clamp(16px, 2.7vh, 22px);
+  font-size: clamp(18px, 3vh, 26px);
   font-weight: 400;
   line-height: 1.4;
   text-shadow: 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.7);
@@ -2273,9 +2277,9 @@ const FRAMEWORKS = {
       promptText: 'Talk about a random topic, making exactly three distinct points.',
       mode: 'parallel',
       elements: [
-        { label: 'Point 1', emoji: '1️⃣', flex: 1 },
-        { label: 'Point 2', emoji: '2️⃣', flex: 1 },
-        { label: 'Point 3', emoji: '3️⃣', flex: 1 },
+        { label: '', emoji: '1️⃣', flex: 1 },
+        { label: '', emoji: '2️⃣', flex: 1 },
+        { label: '', emoji: '3️⃣', flex: 1 },
       ],
       postChallenge: { type: 'completion-timed' },
     },
@@ -4383,7 +4387,7 @@ function showTimesUp() {
   const prompt     = document.getElementById('timesup-prompt');
 
   // Always use compact header title for all challenges
-  title.textContent = "Time's up!";
+  title.textContent = "Done!";
   title.className   = 'timesup-title timesup-title-compact';
   const timesupScreen = document.getElementById('screen-timesup');
   timesupScreen.classList.remove('art2-mode');
@@ -4444,7 +4448,7 @@ function showTimesUp() {
 
   } else {
     const ratings = CHALLENGE_RATINGS[currentChallenge] || [];
-    title.textContent = currentChallenge === 'gratitude' ? "That's time" : "Time's up!";
+    title.textContent = currentChallenge === 'gratitude' ? "That's time" : "Done!";
     if (currentChallenge === 'gratitude') timesupScreen.classList.add('gratitude-mode');
     sub.style.display = 'none';
     prompt.style.display     = 'none';
