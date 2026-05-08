@@ -2450,31 +2450,11 @@ let fwkChallengeEndTime   = 0;     // performance.now() when challenge ended
 // HELPERS
 // ============================================================
 
-function scheduleWordFade() {
-  clearTimeout(wordFadeTimeout);
-  const list = document.querySelector('.words-list');
-  if (list) list.classList.remove('faded');
-  wordFadeTimeout = setTimeout(() => {
-    const l = document.querySelector('.words-list');
-    if (l) l.classList.add('faded');
-  }, 3000);
-}
-
 function cancelWordFade() {
   clearTimeout(wordFadeTimeout);
   wordFadeTimeout = null;
   const list = document.querySelector('.words-list');
   if (list) list.classList.remove('faded');
-}
-
-function schedulePrepFade() {
-  clearPrepFade();
-  const el = document.getElementById('prep-prompt-display');
-  if (el) el.style.opacity = '1';
-  prepFadeTimeout = setTimeout(() => {
-    const e = document.getElementById('prep-prompt-display');
-    if (e) e.style.opacity = '0.35';
-  }, 3000);
 }
 
 function clearPrepFade() {
@@ -3673,7 +3653,6 @@ function launchChallenge() {
       document.getElementById('prep-prompt-display').innerHTML = wordsHTML;
       showScreen('screen-prep');
       startPrepTimer();
-      schedulePrepFade();
       return;
     }
 
@@ -3691,7 +3670,6 @@ function launchChallenge() {
       document.getElementById('prep-prompt-display').innerHTML = topicHTML;
       showScreen('screen-prep');
       startPrepTimer();
-      schedulePrepFade();
       return;
     }
     startActiveChallenge();
@@ -3708,7 +3686,6 @@ function launchChallenge() {
       document.getElementById('prep-prompt-display').innerHTML = plotHTML;
       showScreen('screen-prep');
       startPrepTimer();
-      schedulePrepFade();
       return;
     }
     startActiveChallenge();
@@ -3726,7 +3703,6 @@ function launchChallenge() {
         `<p class="twister-text">${prompt}</p>`;
       showScreen('screen-prep');
       startPrepTimer();
-      schedulePrepFade();
       return;
     }
     startActiveChallenge();
@@ -3742,7 +3718,6 @@ function launchChallenge() {
       document.getElementById('prep-prompt-display').innerHTML = `<p class="twister-text">${q}</p>`;
       showScreen('screen-prep');
       startPrepTimer();
-      schedulePrepFade();
       return;
     }
     startActiveChallenge();
@@ -3791,7 +3766,6 @@ function launchChallenge() {
       document.getElementById('prompt-display').innerHTML;
     showScreen('screen-prep');
     startPrepTimer();
-    schedulePrepFade();
     return;
   }
 
