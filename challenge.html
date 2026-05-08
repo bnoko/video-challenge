@@ -87,10 +87,11 @@ body {
 
 .app {
   position: relative;
-  /* Width is constrained by both viewport width and height */
-  width: min(100vw, calc(100vh * 9 / 16));
-  height: min(100vh, calc(100vw * 16 / 9));
-  max-height: 100vh;
+  /* Use --vh (set by JS from visualViewport) instead of 100vh to avoid
+     iOS zoom glitch when control centre is shown/dismissed */
+  width: min(100vw, calc(var(--vh, 100vh) * 9 / 16));
+  height: min(var(--vh, 100vh), calc(100vw * 16 / 9));
+  max-height: var(--vh, 100vh);
   background: #111;
   overflow: hidden;
 }
@@ -2751,6 +2752,21 @@ function animateTap(el, cb, ms = 350) {
     if (cb) cb();
   }, ms);
 }
+
+// ============================================================
+// VIEWPORT HEIGHT FIX
+// ============================================================
+// iOS Safari/Chrome report an unreliable 100vh when the system UI (control
+// centre, address bar) animates. We track the real visible height via
+// visualViewport and expose it as --vh so .app sizing stays stable.
+
+function updateVh() {
+  const h = (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px';
+  document.documentElement.style.setProperty('--vh', h);
+}
+updateVh();
+window.addEventListener('resize', updateVh);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', updateVh);
 
 // ============================================================
 // CAMERA
