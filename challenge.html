@@ -3810,6 +3810,8 @@ let uiHidden = false;
 let visTouchStartX = 0;
 let visTouchStartY = 0;
 let restoreTouchStartX = 0;
+let visLastTapTime = 0;
+const VIS_DOUBLE_TAP_MS = 300;
 let wasTimerRunning = false;
 let wasPrepTimerRunning = false;
 let slideOutScreen = null;
@@ -3876,8 +3878,8 @@ appEl.addEventListener('touchstart', e => {
 
 appEl.addEventListener('touchend', e => {
   if (uiHidden) return;
-  // Pass through if touch landed on any interactive element or framework overlay
-  if (e.target.closest('button, input, label, a, select, #framework-active-wrap')) return;
+  // Pass through if touch landed on any interactive element or open sheet/overlay
+  if (e.target.closest('button, input, label, a, select, #framework-active-wrap, .framework-picker-overlay, .take-counter-sheet-overlay')) return;
   // Only trigger in the middle vertical third of the app container
   const rect = appEl.getBoundingClientRect();
   const pct = (visTouchStartY - rect.top) / rect.height;
@@ -3886,8 +3888,17 @@ appEl.addEventListener('touchend', e => {
   const dy = e.changedTouches[0].clientY - visTouchStartY;
   const isSwipeLeft = dx < -40 && Math.abs(dx) > Math.abs(dy) * 1.5;
   const isTap       = Math.abs(dx) < 12 && Math.abs(dy) < 12;
-  if (isSwipeLeft) hideUI(true);
-  else if (isTap)  hideUI(false);
+  if (isSwipeLeft) {
+    hideUI(true);
+  } else if (isTap) {
+    const now = Date.now();
+    if (now - visLastTapTime < VIS_DOUBLE_TAP_MS) {
+      visLastTapTime = 0;
+      hideUI(false);
+    } else {
+      visLastTapTime = now;
+    }
+  }
 }, { passive: true });
 
 // Desktop fallback — click on empty area
