@@ -4151,7 +4151,7 @@ function startActiveChallenge() {
   showScreen('screen-active');
   document.getElementById('reroll-btn').style.display =
     challengeSupportsReroll() ? '' : 'none';
-  fwkChallengeStartTime = challengeNow();
+  fwkChallengeStartTime = 0;
   fwkChallengeEndTime   = 0;
   fwkTimedOut           = false;
   renderFrameworkOverlay();
