@@ -1816,7 +1816,8 @@ body {
 }
 
 /* Pencil icon button — same base style as help-btn */
-.take-counter-btn {
+.take-counter-btn,
+.custom-prompt-btn {
   background: none;
   border: none;
   -webkit-appearance: none;
@@ -1830,11 +1831,114 @@ body {
   justify-content: center;
 }
 
-.take-counter-btn svg {
+.take-counter-btn svg,
+.custom-prompt-btn svg {
   display: block;
   width: clamp(18px, 3vh, 23px);
   height: clamp(18px, 3vh, 23px);
   filter: drop-shadow(0 1px 8px rgba(0,0,0,0.9));
+}
+
+.custom-prompt-btn {
+  display: none;
+}
+
+.custom-prompt-overlay {
+  z-index: 108;
+}
+
+.custom-prompt-panel {
+  position: relative;
+  width: min(84%, 440px);
+  background: rgba(16,16,20,0.97);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 18px;
+  padding: clamp(18px, 4.2%, 24px);
+  color: white;
+  box-shadow: 0 18px 46px rgba(0,0,0,0.42);
+}
+
+.custom-prompt-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  padding: 6px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-prompt-close svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.custom-prompt-title {
+  font-size: clamp(15px, 2.4vh, 20px);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.custom-prompt-helper {
+  color: rgba(255,255,255,0.76);
+  font-size: clamp(12px, 1.95vh, 15px);
+  line-height: 1.4;
+  margin-bottom: 14px;
+  padding-right: 20px;
+}
+
+.custom-prompt-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.custom-prompt-input {
+  width: 100%;
+  min-height: 92px;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.18);
+  border-radius: 12px;
+  color: white;
+  font-size: clamp(14px, 2.15vh, 17px);
+  line-height: 1.35;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  resize: none;
+  outline: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+}
+
+.custom-prompt-input::placeholder {
+  color: rgba(255,255,255,0.28);
+}
+
+.custom-prompt-input:focus {
+  border-color: rgba(255,255,255,0.34);
+}
+
+.custom-prompt-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.custom-prompt-go {
+  background: rgba(255,255,255,0.12);
+  border: 1.5px solid rgba(255,255,255,0.32);
+  color: white;
+  font-size: clamp(13px, 2vh, 16px);
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ============================================================
@@ -2037,6 +2141,7 @@ body {
     <p class="intro-label" id="intro-label"></p>
     <div class="prep-top-right">
       <button class="take-counter-btn" id="take-counter-btn"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      <button class="custom-prompt-btn" id="custom-prompt-btn" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>
       <button class="help-btn" id="intro-help"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
     </div>
     <div class="intro-inner">
@@ -2059,6 +2164,20 @@ body {
           <span class="prep-toggle-label">Add prep time</span>
         </label>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay custom-prompt-overlay" id="custom-prompt-overlay">
+    <div class="modal-box custom-prompt-panel">
+      <button class="custom-prompt-close" id="custom-prompt-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <div class="custom-prompt-title">Custom Prompt</div>
+      <div class="custom-prompt-helper">Enter a custom prompt and start the challenge with your current settings</div>
+      <form class="custom-prompt-form" id="custom-prompt-form">
+        <textarea class="custom-prompt-input" id="custom-prompt-input" placeholder="Type your prompt here"></textarea>
+        <div class="custom-prompt-actions">
+          <button class="custom-prompt-go" id="custom-prompt-go" type="submit">Go</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -3802,6 +3921,7 @@ let currentPromptType = null;  // selected prompt type object (from PROMPT_TYPES
 let currentStoryWords = null;  // array of 3 word strings (set at launch)
 let currentPlotText   = null;  // plot premise string (set at launch)
 let currentArticulationItem = null; // current articulation passage/item for same-prompt replay
+let currentCustomPromptText = ''; // exact user-entered prompt for custom launches / same-prompt replay
 
 // Articulation 2 state
 let artLineHeight  = 0;    // px height of one rendered line
@@ -3841,6 +3961,23 @@ let fwkTimedOut           = false; // true only when the challenge ends by natur
 function pickRandom(arr, n) {
   const copy = [...arr].sort(() => Math.random() - 0.5);
   return copy.slice(0, n);
+}
+
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function challengeSupportsCustomPrompt(challenge = currentChallenge) {
+  return ['story', 'topic', 'selfknowledge', 'interview'].includes(challenge);
+}
+
+function clearCustomPromptState() {
+  currentCustomPromptText = '';
 }
 
 function animateTap(el, cb, ms = 350) {
@@ -3917,6 +4054,7 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   renderTakeDisplay();
+  closeCustomPromptPanel();
 
   // Always reset dynamic prompt state when returning to intro so the
   // intro desc shows the generic text, no matter which path got here.
@@ -4501,6 +4639,7 @@ function buildStoryWordsHTML(words) {
 // For topic/story: once a prompt has been picked at launch, returns that specific text
 // rather than the generic default or framework promptText.
 function getEffectivePromptText() {
+  if (challengeSupportsCustomPrompt() && currentCustomPromptText) return currentCustomPromptText;
   if (currentChallenge === 'story') {
     if (currentStoryWords) {
       const ws = currentStoryWords;
@@ -4515,6 +4654,9 @@ function getEffectivePromptText() {
 
 // Returns HTML for the effective prompt, with highlights for topic/story challenges.
 function getEffectivePromptHTML() {
+  if (challengeSupportsCustomPrompt() && currentCustomPromptText) {
+    return escapeHTML(currentCustomPromptText);
+  }
   if (currentChallenge === 'story') {
     if (currentStoryWords) return buildStoryWordsHTML(currentStoryWords);
     if (currentPlotText) return 'Tell this story: <strong class="topic-highlight">' + currentPlotText + '</strong>';
@@ -5332,6 +5474,73 @@ document.getElementById('take-counter-use-template').onclick = () => {
   resetTakeN();
 };
 
+function openCustomPromptPanel() {
+  if (!challengeSupportsCustomPrompt()) return;
+  const overlay = document.getElementById('custom-prompt-overlay');
+  const input = document.getElementById('custom-prompt-input');
+  input.value = currentCustomPromptText || '';
+  overlay.classList.add('visible');
+  setTimeout(() => input.focus(), 80);
+}
+
+function closeCustomPromptPanel() {
+  document.getElementById('custom-prompt-overlay').classList.remove('visible');
+}
+
+function launchCustomPromptChallenge(rawPrompt) {
+  const prompt = rawPrompt.trim();
+  if (!prompt || !challengeSupportsCustomPrompt()) return;
+
+  currentCustomPromptText = prompt;
+  usedPromptText = prompt;
+
+  if (currentChallenge === 'story') {
+    currentStoryWords = null;
+    currentPlotText   = null;
+  } else if (currentChallenge === 'topic') {
+    currentTopicSentence = null;
+    currentTopicText     = null;
+  }
+
+  document.getElementById('prompt-label').textContent = '';
+  document.getElementById('prompt-display').innerHTML =
+    `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+  timerTotal = getEffectiveTime(currentChallenge);
+
+  if (prepTimeEnabled && challengeSupportsPrep() && !currentFramework?.disablePrepTime) {
+    document.getElementById('prep-prompt-label').textContent = '';
+    document.getElementById('prep-prompt-display').innerHTML =
+      `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+    showScreen('screen-prep');
+    startPrepTimer();
+    return;
+  }
+
+  startActiveChallenge();
+}
+
+document.getElementById('custom-prompt-btn').onclick = () => { playPop(); openCustomPromptPanel(); };
+document.getElementById('custom-prompt-close').onclick = closeCustomPromptPanel;
+document.getElementById('custom-prompt-overlay').onclick = (e) => {
+  if (e.target.id === 'custom-prompt-overlay') closeCustomPromptPanel();
+};
+document.getElementById('custom-prompt-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    document.getElementById('custom-prompt-form').requestSubmit();
+  }
+});
+document.getElementById('custom-prompt-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const input = document.getElementById('custom-prompt-input');
+  if (!input.value.trim()) {
+    input.focus();
+    return;
+  }
+  closeCustomPromptPanel();
+  launchCustomPromptChallenge(input.value);
+});
+
 // ============================================================
 // VISIBILITY TOGGLE
 // ============================================================
@@ -5562,11 +5771,19 @@ function setToggleVisibility(show) {
   }
   setFrameworkPillVisibility();
   setPromptTypePillVisibility();
+  setCustomPromptButtonVisibility();
+}
+
+function setCustomPromptButtonVisibility() {
+  const btn = document.getElementById('custom-prompt-btn');
+  if (!btn) return;
+  btn.style.display = challengeSupportsCustomPrompt() ? '' : 'none';
 }
 
 function selectChallenge(challenge) {
   const challengeConfig = getChallengeConfig(challenge);
   currentChallenge = challenge;
+  clearCustomPromptState();
 
   if (challenge === 'story') {
     currentPromptType = null;
@@ -5595,6 +5812,7 @@ Object.entries(CHALLENGES).forEach(([challenge, challengeConfig]) => {
 // -Intro screen —
 
 document.getElementById('intro-back').onclick = () => {
+  clearCustomPromptState();
   setToggleVisibility(true);
   showScreen('screen-select');
 };
@@ -5622,6 +5840,7 @@ function restartActiveAfterReroll() {
 }
 
 document.getElementById('prep-reroll').onclick = () => {
+  clearCustomPromptState();
   let wordsHTML;
   if (currentChallenge === 'story') {
     if (currentPromptType?.id === '3-words') {
@@ -5727,6 +5946,7 @@ document.getElementById('go-btn').onclick = () => {
 };
 
 function launchChallenge() {
+  clearCustomPromptState();
   if (currentChallenge === 'story') {
     // Pick prompt content based on selected prompt type
     if (currentPromptType?.id === '3-words') {
@@ -5854,6 +6074,13 @@ function launchChallenge() {
 }
 
 function renderCurrentPromptForReplay() {
+  if (challengeSupportsCustomPrompt() && currentCustomPromptText) {
+    document.getElementById('prompt-label').textContent = '';
+    document.getElementById('prompt-display').innerHTML =
+      `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+    return;
+  }
+
   if (currentChallenge === 'story' || currentChallenge === 'topic' || currentChallenge === 'gratitude') {
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prompt-display').innerHTML =
@@ -5889,7 +6116,11 @@ function replaySamePrompt() {
   renderCurrentPromptForReplay();
 
   if (prepTimeEnabled && challengeSupportsPrep() && !currentFramework?.disablePrepTime) {
-    if (currentChallenge === 'story' || currentChallenge === 'topic' || currentChallenge === 'gratitude') {
+    if (challengeSupportsCustomPrompt() && currentCustomPromptText) {
+      document.getElementById('prep-prompt-label').textContent = '';
+      document.getElementById('prep-prompt-display').innerHTML =
+        `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+    } else if (currentChallenge === 'story' || currentChallenge === 'topic' || currentChallenge === 'gratitude') {
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML =
         `<p class="prompt-text">${getPrepDescHTML()}</p>`;
@@ -5936,6 +6167,7 @@ document.getElementById('screen-active').addEventListener('click', e => {
 });
 
 document.getElementById('reroll-btn').onclick = () => {
+  clearCustomPromptState();
   if (currentChallenge === 'story') {
     let newHTML = '';
     if (currentPromptType?.id === '3-words') {
@@ -6105,6 +6337,7 @@ document.getElementById('new-prompt-btn').onclick = () => {
   // Keep currentFramework selected so user doesn't have to re-pick it
   showAutoTakeEndMarker();
   incrementTakeN(currentChallenge);
+  clearCustomPromptState();
   clearFrameworkOverlay();
   showScreen('screen-intro');
 };
@@ -6112,6 +6345,7 @@ document.getElementById('new-prompt-btn').onclick = () => {
 document.getElementById('menu-btn').onclick = () => {
   showAutoTakeEndMarker();
   incrementTakeN(currentChallenge);
+  clearCustomPromptState();
   clearFrameworkOverlay();
   currentFramework = null;
   showScreen('screen-select');
