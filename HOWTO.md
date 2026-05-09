@@ -15,6 +15,33 @@ bash "/Users/byron/Content creating videos/Video challenges/deploy.sh"
 
 That's it. Live on your phone within ~30 seconds.
 
+`deploy.sh` now automatically syncs the content from `data/*.json` into the
+embedded arrays in `challenge.html` before it commits and pushes.
+
+---
+
+## When content changes
+
+The JSON files in `data/` are now the authoring source of truth for:
+
+- `data/topics.json` → `TOPICS`
+- `data/plots.json` → `PLOTS`
+- `data/self_knowledge.json` → `SELF_KNOWLEDGE`
+- `data/interview_questions.json` → `INTERVIEW_QUESTIONS`
+- `data/articulation.json` → `ARTICULATIONS`
+
+To push updated content into the app without deploying yet, run:
+
+```bash
+node "/Users/byron/Content creating videos/Video challenges/scripts/sync_embedded_content.js"
+```
+
+To verify whether `challenge.html` is already in sync, run:
+
+```bash
+node "/Users/byron/Content creating videos/Video challenges/scripts/sync_embedded_content.js" --check
+```
+
 ---
 
 ## If you ever need to set up on a new Mac
@@ -34,7 +61,8 @@ That's it. Live on your phone within ~30 seconds.
 
 ```
 cd "/Users/byron/Content creating videos/Video challenges"
-git add challenge.html
+node scripts/sync_embedded_content.js
+git add challenge.html data/*.json
 git commit -m "update"
 git push
 ```
