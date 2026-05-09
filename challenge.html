@@ -2135,6 +2135,78 @@ const CONFIG = {
   prepTime:      { enabled: true,  public: false },
 };
 
+// Central per-challenge metadata. Keep behavior that has real bespoke rendering
+// in the launch/reroll functions; use this object for repeated labels, times,
+// availability flags, intro copy, ratings, and small times-up differences.
+const CHALLENGES = {
+  story: {
+    buttonId: 'btn-story',
+    label: 'Storytelling',
+    defaultTime: 60,
+    prepSupported: true,
+    rerollSupported: false, // enabled dynamically when a prompt type is selected
+    defaultPromptText: 'Tell a story.',
+    ratings: [{ label: 'Challenge' }, { label: 'Enjoyment' }],
+  },
+  topic: {
+    buttonId: 'btn-topic',
+    label: 'Random Topic',
+    defaultTime: 60,
+    prepSupported: true,
+    rerollSupported: true,
+    defaultPromptText: 'Talk about a random topic.',
+    ratings: [{ label: 'Clarity' }, { label: 'Confidence' }],
+  },
+  selfknowledge: {
+    buttonId: 'btn-selfknowledge',
+    label: 'Self-Knowledge',
+    defaultTime: 60,
+    prepSupported: true,
+    rerollSupported: true,
+    introDesc: "You'll get a reflective prompt and 60 seconds to answer",
+    ratings: [{ label: 'Clarity' }, { label: 'Depth' }],
+  },
+  interview: {
+    buttonId: 'btn-interview',
+    label: 'Interview Practice',
+    defaultTime: 60,
+    prepSupported: true,
+    rerollSupported: true,
+    introDesc: "You'll get a common interview question and 60 seconds to answer",
+    ratings: [{ label: 'Relevance' }, { label: 'Confidence' }],
+  },
+  gratitude: {
+    buttonId: 'btn-gratitude',
+    label: 'Daily Gratitude',
+    defaultTime: 60,
+    prepSupported: true,
+    rerollSupported: false,
+    defaultPromptText: "Reflect on something you're grateful for.",
+    timesUpTitle: "That's time",
+    timesUpClass: 'gratitude-mode',
+    ratings: [],
+  },
+  articulation: {
+    buttonId: 'btn-articulation',
+    label: 'Articulation',
+    defaultTime: 30,
+    prepSupported: true,
+    rerollSupported: true,
+    introDesc: "You'll get a tongue-twisting passage -read as far as you can in 30 seconds. Scroll with your finger to follow along",
+    ratings: [],
+  },
+  articulation2: {
+    buttonId: 'btn-articulation2',
+    label: 'Articulation',
+    defaultTime: 30,
+    prepSupported: false,
+    rerollSupported: false,
+    introDesc: "You'll get 30 seconds to read as far as you can. Tap anywhere on the screen to move to the next line.",
+    timesUpMode: 'articulation2',
+    ratings: [],
+  },
+};
+
 // ============================================================
 // TIPS
 // ============================================================
@@ -2421,23 +2493,6 @@ const FRAMEWORKS = {
 };
 
 // ============================================================
-// CHALLENGE RATINGS
-// ============================================================
-// Star rating rows shown in the challenge zone on the times-up screen.
-// articulation2 uses its own bespoke layout and is excluded here.
-
-const CHALLENGE_RATINGS = {
-  topic:         [{ label: 'Clarity' },   { label: 'Confidence' }],
-  gratitude:     [],
-  story:         [{ label: 'Challenge' }, { label: 'Enjoyment' }],
-  selfknowledge: [{ label: 'Clarity' },   { label: 'Depth' }],
-  interview:     [{ label: 'Relevance' }, { label: 'Confidence' }],
-
-  articulation:  [],
-  articulation2: [],
-};
-
-// ============================================================
 // CONTENT
 // ============================================================
 
@@ -2627,7 +2682,7 @@ const INTERVIEW_QUESTIONS = [
   "Do you have any questions for us?",
 ];
 
-const GRATITUDE_PROMPT = "Reflect on something you're grateful for.";
+const GRATITUDE_PROMPT = CHALLENGES.gratitude.defaultPromptText;
 
 
 const TOPICS = [
@@ -2872,7 +2927,7 @@ function showScreen(id) {
   if (id === 'screen-prep') {
     renderFrameworkPrepOverlay();
     document.getElementById('prep-reroll').style.display =
-      (currentChallenge === 'gratitude' || currentChallenge === 'articulation2') ? 'none' : '';
+      challengeSupportsReroll() ? '' : 'none';
   }
 
   // Camera shows on every screen once it's been initialised
@@ -3086,10 +3141,8 @@ function startActiveChallenge() {
   if (currentFramework?.timeOverride) timerTotal = currentFramework.timeOverride;
   timerRemaining = timerTotal;
   showScreen('screen-active');
-  // Hide reroll for challenges where it doesn't apply
   document.getElementById('reroll-btn').style.display =
-    (currentChallenge === 'gratitude' || currentChallenge === 'articulation2' ||
-     (currentChallenge === 'story' && !currentPromptType)) ? 'none' : '';
+    challengeSupportsReroll() ? '' : 'none';
   fwkChallengeStartTime = challengeNow();
   fwkChallengeEndTime   = 0;
   renderFrameworkOverlay();
@@ -3237,15 +3290,71 @@ document.getElementById('help-overlay').addEventListener('click', e => {
 // ============================================================
 
 const CHALLENGE_DEFAULT_DESCS = {
-  gratitude: "Reflect on something you're grateful for.",
-  topic:     "Talk about a random topic.",
-  story:     "Tell a story.",
+  ...Object.fromEntries(
+    Object.entries(CHALLENGES)
+      .filter(([, cfg]) => cfg.defaultPromptText)
+      .map(([key, cfg]) => [key, cfg.defaultPromptText])
+  ),
 };
 
-const CHALLENGE_DEFAULT_TIMES = {
-  gratitude: 60, story: 60, topic: 60,
-  selfknowledge: 60, interview: 60, articulation2: 30,
-};
+const CHALLENGE_DEFAULT_TIMES = Object.fromEntries(
+  Object.entries(CHALLENGES).map(([key, cfg]) => [key, cfg.defaultTime])
+);
+
+function getChallengeConfig(challenge = currentChallenge) {
+  return CHALLENGES[challenge] || {};
+}
+
+function getChallengeDefaultTime(challenge = currentChallenge) {
+  return CHALLENGE_DEFAULT_TIMES[challenge] || 60;
+}
+
+function getEffectiveTime(challenge = currentChallenge) {
+  return currentFramework?.timeOverride || getChallengeDefaultTime(challenge);
+}
+
+function challengeSupportsPrep(challenge = currentChallenge) {
+  return CONFIG.prepTime.enabled && getChallengeConfig(challenge).prepSupported !== false;
+}
+
+function challengeSupportsReroll(challenge = currentChallenge) {
+  if (challenge === 'story') return Boolean(currentPromptType);
+  return getChallengeConfig(challenge).rerollSupported === true;
+}
+
+function validateChallengeDefinitions() {
+  const errors = [];
+
+  for (const [challengeKey, cfg] of Object.entries(CHALLENGES)) {
+    if (!Object.prototype.hasOwnProperty.call(CONFIG, challengeKey)) {
+      errors.push(`CHALLENGES.${challengeKey}: missing CONFIG entry`);
+    }
+    if (typeof cfg.buttonId !== 'string' || cfg.buttonId.trim() === '') {
+      errors.push(`CHALLENGES.${challengeKey}: missing buttonId`);
+    } else if (!document.getElementById(cfg.buttonId)) {
+      errors.push(`CHALLENGES.${challengeKey}: button "${cfg.buttonId}" not found`);
+    }
+    if (typeof cfg.label !== 'string' || cfg.label.trim() === '') {
+      errors.push(`CHALLENGES.${challengeKey}: missing label`);
+    }
+    if (!Number.isFinite(cfg.defaultTime) || cfg.defaultTime <= 0) {
+      errors.push(`CHALLENGES.${challengeKey}: defaultTime must be a positive number`);
+    }
+    if (cfg.ratings !== undefined && !Array.isArray(cfg.ratings)) {
+      errors.push(`CHALLENGES.${challengeKey}: ratings must be an array`);
+    }
+  }
+
+  for (const challengeKey of Object.keys(CONFIG)) {
+    if (challengeKey !== 'prepTime' && !Object.prototype.hasOwnProperty.call(CHALLENGES, challengeKey)) {
+      errors.push(`CONFIG.${challengeKey}: missing CHALLENGES entry`);
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error('Invalid challenge configuration:\n' + errors.join('\n'));
+  }
+}
 
 function validateFrameworkDefinitions() {
   const validModes = new Set(['parallel', 'sequential', 'counter']);
@@ -3271,8 +3380,8 @@ function validateFrameworkDefinitions() {
       errors.push(`FRAMEWORKS.${challengeKey}: expected a non-empty array`);
       continue;
     }
-    if (!Object.prototype.hasOwnProperty.call(CHALLENGE_DEFAULT_DESCS, challengeKey)) {
-      errors.push(`FRAMEWORKS.${challengeKey}: missing CHALLENGE_DEFAULT_DESCS entry`);
+    if (!getChallengeConfig(challengeKey).defaultPromptText) {
+      errors.push(`FRAMEWORKS.${challengeKey}: missing CHALLENGES.${challengeKey}.defaultPromptText`);
     }
 
     const ids = new Set();
@@ -3353,6 +3462,7 @@ function validateFrameworkDefinitions() {
   }
 }
 
+validateChallengeDefinitions();
 validateFrameworkDefinitions();
 
 // Converts a verb to its gerund (-ing) form.
@@ -3435,15 +3545,17 @@ function getPrepDescHTML() {
 
 // Returns "You'll get X seconds to [lowercase prompt]" (no trailing period) for the intro screen.
 function getIntroDesc() {
+  const challengeConfig = getChallengeConfig();
+  if (challengeConfig.introDesc) return challengeConfig.introDesc;
   if (currentChallenge === 'story') {
-    const seconds = currentFramework?.timeOverride || CHALLENGE_DEFAULT_TIMES['story'] || 60;
+    const seconds = getEffectiveTime('story');
     const ptPhrase = currentPromptType?.introPhrase || 'tell a story';
     const fwkPart  = currentFramework ? `, using the ${currentFramework.name} framework` : '';
     return `You'll get ${seconds} seconds to ${ptPhrase}${fwkPart}`;
   }
   const rawPrompt = getEffectivePromptText();
   if (!rawPrompt) return '';
-  const seconds = currentFramework?.timeOverride || CHALLENGE_DEFAULT_TIMES[currentChallenge] || 60;
+  const seconds = getEffectiveTime();
   const lower = rawPrompt.charAt(0).toLowerCase() + rawPrompt.slice(1);
   const stripped = lower.replace(/[.!?]+$/, '');
   return `You'll get ${seconds} seconds to ${stripped}`;
@@ -3459,8 +3571,7 @@ function updateFrameworkPill() {
     pill.classList.remove('selected');
   }
   // Sync intro-desc using computed sentence
-  const defaultDesc = CHALLENGE_DEFAULT_DESCS[currentChallenge];
-  if (defaultDesc !== undefined) {
+  if (currentChallenge) {
     const descEl = document.getElementById('intro-desc');
     if (descEl) descEl.textContent = getIntroDesc();
   }
@@ -3474,7 +3585,7 @@ function updateFrameworkPill() {
   } else {
     // Restore display only if it was previously shown (challenge supports prep time)
     // setToggleVisibility controls the baseline; we only need to restore here
-    const challengeShowsToggle = currentChallenge !== 'articulation2';
+    const challengeShowsToggle = challengeSupportsPrep();
     if (challengeShowsToggle) toggleWrap.style.display = 'flex';
   }
 }
@@ -4030,9 +4141,8 @@ function renderChallengeRatings() {
   const ratingsEl = document.getElementById('challenge-ratings');
   ratingsEl.innerHTML = '';
   ratingsEl.style.display = 'none';
-  if (currentChallenge === 'articulation2') return;
 
-  const ratings = CHALLENGE_RATINGS[currentChallenge] || [];
+  const ratings = getChallengeConfig().ratings || [];
   if (ratings.length === 0) return;
 
   ratings.forEach(rating => {
@@ -4298,91 +4408,33 @@ function setToggleVisibility(show) {
   setPromptTypePillVisibility();
 }
 
-document.getElementById('btn-story').onclick = () => {
-  playPop();
-  animateTap(document.getElementById('btn-story'), () => {
-    currentChallenge  = 'story';
+function selectChallenge(challenge) {
+  const challengeConfig = getChallengeConfig(challenge);
+  currentChallenge = challenge;
+
+  if (challenge === 'story') {
     currentPromptType = null;
     currentStoryWords = null;
     currentPlotText   = null;
-    document.getElementById('intro-label').textContent = 'Storytelling';
-    document.getElementById('intro-desc').textContent = getIntroDesc();
-    setToggleVisibility(true);
-    showScreen('screen-intro');
-  });
-};
-
-document.getElementById('btn-articulation').onclick = () => {
-  playPop();
-  animateTap(document.getElementById('btn-articulation'), () => {
-    currentChallenge = 'articulation';
-    document.getElementById('intro-label').textContent = 'Articulation';
-    document.getElementById('intro-desc').textContent =
-      "You'll get a tongue-twisting passage -read as far as you can in 30 seconds. Scroll with your finger to follow along";
-    setToggleVisibility(true);
-    showScreen('screen-intro');
-  });
-};
-
-document.getElementById('btn-articulation2').onclick = () => {
-  playPop();
-  animateTap(document.getElementById('btn-articulation2'), () => {
-    currentChallenge = 'articulation2';
-    document.getElementById('intro-label').textContent = 'Articulation';
-    document.getElementById('intro-desc').textContent =
-      "You'll get 30 seconds to read as far as you can. Tap anywhere on the screen to move to the next line.";
-    setToggleVisibility(false);
-    showScreen('screen-intro');
-  });
-};
-
-document.getElementById('btn-selfknowledge').onclick = () => {
-  playPop();
-  animateTap(document.getElementById('btn-selfknowledge'), () => {
-    currentChallenge = 'selfknowledge';
-    document.getElementById('intro-label').textContent = 'Self-Knowledge';
-    document.getElementById('intro-desc').textContent =
-      "You'll get a reflective prompt and 60 seconds to answer";
-    setToggleVisibility(true);
-    showScreen('screen-intro');
-  });
-};
-
-document.getElementById('btn-interview').onclick = () => {
-  playPop();
-  animateTap(document.getElementById('btn-interview'), () => {
-    currentChallenge = 'interview';
-    document.getElementById('intro-label').textContent = 'Interview Practice';
-    document.getElementById('intro-desc').textContent =
-      "You'll get a common interview question and 60 seconds to answer";
-    setToggleVisibility(true);
-    showScreen('screen-intro');
-  });
-};
-
-document.getElementById('btn-gratitude').onclick = () => {
-  playPop();
-  animateTap(document.getElementById('btn-gratitude'), () => {
-    currentChallenge = 'gratitude';
-    document.getElementById('intro-label').textContent = 'Daily Gratitude';
-    document.getElementById('intro-desc').textContent = getIntroDesc();
-    setToggleVisibility(true);
-    showScreen('screen-intro');
-  });
-};
-
-document.getElementById('btn-topic').onclick = () => {
-  playPop();
-  animateTap(document.getElementById('btn-topic'), () => {
-    currentChallenge = 'topic';
+  } else if (challenge === 'topic') {
     currentTopicSentence = null;
     currentTopicText     = null;
-    document.getElementById('intro-label').textContent = 'Random Topic';
-    document.getElementById('intro-desc').textContent = getIntroDesc();
-    setToggleVisibility(true);
-    showScreen('screen-intro');
-  });
-};
+  }
+
+  document.getElementById('intro-label').textContent = challengeConfig.label || '';
+  document.getElementById('intro-desc').textContent = getIntroDesc();
+  setToggleVisibility(challengeSupportsPrep(challenge));
+  showScreen('screen-intro');
+}
+
+Object.entries(CHALLENGES).forEach(([challenge, challengeConfig]) => {
+  document.getElementById(challengeConfig.buttonId).onclick = () => {
+    playPop();
+    animateTap(document.getElementById(challengeConfig.buttonId), () => {
+      selectChallenge(challenge);
+    });
+  };
+});
 
 // -Intro screen —
 
@@ -4495,9 +4547,9 @@ function launchChallenge() {
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prompt-display').innerHTML =
       `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
-    timerTotal = currentFramework?.timeOverride || CHALLENGE_DEFAULT_TIMES['story'];
+    timerTotal = getEffectiveTime('story');
 
-    if (prepTimeEnabled && !currentFramework?.disablePrepTime) {
+    if (prepTimeEnabled && challengeSupportsPrep() && !currentFramework?.disablePrepTime) {
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML =
         `<p class="prompt-text">${getPrepDescHTML()}</p>`;
@@ -4516,8 +4568,8 @@ function launchChallenge() {
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prompt-display').innerHTML =
       `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
-    timerTotal = currentFramework?.timeOverride || CHALLENGE_DEFAULT_TIMES[currentChallenge];
-    if (prepTimeEnabled && !currentFramework?.disablePrepTime) {
+    timerTotal = getEffectiveTime();
+    if (prepTimeEnabled && challengeSupportsPrep() && !currentFramework?.disablePrepTime) {
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML =
         `<p class="prompt-text">${getPrepDescHTML()}</p>`;
@@ -4533,8 +4585,8 @@ function launchChallenge() {
     document.getElementById('prompt-label').textContent = 'Your prompt';
     document.getElementById('prompt-display').innerHTML =
       `<div class="words-list"><p class="twister-text">${prompt}</p></div>`;
-    timerTotal = 60;
-    if (prepTimeEnabled) {
+    timerTotal = getEffectiveTime();
+    if (prepTimeEnabled && challengeSupportsPrep()) {
       document.getElementById('prep-prompt-label').textContent = 'Your prompt';
       document.getElementById('prep-prompt-display').innerHTML =
         `<p class="twister-text">${prompt}</p>`;
@@ -4549,8 +4601,8 @@ function launchChallenge() {
     usedPromptText = q;
     document.getElementById('prompt-label').textContent = 'Your question';
     document.getElementById('prompt-display').innerHTML = `<p class="twister-text">${q}</p>`;
-    timerTotal = 60;
-    if (prepTimeEnabled) {
+    timerTotal = getEffectiveTime();
+    if (prepTimeEnabled && challengeSupportsPrep()) {
       document.getElementById('prep-prompt-label').textContent = 'Your question';
       document.getElementById('prep-prompt-display').innerHTML = `<p class="twister-text">${q}</p>`;
       showScreen('screen-prep');
@@ -4565,8 +4617,8 @@ function launchChallenge() {
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prompt-display').innerHTML =
       `<p class="prompt-text">${promptText}</p>`;
-    timerTotal = 60;
-    if (prepTimeEnabled && !currentFramework?.disablePrepTime) {
+    timerTotal = getEffectiveTime();
+    if (prepTimeEnabled && challengeSupportsPrep() && !currentFramework?.disablePrepTime) {
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML =
         `<p class="prompt-text">${getPrepDesc()}</p>`;
@@ -4580,16 +4632,16 @@ function launchChallenge() {
     const item = pickRandom(ARTICULATIONS, 1)[0];
     usedPromptText = item.name;
     renderArticulation(item);
-    timerTotal = 30;
+    timerTotal = getEffectiveTime();
   } else if (currentChallenge === 'articulation2') {
     const item = pickRandom(ARTICULATIONS, 1)[0];
     usedPromptText = item.name;
     renderArticulation2(item);
-    timerTotal = 30;
+    timerTotal = getEffectiveTime();
   }
 
   // Prep time for fall-through challenges (articulation, articulation2)
-  if (prepTimeEnabled) {
+  if (prepTimeEnabled && challengeSupportsPrep()) {
     const prepLabels = {
       articulation: usedPromptText, articulation2: usedPromptText,
     };
@@ -4699,6 +4751,7 @@ document.getElementById('confirm-keep').onclick = () => {
 
 function showTimesUp() {
   captureFrameworkEndTime();
+  const challengeConfig = getChallengeConfig();
 
   const title      = document.querySelector('.timesup-title');
   const sub        = document.querySelector('.timesup-sub');
@@ -4720,7 +4773,7 @@ function showTimesUp() {
   renderFrameworkZone();
   renderChallengeRatings();
 
-  if (currentChallenge === 'articulation2') {
+  if (challengeConfig.timesUpMode === 'articulation2') {
     const reached = artLineIdx + 1;
     const pct = artTotalLines > 0 ? Math.round((reached / artTotalLines) * 100) : 0;
 
@@ -4766,9 +4819,8 @@ function showTimesUp() {
     });
 
   } else {
-    const ratings = CHALLENGE_RATINGS[currentChallenge] || [];
-    title.textContent = currentChallenge === 'gratitude' ? "That's time" : "Done!";
-    if (currentChallenge === 'gratitude') timesupScreen.classList.add('gratitude-mode');
+    title.textContent = challengeConfig.timesUpTitle || "Done!";
+    if (challengeConfig.timesUpClass) timesupScreen.classList.add(challengeConfig.timesUpClass);
     sub.style.display = 'none';
     prompt.style.display     = 'none';
     completion.style.display = 'none';
@@ -4797,18 +4849,9 @@ document.getElementById('menu-btn').onclick = () => {
 // ============================================================
 
 (function applyConfig() {
-  const map = {
-    story:         'btn-story',
-    topic:         'btn-topic',
-    selfknowledge: 'btn-selfknowledge',
-    interview:     'btn-interview',
-    gratitude:     'btn-gratitude',
-    articulation:  'btn-articulation',
-    articulation2: 'btn-articulation2',
-  };
-  for (const [key, btnId] of Object.entries(map)) {
+  for (const [key, challengeConfig] of Object.entries(CHALLENGES)) {
     if (!CONFIG[key]?.enabled) {
-      const el = document.getElementById(btnId);
+      const el = document.getElementById(challengeConfig.buttonId);
       if (el) el.style.display = 'none';
     }
   }
