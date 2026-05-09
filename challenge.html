@@ -512,14 +512,14 @@ body {
 .art2-stars {
   flex: 1;
   display: flex;
-  gap: clamp(8px, 1.8vw, 14px);
+  gap: clamp(5px, 1.2vw, 10px);
   align-items: center;
 }
 
 .art2-star {
   background: none;
   border: none;
-  padding: 0;
+  padding: clamp(3px, 0.6vh, 5px);
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -527,7 +527,7 @@ body {
   align-items: center;
   justify-content: center;
   color: white;
-  opacity: 0.3;
+  opacity: 0.22;
   transition: color 0.12s ease, opacity 0.12s ease;
 }
 
@@ -538,8 +538,8 @@ body {
 
 .art2-star svg {
   display: block;
-  width: clamp(30px, 5.2vh, 42px);
-  height: clamp(30px, 5.2vh, 42px);
+  width: clamp(24px, 4.3vh, 34px);
+  height: clamp(24px, 4.3vh, 34px);
 }
 
 /* Tongue twister: quoted text */
