@@ -3951,22 +3951,29 @@ function renderFrameworkZone() {
     const segments   = []; // { el, durMs, reached, color }
 
     if (currentFramework.mode === 'sequential') {
-      // Sequential: tap[i] = when step i ENDED; step 0 starts at challengeStart
-      for (let i = 0; i < elements.length; i++) {
-        const startMs = i === 0 ? fwkChallengeStartTime : fwkElementTaps[i - 1];
-        if (startMs === null) {
-          // Previous step was never tapped — this step never started
+      if (fwkElementTaps.every(t => t === null)) {
+        segments.push({ el: elements[0], durMs: totalMs, reached: true, color: SEG_COLORS[0] });
+        for (let i = 1; i < elements.length; i++) {
           segments.push({ el: elements[i], durMs: 0, reached: false, color: SEG_COLORS[i % SEG_COLORS.length] });
-        } else if (fwkElementTaps[i] !== null) {
-          // Step completed (tapped to move on)
-          segments.push({ el: elements[i], durMs: fwkElementTaps[i] - startMs, reached: true, color: SEG_COLORS[i % SEG_COLORS.length] });
-        } else {
-          // Final active step — ran to challenge end
-          segments.push({ el: elements[i], durMs: fwkChallengeEndTime - startMs, reached: true, color: SEG_COLORS[i % SEG_COLORS.length] });
-          for (let j = i + 1; j < elements.length; j++) {
-            segments.push({ el: elements[j], durMs: 0, reached: false, color: SEG_COLORS[j % SEG_COLORS.length] });
+        }
+      } else {
+      // Sequential: tap[i] = when step i ENDED; step 0 starts at challengeStart
+        for (let i = 0; i < elements.length; i++) {
+          const startMs = i === 0 ? fwkChallengeStartTime : fwkElementTaps[i - 1];
+          if (startMs === null) {
+            // Previous step was never tapped — this step never started
+            segments.push({ el: elements[i], durMs: 0, reached: false, color: SEG_COLORS[i % SEG_COLORS.length] });
+          } else if (fwkElementTaps[i] !== null) {
+            // Step completed (tapped to move on)
+            segments.push({ el: elements[i], durMs: fwkElementTaps[i] - startMs, reached: true, color: SEG_COLORS[i % SEG_COLORS.length] });
+          } else {
+            // Final active step — ran to challenge end
+            segments.push({ el: elements[i], durMs: fwkChallengeEndTime - startMs, reached: true, color: SEG_COLORS[i % SEG_COLORS.length] });
+            for (let j = i + 1; j < elements.length; j++) {
+              segments.push({ el: elements[j], durMs: 0, reached: false, color: SEG_COLORS[j % SEG_COLORS.length] });
+            }
+            break;
           }
-          break;
         }
       }
     } else {
