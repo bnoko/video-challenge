@@ -4029,6 +4029,14 @@ function getCustomPromptFullText(rawPrompt = currentCustomPromptText) {
   return prefix ? prefix + raw : raw;
 }
 
+function getCustomPromptHTML(rawPrompt = currentCustomPromptText) {
+  const raw = String(rawPrompt || '').trim();
+  if (!raw) return '';
+  const prefix = getCustomPromptPrefixText();
+  if (!prefix) return escapeHTML(raw);
+  return escapeHTML(prefix) + `<strong class="topic-highlight">${escapeHTML(raw)}</strong>`;
+}
+
 function animateTap(el, cb, ms = 350) {
   el.classList.remove('tapping');
   void el.offsetWidth;          // force reflow to restart animation
@@ -4704,7 +4712,7 @@ function getEffectivePromptText() {
 // Returns HTML for the effective prompt, with highlights for topic/story challenges.
 function getEffectivePromptHTML() {
   if (challengeSupportsCustomPrompt() && currentCustomPromptText) {
-    return escapeHTML(getCustomPromptFullText());
+    return getCustomPromptHTML();
   }
   if (currentChallenge === 'story') {
     if (currentStoryWords) return buildStoryWordsHTML(currentStoryWords);
@@ -5559,7 +5567,7 @@ function launchCustomPromptChallenge(rawPrompt) {
   if (currentChallenge === 'story' || currentChallenge === 'topic') {
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prompt-display').innerHTML =
-      `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+      `<p class="prompt-text">${getCustomPromptHTML()}</p>`;
   } else if (currentChallenge === 'selfknowledge') {
     document.getElementById('prompt-label').textContent = 'Your prompt';
     document.getElementById('prompt-display').innerHTML =
@@ -6152,7 +6160,7 @@ function renderCurrentPromptForReplay() {
     if (currentChallenge === 'story' || currentChallenge === 'topic') {
       document.getElementById('prompt-label').textContent = '';
       document.getElementById('prompt-display').innerHTML =
-        `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+        `<p class="prompt-text">${getCustomPromptHTML()}</p>`;
     } else if (currentChallenge === 'selfknowledge') {
       document.getElementById('prompt-label').textContent = 'Your prompt';
       document.getElementById('prompt-display').innerHTML =
