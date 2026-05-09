@@ -2609,7 +2609,11 @@ const FRAMEWORKS = {
       timeOverride: 30,
       buttonLabel: 'Tap here as you say each new thing',
       prepButtonLabel: 'When the challenge begins, tap here as you say each new thing.',
-      postChallenge: { type: 'counter', resultSentence: '{count} things you\'re grateful for' },
+      postChallenge: {
+        type: 'counter',
+        resultSingular: 'thing you\'re grateful for',
+        resultPlural: 'things you\'re grateful for',
+      },
     },
   ],
 };
