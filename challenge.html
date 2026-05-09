@@ -1856,6 +1856,115 @@ body {
   display: none;
 }
 
+#creator-marker-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 115;
+  pointer-events: none;
+}
+
+.creator-marker {
+  position: absolute;
+  left: 50%;
+  width: min(92%, 520px);
+  transform: translateX(-50%);
+  border-radius: 18px;
+  padding: 14px 16px 15px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.45);
+  backdrop-filter: blur(10px);
+}
+
+.creator-marker.visible {
+  opacity: 1;
+}
+
+.creator-marker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.creator-marker-kind {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.creator-marker-time {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.96;
+}
+
+.creator-marker-title {
+  font-size: clamp(22px, 3.7vh, 30px);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+}
+
+.creator-marker-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.creator-marker-line {
+  font-size: clamp(13px, 2vh, 16px);
+  font-weight: 700;
+  line-height: 1.2;
+  opacity: 0.98;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.3);
+}
+
+.creator-marker-line strong {
+  font-weight: 900;
+}
+
+#creator-auto-marker {
+  top: max(26px, 4.5%);
+  background:
+    linear-gradient(180deg, rgba(207, 255, 74, 0.96), rgba(139, 244, 61, 0.94));
+  color: #102000;
+  border: 3px solid rgba(255,255,255,0.92);
+  transform: translateX(-50%) translateY(-10px);
+}
+
+#creator-auto-marker.visible {
+  transform: translateX(-50%) translateY(0);
+}
+
+#creator-auto-marker .creator-marker-title,
+#creator-auto-marker .creator-marker-line {
+  text-shadow: none;
+}
+
+#creator-note-marker {
+  bottom: max(28px, 5%);
+  background:
+    linear-gradient(180deg, rgba(255, 111, 0, 0.96), rgba(255, 59, 48, 0.94));
+  border: 3px solid rgba(255, 245, 157, 0.98);
+  transform: translateX(-50%) scale(0.98);
+  animation: creatorNotePulse 1.4s ease-in-out infinite;
+}
+
+#creator-note-marker.visible {
+  transform: translateX(-50%) scale(1);
+}
+
+@keyframes creatorNotePulse {
+  0%, 100% { box-shadow: 0 10px 32px rgba(0,0,0,0.45), 0 0 0 0 rgba(255, 245, 157, 0.42); }
+  50%      { box-shadow: 0 10px 32px rgba(0,0,0,0.45), 0 0 0 10px rgba(255, 245, 157, 0); }
+}
+
 /* UI hidden state */
 #app.ui-hidden .screen,
 #app.ui-hidden .modal-overlay,
@@ -2112,6 +2221,12 @@ body {
 
   <!-- ── UI Restore Overlay (full-screen, shown only when UI is hidden) ── -->
   <div id="ui-restore-overlay"></div>
+
+  <!-- ── Creator Markers ── -->
+  <div id="creator-marker-layer">
+    <div class="creator-marker" id="creator-auto-marker"></div>
+    <div class="creator-marker" id="creator-note-marker"></div>
+  </div>
 
 </div>
 
@@ -4290,10 +4405,85 @@ const VIS_DOUBLE_TAP_MS = 300;
 let wasTimerRunning = false;
 let wasPrepTimerRunning = false;
 let slideOutScreen = null;
+let creatorAutoMarkerTimeout = null;
+let noteMarkerActive = false;
+let noteTouchStartX = 0;
+let noteTouchStartY = 0;
 
 const visBtn = document.getElementById('vis-toggle-btn');
 const appEl  = document.getElementById('app');
 const restoreOverlay = document.getElementById('ui-restore-overlay');
+const creatorAutoMarkerEl = document.getElementById('creator-auto-marker');
+const creatorNoteMarkerEl = document.getElementById('creator-note-marker');
+
+function formatMarkerTimestamp(date = new Date()) {
+  const day = date.getDate();
+  const month = date.toLocaleString('en-GB', { month: 'short' });
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+  const ss = String(date.getSeconds()).padStart(2, '0');
+  return `${day} ${month}, ${hh}:${mm}:${ss}`;
+}
+
+function getCurrentTakeDisplayText(challenge = currentChallenge) {
+  const template = getTakeTemplate(challenge);
+  if (!template) return '';
+  return template.replace(/\[n\]/gi, getTakeN(challenge));
+}
+
+function buildCreatorMarkerData() {
+  const onSelectScreen = document.getElementById('screen-select').classList.contains('active');
+  const challengeLabel = getChallengeConfig(currentChallenge).label || '';
+  return {
+    challengeName: onSelectScreen ? 'Selection Menu' : challengeLabel,
+    frameworkName: onSelectScreen ? '' : (currentFramework?.name || ''),
+    promptTypeName: onSelectScreen ? '' : (currentPromptType?.name || ''),
+    takeText: onSelectScreen ? '' : getCurrentTakeDisplayText(currentChallenge),
+    timestamp: formatMarkerTimestamp(),
+  };
+}
+
+function renderCreatorMarker(el, kindLabel, title, data) {
+  const lines = [];
+  if (data.challengeName) lines.push(`<div class="creator-marker-line"><strong>Challenge:</strong> ${data.challengeName}</div>`);
+  if (data.frameworkName) lines.push(`<div class="creator-marker-line"><strong>Framework:</strong> ${data.frameworkName}</div>`);
+  if (data.promptTypeName) lines.push(`<div class="creator-marker-line"><strong>Prompt Type:</strong> ${data.promptTypeName}</div>`);
+  if (data.takeText) lines.push(`<div class="creator-marker-line"><strong>Take:</strong> ${data.takeText}</div>`);
+
+  el.innerHTML =
+    `<div class="creator-marker-head">`
+      + `<span class="creator-marker-kind">${kindLabel}</span>`
+      + `<span class="creator-marker-time">${data.timestamp}</span>`
+    + `</div>`
+    + `<div class="creator-marker-title">${title}</div>`
+    + `<div class="creator-marker-lines">${lines.join('')}</div>`;
+}
+
+function showAutoTakeEndMarker() {
+  clearTimeout(creatorAutoMarkerTimeout);
+  renderCreatorMarker(creatorAutoMarkerEl, 'Take End', 'Take finished', buildCreatorMarkerData());
+  creatorAutoMarkerEl.classList.add('visible');
+  creatorAutoMarkerTimeout = setTimeout(() => {
+    creatorAutoMarkerEl.classList.remove('visible');
+  }, 1500);
+}
+
+function showNoteMarker() {
+  noteMarkerActive = true;
+  renderCreatorMarker(creatorNoteMarkerEl, 'Note Marker', 'Speak note to future self', buildCreatorMarkerData());
+  creatorNoteMarkerEl.classList.add('visible');
+}
+
+function clearNoteMarker() {
+  noteMarkerActive = false;
+  creatorNoteMarkerEl.classList.remove('visible');
+}
+
+function isLowerThirdTouch(clientY) {
+  const rect = appEl.getBoundingClientRect();
+  const pct = (clientY - rect.top) / rect.height;
+  return pct >= 0.67;
+}
 
 function hideUI(slideMode) {
   uiHidden = true;
@@ -4325,6 +4515,7 @@ function hideUI(slideMode) {
 function restoreUI(slideMode) {
   uiHidden = false;
   restoreOverlay.style.display = 'none';
+  clearNoteMarker();
 
   if (slideMode && slideOutScreen) {
     // Slide back in from left
@@ -4385,17 +4576,30 @@ appEl.addEventListener('click', e => {
 
 restoreOverlay.addEventListener('touchstart', e => {
   restoreTouchStartX = e.touches[0].clientX;
+  noteTouchStartX = e.touches[0].clientX;
+  noteTouchStartY = e.touches[0].clientY;
 }, { passive: true });
 
 restoreOverlay.addEventListener('touchend', e => {
   if (!uiHidden) return;
-  const dx = e.changedTouches[0].clientX - restoreTouchStartX;
+  const touch = e.changedTouches[0];
+  const dx = touch.clientX - restoreTouchStartX;
+  const dy = touch.clientY - noteTouchStartY;
+  const isTap = Math.abs(touch.clientX - noteTouchStartX) < 12 && Math.abs(dy) < 12;
+  if (isTap && isLowerThirdTouch(noteTouchStartY)) {
+    if (!noteMarkerActive) showNoteMarker();
+    return;
+  }
   const isSwipeRight = dx > 28;
   restoreUI(isSwipeRight);
 }, { passive: true });
 
-restoreOverlay.addEventListener('click', () => {
+restoreOverlay.addEventListener('click', e => {
   if (!uiHidden) return;
+  if (isLowerThirdTouch(e.clientY)) {
+    if (!noteMarkerActive) showNoteMarker();
+    return;
+  }
   restoreUI(false);
 });
 
@@ -4839,12 +5043,14 @@ function showTimesUp() {
 document.getElementById('again-btn').onclick = () => {
   // Return to the intro screen for the same challenge (currentChallenge stays set)
   // Keep currentFramework selected so user doesn't have to re-pick it
+  showAutoTakeEndMarker();
   incrementTakeN(currentChallenge);
   clearFrameworkOverlay();
   showScreen('screen-intro');
 };
 
 document.getElementById('menu-btn').onclick = () => {
+  showAutoTakeEndMarker();
   incrementTakeN(currentChallenge);
   clearFrameworkOverlay();
   currentFramework = null;
