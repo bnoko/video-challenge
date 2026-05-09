@@ -1414,6 +1414,11 @@ body {
   border-color: rgba(234,179,8,0.35);
 }
 
+.fwk-ct-item.partial {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.22);
+}
+
 .fwk-ct-emoji {
   font-size: clamp(14px, 2.4vh, 20px);
   line-height: 1;
@@ -1431,6 +1436,10 @@ body {
   color: rgba(255,255,255,0.65);
 }
 
+.fwk-ct-item.partial .fwk-ct-label {
+  color: rgba(255,255,255,0.72);
+}
+
 .fwk-ct-check {
   font-size: clamp(20px, 3.4vh, 28px);
   font-weight: 700;
@@ -1440,6 +1449,10 @@ body {
 
 .fwk-ct-item.tapped .fwk-ct-check {
   color: #fcd34d;
+}
+
+.fwk-ct-item.partial .fwk-ct-check {
+  color: rgba(255,255,255,0.82);
 }
 
 .fwk-ct-time {
@@ -3817,6 +3830,7 @@ let fwkTapCount           = 0;     // counter mode: total taps
 let fwkCurrentStep        = 0;     // sequential mode: index of active step
 let fwkChallengeStartTime = 0;     // performance.now() when challenge started
 let fwkChallengeEndTime   = 0;     // performance.now() when challenge ended
+let fwkTimedOut           = false; // true only when the challenge ends by natural timer expiry
 
 // ============================================================
 // HELPERS
@@ -3978,6 +3992,7 @@ function timerTick() {
   } else {
     timerRunning = false;
     timerRemaining = 0;
+    fwkTimedOut = true;
     captureFrameworkEndTime();
     timerPie.setAttribute('d', '');
     timerNum.textContent = '';
@@ -4138,6 +4153,7 @@ function startActiveChallenge() {
     challengeSupportsReroll() ? '' : 'none';
   fwkChallengeStartTime = challengeNow();
   fwkChallengeEndTime   = 0;
+  fwkTimedOut           = false;
   renderFrameworkOverlay();
   startTimer();
 }
@@ -5088,6 +5104,12 @@ function renderFrameworkZone() {
     const untappedItems = currentFramework.elements
       .map((el, i) => ({ el, i, tapTime: null }))
       .filter(x => fwkElementTaps[x.i] === null);
+    const hasPartialUntapped =
+      currentFramework.mode === 'parallel' &&
+      fwkTimedOut &&
+      untappedItems.length === 1;
+    const partialItem = hasPartialUntapped ? untappedItems[0] : null;
+    const fullyUntappedItems = hasPartialUntapped ? [] : untappedItems;
 
     const row = document.createElement('div');
     row.className = 'fwk-ct-row';
@@ -5120,8 +5142,35 @@ function renderFrameworkZone() {
       row.appendChild(card);
     });
 
+    if (partialItem) {
+      const prevTime = tappedItems.length > 0 ? tappedItems[tappedItems.length - 1].tapTime : fwkChallengeStartTime;
+      const durSec = Math.max(0, Math.round((fwkChallengeEndTime - prevTime) / 1000));
+
+      const card = document.createElement('div');
+      card.className = 'fwk-ct-item partial';
+      if (partialItem.el.emoji) {
+        const emo = document.createElement('div');
+        emo.className = 'fwk-ct-emoji';
+        emo.textContent = partialItem.el.emoji;
+        card.appendChild(emo);
+      }
+      const lbl = document.createElement('div');
+      lbl.className = 'fwk-ct-label';
+      lbl.textContent = partialItem.el.label;
+      card.appendChild(lbl);
+      const check = document.createElement('div');
+      check.className = 'fwk-ct-check';
+      check.textContent = '–';
+      card.appendChild(check);
+      const timeEl = document.createElement('div');
+      timeEl.className = 'fwk-ct-time';
+      timeEl.textContent = durSec + 's';
+      card.appendChild(timeEl);
+      row.appendChild(card);
+    }
+
     // Render untapped items last, in defined order, with cross and no time
-    untappedItems.forEach(item => {
+    fullyUntappedItems.forEach(item => {
       const card = document.createElement('div');
       card.className = 'fwk-ct-item';
       if (item.el.emoji) {
