@@ -4399,7 +4399,6 @@ document.getElementById('take-counter-use-template').onclick = () => {
 let uiHidden = false;
 let visTouchStartX = 0;
 let visTouchStartY = 0;
-let restoreTouchStartX = 0;
 let visLastTapTime = 0;
 const VIS_DOUBLE_TAP_MS = 300;
 let wasTimerRunning = false;
@@ -4479,6 +4478,14 @@ function clearNoteMarker() {
   creatorNoteMarkerEl.classList.remove('visible');
 }
 
+function toggleNoteMarker() {
+  if (noteMarkerActive) {
+    clearNoteMarker();
+  } else {
+    showNoteMarker();
+  }
+}
+
 function isLowerThirdTouch(clientY) {
   const rect = appEl.getBoundingClientRect();
   const pct = (clientY - rect.top) / rect.height;
@@ -4552,11 +4559,8 @@ appEl.addEventListener('touchend', e => {
   if (pct < 0.33 || pct > 0.67) return;
   const dx = e.changedTouches[0].clientX - visTouchStartX;
   const dy = e.changedTouches[0].clientY - visTouchStartY;
-  const isSwipeLeft = dx < -40 && Math.abs(dx) > Math.abs(dy) * 1.5;
   const isTap       = Math.abs(dx) < 12 && Math.abs(dy) < 12;
-  if (isSwipeLeft) {
-    hideUI(true);
-  } else if (isTap) {
+  if (isTap) {
     const now = Date.now();
     if (now - visLastTapTime < VIS_DOUBLE_TAP_MS) {
       visLastTapTime = 0;
@@ -4575,7 +4579,6 @@ appEl.addEventListener('click', e => {
 });
 
 restoreOverlay.addEventListener('touchstart', e => {
-  restoreTouchStartX = e.touches[0].clientX;
   noteTouchStartX = e.touches[0].clientX;
   noteTouchStartY = e.touches[0].clientY;
 }, { passive: true });
@@ -4583,21 +4586,21 @@ restoreOverlay.addEventListener('touchstart', e => {
 restoreOverlay.addEventListener('touchend', e => {
   if (!uiHidden) return;
   const touch = e.changedTouches[0];
-  const dx = touch.clientX - restoreTouchStartX;
+  const dx = touch.clientX - noteTouchStartX;
   const dy = touch.clientY - noteTouchStartY;
-  const isTap = Math.abs(touch.clientX - noteTouchStartX) < 12 && Math.abs(dy) < 12;
-  if (isTap && isLowerThirdTouch(noteTouchStartY)) {
-    if (!noteMarkerActive) showNoteMarker();
+  const isTap = Math.abs(dx) < 12 && Math.abs(dy) < 12;
+  if (!isTap) return;
+  if (isLowerThirdTouch(noteTouchStartY)) {
+    toggleNoteMarker();
     return;
   }
-  const isSwipeRight = dx > 28;
-  restoreUI(isSwipeRight);
+  restoreUI(false);
 }, { passive: true });
 
 restoreOverlay.addEventListener('click', e => {
   if (!uiHidden) return;
   if (isLowerThirdTouch(e.clientY)) {
-    if (!noteMarkerActive) showNoteMarker();
+    toggleNoteMarker();
     return;
   }
   restoreUI(false);
