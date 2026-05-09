@@ -5777,7 +5777,7 @@ function setToggleVisibility(show) {
 function setCustomPromptButtonVisibility() {
   const btn = document.getElementById('custom-prompt-btn');
   if (!btn) return;
-  btn.style.display = challengeSupportsCustomPrompt() ? '' : 'none';
+  btn.style.display = challengeSupportsCustomPrompt() ? 'flex' : 'none';
 }
 
 function selectChallenge(challenge) {
