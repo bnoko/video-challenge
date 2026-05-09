@@ -5533,6 +5533,16 @@ document.getElementById('prep-skip').onclick = () => {
   triggerReadySetGo(() => { playStart(); startActiveChallenge(); });
 };
 
+function restartPrepAfterReroll() {
+  stopPrepTimer();
+  startPrepTimer();
+}
+
+function restartActiveAfterReroll() {
+  stopTimer();
+  startActiveChallenge();
+}
+
 document.getElementById('prep-reroll').onclick = () => {
   let wordsHTML;
   if (currentChallenge === 'story') {
@@ -5554,6 +5564,7 @@ document.getElementById('prep-reroll').onclick = () => {
       document.getElementById('prep-prompt-display').innerHTML =
         `<p class="prompt-text">${getPrepDescHTML()}</p>`;
     }
+    restartPrepAfterReroll();
     return;
   } else if (currentChallenge === 'topic') {
     const topic = pickRandom(TOPICS, 1)[0];
@@ -5563,6 +5574,35 @@ document.getElementById('prep-reroll').onclick = () => {
     wordsHTML = `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prep-prompt-label').textContent = '';
+  } else if (currentChallenge === 'selfknowledge') {
+    const prompt = pickRandom(SELF_KNOWLEDGE, 1)[0];
+    usedPromptText = prompt;
+    document.getElementById('prompt-label').textContent = 'Your prompt';
+    document.getElementById('prep-prompt-label').textContent = 'Your prompt';
+    document.getElementById('prompt-display').innerHTML =
+      `<div class="words-list"><p class="twister-text">${prompt}</p></div>`;
+    document.getElementById('prep-prompt-display').innerHTML =
+      `<p class="twister-text">${prompt}</p>`;
+    restartPrepAfterReroll();
+    return;
+  } else if (currentChallenge === 'interview') {
+    const q = pickRandom(INTERVIEW_QUESTIONS, 1)[0];
+    usedPromptText = q;
+    document.getElementById('prompt-label').textContent = 'Your question';
+    document.getElementById('prep-prompt-label').textContent = 'Your question';
+    document.getElementById('prompt-display').innerHTML = `<p class="twister-text">${q}</p>`;
+    document.getElementById('prep-prompt-display').innerHTML = `<p class="twister-text">${q}</p>`;
+    restartPrepAfterReroll();
+    return;
+  } else if (currentChallenge === 'articulation') {
+    const item = pickRandom(ARTICULATIONS, 1)[0];
+    usedPromptText = item.name;
+    renderArticulation(item);
+    document.getElementById('prep-prompt-label').textContent = usedPromptText;
+    document.getElementById('prep-prompt-display').innerHTML =
+      document.getElementById('prompt-display').innerHTML;
+    restartPrepAfterReroll();
+    return;
   }
   if (wordsHTML) {
     document.getElementById('prompt-display').innerHTML = wordsHTML;
@@ -5573,6 +5613,7 @@ document.getElementById('prep-reroll').onclick = () => {
     } else {
       document.getElementById('prep-prompt-display').innerHTML = wordsHTML;
     }
+    restartPrepAfterReroll();
   }
 };
 
@@ -5776,6 +5817,7 @@ document.getElementById('reroll-btn').onclick = () => {
         document.getElementById('prompt-label').textContent = '';
         document.getElementById('prompt-display').innerHTML = `<p class="prompt-text">${newHTML}</p>`;
       }
+      restartActiveAfterReroll();
     }
   } else if (currentChallenge === 'topic') {
     const topic = pickRandom(TOPICS, 1)[0];
@@ -5789,25 +5831,30 @@ document.getElementById('reroll-btn').onclick = () => {
     } else {
       renderTopic(topic);
     }
+    restartActiveAfterReroll();
   } else if (currentChallenge === 'articulation') {
     const item = pickRandom(ARTICULATIONS, 1)[0];
     usedPromptText = item.name;
     renderArticulation(item);
+    restartActiveAfterReroll();
   } else if (currentChallenge === 'articulation2') {
     const item = pickRandom(ARTICULATIONS, 1)[0];
     usedPromptText = item.name;
     renderArticulation2(item);
+    restartActiveAfterReroll();
   } else if (currentChallenge === 'selfknowledge') {
     const prompt = pickRandom(SELF_KNOWLEDGE, 1)[0];
     usedPromptText = prompt;
     document.getElementById('prompt-label').textContent = 'Your prompt';
     document.getElementById('prompt-display').innerHTML =
       `<div class="words-list"><p class="twister-text">${prompt}</p></div>`;
+    restartActiveAfterReroll();
   } else if (currentChallenge === 'interview') {
     const q = pickRandom(INTERVIEW_QUESTIONS, 1)[0];
     usedPromptText = q;
     document.getElementById('prompt-label').textContent = 'Your question';
     document.getElementById('prompt-display').innerHTML = `<p class="twister-text">${q}</p>`;
+    restartActiveAfterReroll();
   }
   // Gratitude: no reroll -static prompt
 };
