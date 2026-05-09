@@ -247,6 +247,39 @@ body {
   white-space: nowrap;
 }
 
+.select-sound-btn {
+  position: absolute;
+  top: max(28px, 5%);
+  right: max(18px, 4%);
+  z-index: 10;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.select-sound-btn svg {
+  display: block;
+  width: clamp(20px, 3.4vh, 26px);
+  height: clamp(20px, 3.4vh, 26px);
+  filter: drop-shadow(0 1px 8px rgba(0,0,0,0.9));
+}
+
+.select-sound-btn .sound-off-mark {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.select-sound-btn.muted .sound-off-mark {
+  opacity: 1;
+}
+
 /* ============================================================
    SCREEN 2 -INTRO
    ============================================================ */
@@ -2151,6 +2184,14 @@ body {
 
   <!-- ── SCREEN 1: Challenge Selection ── -->
   <div class="screen active" id="screen-select">
+    <button class="select-sound-btn" id="sound-toggle-btn" aria-label="Toggle sound">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 10h4l5-4v12l-5-4H4z"/>
+        <path d="M17 9a4 4 0 0 1 0 6"/>
+        <path d="M19.5 6.5a7.5 7.5 0 0 1 0 11"/>
+        <path class="sound-off-mark" d="M5 5 19 19"/>
+      </svg>
+    </button>
     <div class="select-inner">
       <h1 class="select-title">Choose a challenge</h1>
       <div class="challenge-options">
@@ -3886,6 +3927,8 @@ const TOPICS = [
 // ============================================================
 
 let audioCtx = null;
+const SOUND_MUTED_KEY = 'videoChallenge.soundMuted';
+let soundMuted = localStorage.getItem(SOUND_MUTED_KEY) === '1';
 
 function getACtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -3894,6 +3937,7 @@ function getACtx() {
 }
 
 function tone(freq, startDelay, dur, vol, type = 'sine') {
+  if (soundMuted) return;
   try {
     const ac = getACtx();
     const osc = ac.createOscillator();
@@ -5471,6 +5515,20 @@ function incrementTakeN(challenge) {
   setTakeN(challenge, getTakeN(challenge) + 1);
 }
 
+function renderSoundToggle() {
+  const btn = document.getElementById('sound-toggle-btn');
+  if (!btn) return;
+  btn.classList.toggle('muted', soundMuted);
+  btn.setAttribute('aria-label', soundMuted ? 'Unmute sound' : 'Mute sound');
+  btn.setAttribute('title', soundMuted ? 'Sound off' : 'Sound on');
+}
+
+function setSoundMuted(nextMuted) {
+  soundMuted = Boolean(nextMuted);
+  localStorage.setItem(SOUND_MUTED_KEY, soundMuted ? '1' : '0');
+  renderSoundToggle();
+}
+
 function renderTakeDisplay() {
   const el = document.getElementById('take-counter-display');
   const versionEl = document.getElementById('version-display');
@@ -5529,6 +5587,12 @@ document.getElementById('take-counter-use-template').onclick = () => {
   document.getElementById('take-counter-input').value = TAKE_COUNTER_DEFAULT;
   document.getElementById('take-counter-input').focus();
   resetTakeN();
+};
+
+document.getElementById('sound-toggle-btn').onclick = () => {
+  const nextMuted = !soundMuted;
+  setSoundMuted(nextMuted);
+  if (!nextMuted) playPop();
 };
 
 function openCustomPromptPanel() {
@@ -5723,6 +5787,14 @@ function isLowerThirdTouch(clientY) {
   return pct >= 0.67;
 }
 
+function isDesktopKeyboardMode() {
+  return window.matchMedia('(pointer: fine)').matches;
+}
+
+function isTextEntryTarget(target) {
+  return Boolean(target && target.closest('input, textarea, select, [contenteditable=\"true\"]'));
+}
+
 function hideUI(slideMode) {
   uiHidden = true;
   wasTimerRunning     = timerRunning;
@@ -5750,10 +5822,10 @@ function hideUI(slideMode) {
   restoreOverlay.style.display = 'block';
 }
 
-function restoreUI(slideMode) {
+function restoreUI(slideMode, clearMarker = true) {
   uiHidden = false;
   restoreOverlay.style.display = 'none';
-  clearNoteMarker();
+  if (clearMarker) clearNoteMarker();
 
   if (slideMode && slideOutScreen) {
     // Slide back in from left
@@ -5802,13 +5874,6 @@ appEl.addEventListener('touchend', e => {
   }
 }, { passive: true });
 
-// Desktop fallback — click on empty area
-appEl.addEventListener('click', e => {
-  if (uiHidden || ('ontouchstart' in window)) return;
-  if (e.target.closest('button, input, label, a, select, #framework-active-wrap')) return;
-  hideUI(false);
-});
-
 restoreOverlay.addEventListener('touchstart', e => {
   noteTouchStartX = e.touches[0].clientX;
   noteTouchStartY = e.touches[0].clientY;
@@ -5826,7 +5891,7 @@ restoreOverlay.addEventListener('touchend', e => {
     toggleNoteMarker();
     return;
   }
-  restoreUI(false);
+  restoreUI(false, true);
 }, { passive: true });
 
 restoreOverlay.addEventListener('click', e => {
@@ -5836,7 +5901,26 @@ restoreOverlay.addEventListener('click', e => {
     toggleNoteMarker();
     return;
   }
-  restoreUI(false);
+  restoreUI(false, true);
+});
+
+document.addEventListener('keydown', e => {
+  if (!isDesktopKeyboardMode()) return;
+  if (e.defaultPrevented || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (isTextEntryTarget(e.target)) return;
+
+  const key = e.key.toLowerCase();
+  if (key === 'h') {
+    e.preventDefault();
+    if (uiHidden) {
+      restoreUI(true, false);
+    } else {
+      hideUI(false);
+    }
+  } else if (key === 't') {
+    e.preventDefault();
+    toggleNoteMarker();
+  }
 });
 
 // ============================================================
@@ -6464,6 +6548,7 @@ document.getElementById('menu-btn').onclick = () => {
       if (el) el.style.display = 'none';
     }
   }
+  renderSoundToggle();
 })();
 
 </script>
