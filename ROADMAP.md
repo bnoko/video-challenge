@@ -5,7 +5,7 @@
 
 ---
 
-## 1. Recording tools ← do these first
+## 1. Recording tools
 
 - [ ] **Take counter / intro text** — pencil icon on challenge intro screen; user types any text with `[n]` auto-increment counters (e.g. `Day 3, take [4]`); includes a one-tap template link below the input showing the default format so it's easy to reset to; `[n]` increments on "Do it again"; persists in localStorage per challenge; discreet on-screen position (personal cue, not viewer content)
 - [ ] **Interface visibility toggle** — persistent subtle icon bottom-right (thumb-reachable; typically hidden by Instagram/TikTok UI anyway); tap = instant hide all UI, pauses active timer; swipe from that icon = slide-left animation, all elements sweep off-screen left; tap anywhere to restore. Same icon handles both gestures — detected by horizontal movement distance on touchend.
@@ -16,7 +16,7 @@
 
 For any challenge receiving frameworks: **build fresh using Gratitude as the template**, mining existing prompt content as needed. Don't retrofit.
 
-Art2 is done (shipped). Tongue Twister: **deleted**. Story Plot: **deleted** — PLOTS content migrated into the Storytelling "Basic plot" prompt type. Tongue Twister is superseded by Articulation.
+Art2 is done (shipped). Tongue Twister is superseded by Articulation. Story Plot content now lives under Storytelling as the "Basic plot" prompt type.
 
 ---
 

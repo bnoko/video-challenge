@@ -14,15 +14,11 @@
   4. screen-timesup  End screen
 
   ── CHALLENGES ───────────────────────────────────────────────
-  story         3 random words, 60s. Words fade after 3s. Reroll ✓
-  tongue        Tongue twister, 30s. Reroll ✓
-  topic         Random topic, 60s. Reroll ✓
-  plot          Story premise, 60s. Reroll ✓
-  selfknowledge Reflective prompt (WNRS/Esther Perel style), 60s.
-                Prompt fades after 3s. Reroll ✓
+  story         Storytelling, 60s. Prompt types + optional frameworks.
+  topic         Random topic, 60s. Optional frameworks.
+  selfknowledge Reflective prompt (WNRS/Esther Perel style), 60s. Reroll ✓
   interview     Behavioural interview question, 60s. Reroll ✓
-  gratitude     Fixed prompt ("3 things I'm grateful for"), 60s.
-                No reroll. Prompt fades after 3s.
+  gratitude     Daily gratitude, 60s. Optional frameworks. No reroll.
   articulation  Long passage to read aloud, 30s. Reroll ✓ (disabled)
   articulation2 Line-by-line scroll passage, 30s. Tap anywhere to advance.
                 No reroll. No prep time. Tracks lines reached.
@@ -38,9 +34,6 @@
     is shown; the label was redundant.
   - Times up screen: no prompt repeat for most challenges.
     Exceptions: gratitude shows a quote; art2 shows line count.
-  - Prep time fades prompt after 3s on prep screen.
-    Word fade also fires after 3s on active screen for challenges
-    that use it (story, selfknowledge, gratitude).
   - art2 scroll container height is set dynamically via RAF;
     a CSS fallback height prevents full-text flash before JS runs.
   - GO button is same size/position as the active timer circle
@@ -365,17 +358,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: clamp(2px, 0.5vh, 6px);
-  opacity: 1;
-  transition: opacity 1.2s ease;
-}
-
-.words-list.faded {
-  opacity: 0.35;
-}
-
-/* Prep screen prompt fade */
-#prep-prompt-display {
-  transition: opacity 1.2s ease;
 }
 
 .word-item {
@@ -404,15 +386,6 @@ body {
   font-size: clamp(15px, 2.5vh, 20px);
   font-weight: 400;
   line-height: 1.55;
-  text-shadow: 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.7);
-}
-
-/* Story plot */
-.plot-text {
-  color: white;
-  font-size: clamp(22px, 4vh, 34px);
-  font-weight: 300;
-  line-height: 1.4;
   text-shadow: 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.7);
 }
 
@@ -2275,10 +2248,11 @@ TIPS.gratitude = {
 // Adding a new framework = add an entry. No rendering code changes needed.
 //
 // modes:   'parallel'  — all boxes visible at once, tap each when you reach it
+//          'sequential' — move through the structure one step at a time
 //          'counter'   — single tap counter (no elements array)
 // postChallenge.type:
 //          'time-distribution' — proportional bar of time spent per element
-//          'completion'        — show which elements were tapped
+//          'completion-timed'  — show tap order + duration per element
 //          'counter'           — show the total count
 
 const PROMPT_TYPES = {
@@ -2787,8 +2761,6 @@ let timerRAF        = null;
 let timerRunning    = false;
 let beepsPlayed     = new Set();
 let midBeepsPlayed  = new Set();
-let wordFadeTimeout = null;
-let prepFadeTimeout = null;
 
 // Framework state
 let currentFramework      = null;  // selected framework object, or null
@@ -2801,20 +2773,6 @@ let fwkChallengeEndTime   = 0;     // performance.now() when challenge ended
 // ============================================================
 // HELPERS
 // ============================================================
-
-function cancelWordFade() {
-  clearTimeout(wordFadeTimeout);
-  wordFadeTimeout = null;
-  const list = document.querySelector('.words-list');
-  if (list) list.classList.remove('faded');
-}
-
-function clearPrepFade() {
-  clearTimeout(prepFadeTimeout);
-  prepFadeTimeout = null;
-  const el = document.getElementById('prep-prompt-display');
-  if (el) el.style.opacity = '';
-}
 
 function pickRandom(arr, n) {
   const copy = [...arr].sort(() => Math.random() - 0.5);
@@ -2972,9 +2930,9 @@ function timerTick() {
   } else {
     timerRunning = false;
     timerRemaining = 0;
+    captureFrameworkEndTime();
     timerPie.setAttribute('d', '');
     timerNum.textContent = '';
-    cancelWordFade();
     playEnd();
     setTimeout(showTimesUp, 350);
   }
@@ -3019,7 +2977,11 @@ function stopTimer() {
   timerRunning   = false;
   timerStartWall = null;
   timerRemaining = 0;
-  cancelWordFade();
+}
+
+function captureFrameworkEndTime() {
+  if (fwkChallengeEndTime !== 0) return;
+  fwkChallengeEndTime = challengeNow();
 }
 
 // ============================================================
@@ -3121,7 +3083,6 @@ function stopPrepTimer() {
 }
 
 function startActiveChallenge() {
-  clearPrepFade();
   if (currentFramework?.timeOverride) timerTotal = currentFramework.timeOverride;
   timerRemaining = timerTotal;
   showScreen('screen-active');
@@ -3130,6 +3091,7 @@ function startActiveChallenge() {
     (currentChallenge === 'gratitude' || currentChallenge === 'articulation2' ||
      (currentChallenge === 'story' && !currentPromptType)) ? 'none' : '';
   fwkChallengeStartTime = challengeNow();
+  fwkChallengeEndTime   = 0;
   renderFrameworkOverlay();
   startTimer();
 }
@@ -3284,6 +3246,114 @@ const CHALLENGE_DEFAULT_TIMES = {
   gratitude: 60, story: 60, topic: 60,
   selfknowledge: 60, interview: 60, articulation2: 30,
 };
+
+function validateFrameworkDefinitions() {
+  const validModes = new Set(['parallel', 'sequential', 'counter']);
+  const expectedPostTypeByMode = {
+    parallel: 'completion-timed',
+    sequential: 'time-distribution',
+    counter: 'counter',
+  };
+  const allowedFrameworkFields = new Set([
+    'id', 'name', 'description', 'promptText', 'mode', 'disablePrepTime',
+    'timeOverride', 'elements', 'buttonLabel', 'prepButtonLabel',
+    'postChallenge', 'hidePrompt', 'timeTracked',
+  ]);
+  const allowedElementFields = new Set(['label', 'emoji', 'hint', 'flex']);
+  const errors = [];
+
+  for (const [challengeKey, frameworks] of Object.entries(FRAMEWORKS)) {
+    if (!Object.prototype.hasOwnProperty.call(CONFIG, challengeKey)) {
+      errors.push(`FRAMEWORKS.${challengeKey}: unknown challenge key`);
+      continue;
+    }
+    if (!Array.isArray(frameworks) || frameworks.length === 0) {
+      errors.push(`FRAMEWORKS.${challengeKey}: expected a non-empty array`);
+      continue;
+    }
+    if (!Object.prototype.hasOwnProperty.call(CHALLENGE_DEFAULT_DESCS, challengeKey)) {
+      errors.push(`FRAMEWORKS.${challengeKey}: missing CHALLENGE_DEFAULT_DESCS entry`);
+    }
+
+    const ids = new Set();
+    frameworks.forEach((fw, index) => {
+      const label = `FRAMEWORKS.${challengeKey}[${index}]`;
+
+      ['id', 'name', 'description', 'promptText', 'mode'].forEach(field => {
+        if (typeof fw[field] !== 'string' || fw[field].trim() === '') {
+          errors.push(`${label}: missing or invalid ${field}`);
+        }
+      });
+
+      if (ids.has(fw.id)) {
+        errors.push(`${label}: duplicate id "${fw.id}"`);
+      } else if (fw.id) {
+        ids.add(fw.id);
+      }
+
+      if (!validModes.has(fw.mode)) {
+        errors.push(`${label}: invalid mode "${fw.mode}"`);
+      }
+
+      if (!fw.postChallenge || typeof fw.postChallenge !== 'object') {
+        errors.push(`${label}: missing postChallenge`);
+      } else {
+        const expectedPostType = expectedPostTypeByMode[fw.mode];
+        if (typeof fw.postChallenge.type !== 'string' || fw.postChallenge.type.trim() === '') {
+          errors.push(`${label}: missing postChallenge.type`);
+        } else if (expectedPostType && fw.postChallenge.type !== expectedPostType) {
+          errors.push(`${label}: mode "${fw.mode}" must use postChallenge.type "${expectedPostType}"`);
+        }
+      }
+
+      if (fw.timeOverride !== undefined && (!Number.isFinite(fw.timeOverride) || fw.timeOverride <= 0)) {
+        errors.push(`${label}: timeOverride must be a positive number`);
+      }
+
+      if (fw.mode === 'parallel' || fw.mode === 'sequential') {
+        if (!Array.isArray(fw.elements) || fw.elements.length === 0) {
+          errors.push(`${label}: ${fw.mode} frameworks require a non-empty elements array`);
+        } else {
+          fw.elements.forEach((el, elIndex) => {
+            if (!el || typeof el !== 'object') {
+              errors.push(`${label}.elements[${elIndex}]: invalid element`);
+              return;
+            }
+            if (fw.mode === 'sequential') {
+              if (typeof el.label !== 'string' || el.label.trim() === '') {
+                errors.push(`${label}.elements[${elIndex}]: sequential elements require a label`);
+              }
+              if (typeof el.hint !== 'string' || el.hint.trim() === '') {
+                errors.push(`${label}.elements[${elIndex}]: sequential elements require a hint`);
+              }
+            }
+            if (fw.mode === 'parallel' && fw.postChallenge?.type === 'completion-timed' &&
+                typeof el.label !== 'string' && typeof el.emoji !== 'string') {
+              errors.push(`${label}.elements[${elIndex}]: parallel elements need a label or emoji`);
+            }
+            Object.keys(el).forEach(field => {
+              if (!allowedElementFields.has(field)) {
+                console.warn(`${label}.elements[${elIndex}]: unknown field "${field}"`);
+              }
+            });
+          });
+        }
+      }
+
+      Object.keys(fw).forEach(field => {
+        if (!allowedFrameworkFields.has(field)) {
+          console.warn(`${label}: unknown field "${field}"`);
+        }
+      });
+    });
+  }
+
+  if (errors.length > 0) {
+    throw new Error('Invalid framework configuration:\n' + errors.join('\n'));
+  }
+}
+
+validateFrameworkDefinitions();
 
 // Converts a verb to its gerund (-ing) form.
 // Rule: drop silent trailing 'e' (not 'ee', 'oe') then add 'ing'; otherwise just add 'ing'.
@@ -3643,6 +3713,7 @@ function renderFrameworkOverlay() {
           updateSeqState();
         } else {
           updateSeqState();
+          captureFrameworkEndTime();
           stopTimer();
           playEnd();
           setTimeout(showTimesUp, 350);
@@ -3712,6 +3783,7 @@ function renderFrameworkOverlay() {
         box.classList.add('tapped');
         // auto-complete when all elements tapped
         if (fwkElementTaps.every(t => t !== null)) {
+          captureFrameworkEndTime();
           stopTimer();
           playEnd();
           setTimeout(showTimesUp, 350);
@@ -4540,6 +4612,7 @@ document.getElementById('active-back').onclick = () => {
 };
 
 document.getElementById('active-skip').onclick = () => {
+  captureFrameworkEndTime();
   stopTimer();
   showTimesUp();
 };
@@ -4625,7 +4698,7 @@ document.getElementById('confirm-keep').onclick = () => {
 // -Time's up screen —
 
 function showTimesUp() {
-  fwkChallengeEndTime = challengeNow();
+  captureFrameworkEndTime();
 
   const title      = document.querySelector('.timesup-title');
   const sub        = document.querySelector('.timesup-sub');
