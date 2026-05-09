@@ -145,6 +145,9 @@ body {
    ============================================================ */
 
 .back-btn {
+  position: absolute;
+  top: max(28px, 5%);
+  left: max(18px, 4%);
   background: none;
   border: none;
   -webkit-appearance: none;
@@ -1904,6 +1907,22 @@ body {
   padding-right: 20px;
 }
 
+.custom-prompt-prefix {
+  display: none;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  color: rgba(255,255,255,0.88);
+  font-size: clamp(13px, 2.02vh, 16px);
+  line-height: 1.35;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.custom-prompt-prefix.visible {
+  display: block;
+}
+
 .custom-prompt-form {
   display: flex;
   flex-direction: column;
@@ -2186,6 +2205,7 @@ body {
       <div class="custom-prompt-title">Custom Prompt</div>
       <div class="custom-prompt-helper">Enter a custom prompt and start the challenge with your current settings</div>
       <form class="custom-prompt-form" id="custom-prompt-form">
+        <div class="custom-prompt-prefix" id="custom-prompt-prefix"></div>
         <textarea class="custom-prompt-input" id="custom-prompt-input" placeholder="Type your prompt here"></textarea>
         <div class="custom-prompt-actions">
           <button class="custom-prompt-go" id="custom-prompt-go" type="submit">Go</button>
@@ -3993,6 +4013,22 @@ function clearCustomPromptState() {
   currentCustomPromptText = '';
 }
 
+function getCustomPromptPrefixText(challenge = currentChallenge) {
+  if (challenge === 'story') {
+    if (currentPromptType?.id === '3-words') return 'Tell a story including the words ';
+    if (currentPromptType?.id === 'basic-plot') return 'Tell this story: ';
+    return 'Tell a story about ';
+  }
+  if (challenge === 'topic') return 'Talk about ';
+  return '';
+}
+
+function getCustomPromptFullText(rawPrompt = currentCustomPromptText) {
+  const raw = String(rawPrompt || '').trim();
+  const prefix = getCustomPromptPrefixText();
+  return prefix ? prefix + raw : raw;
+}
+
 function animateTap(el, cb, ms = 350) {
   el.classList.remove('tapping');
   void el.offsetWidth;          // force reflow to restart animation
@@ -4652,7 +4688,7 @@ function buildStoryWordsHTML(words) {
 // For topic/story: once a prompt has been picked at launch, returns that specific text
 // rather than the generic default or framework promptText.
 function getEffectivePromptText() {
-  if (challengeSupportsCustomPrompt() && currentCustomPromptText) return currentCustomPromptText;
+  if (challengeSupportsCustomPrompt() && currentCustomPromptText) return getCustomPromptFullText();
   if (currentChallenge === 'story') {
     if (currentStoryWords) {
       const ws = currentStoryWords;
@@ -4668,7 +4704,7 @@ function getEffectivePromptText() {
 // Returns HTML for the effective prompt, with highlights for topic/story challenges.
 function getEffectivePromptHTML() {
   if (challengeSupportsCustomPrompt() && currentCustomPromptText) {
-    return escapeHTML(currentCustomPromptText);
+    return escapeHTML(getCustomPromptFullText());
   }
   if (currentChallenge === 'story') {
     if (currentStoryWords) return buildStoryWordsHTML(currentStoryWords);
@@ -5491,7 +5527,12 @@ function openCustomPromptPanel() {
   if (!challengeSupportsCustomPrompt()) return;
   const overlay = document.getElementById('custom-prompt-overlay');
   const input = document.getElementById('custom-prompt-input');
+  const prefixEl = document.getElementById('custom-prompt-prefix');
+  const prefix = getCustomPromptPrefixText();
   input.value = currentCustomPromptText || '';
+  input.placeholder = prefix ? 'Continue here' : 'Type your prompt here';
+  prefixEl.textContent = prefix.trim();
+  prefixEl.classList.toggle('visible', Boolean(prefix));
   overlay.classList.add('visible');
   setTimeout(() => input.focus(), 80);
 }
@@ -5505,7 +5546,7 @@ function launchCustomPromptChallenge(rawPrompt) {
   if (!prompt || !challengeSupportsCustomPrompt()) return;
 
   currentCustomPromptText = prompt;
-  usedPromptText = prompt;
+  usedPromptText = getCustomPromptFullText(prompt);
 
   if (currentChallenge === 'story') {
     currentStoryWords = null;
@@ -5515,15 +5556,35 @@ function launchCustomPromptChallenge(rawPrompt) {
     currentTopicText     = null;
   }
 
-  document.getElementById('prompt-label').textContent = '';
-  document.getElementById('prompt-display').innerHTML =
-    `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+  if (currentChallenge === 'story' || currentChallenge === 'topic') {
+    document.getElementById('prompt-label').textContent = '';
+    document.getElementById('prompt-display').innerHTML =
+      `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+  } else if (currentChallenge === 'selfknowledge') {
+    document.getElementById('prompt-label').textContent = 'Your prompt';
+    document.getElementById('prompt-display').innerHTML =
+      `<div class="words-list"><p class="twister-text">${escapeHTML(prompt)}</p></div>`;
+  } else if (currentChallenge === 'interview') {
+    document.getElementById('prompt-label').textContent = 'Your question';
+    document.getElementById('prompt-display').innerHTML =
+      `<p class="twister-text">${escapeHTML(prompt)}</p>`;
+  }
   timerTotal = getEffectiveTime(currentChallenge);
 
   if (prepTimeEnabled && challengeSupportsPrep() && !currentFramework?.disablePrepTime) {
-    document.getElementById('prep-prompt-label').textContent = '';
-    document.getElementById('prep-prompt-display').innerHTML =
-      `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+    if (currentChallenge === 'story' || currentChallenge === 'topic') {
+      document.getElementById('prep-prompt-label').textContent = '';
+      document.getElementById('prep-prompt-display').innerHTML =
+        `<p class="prompt-text">${getPrepDescHTML()}</p>`;
+    } else if (currentChallenge === 'selfknowledge') {
+      document.getElementById('prep-prompt-label').textContent = 'Your prompt';
+      document.getElementById('prep-prompt-display').innerHTML =
+        `<p class="twister-text">${escapeHTML(prompt)}</p>`;
+    } else if (currentChallenge === 'interview') {
+      document.getElementById('prep-prompt-label').textContent = 'Your question';
+      document.getElementById('prep-prompt-display').innerHTML =
+        `<p class="twister-text">${escapeHTML(prompt)}</p>`;
+    }
     showScreen('screen-prep');
     startPrepTimer();
     return;
@@ -6088,9 +6149,19 @@ function launchChallenge() {
 
 function renderCurrentPromptForReplay() {
   if (challengeSupportsCustomPrompt() && currentCustomPromptText) {
-    document.getElementById('prompt-label').textContent = '';
-    document.getElementById('prompt-display').innerHTML =
-      `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+    if (currentChallenge === 'story' || currentChallenge === 'topic') {
+      document.getElementById('prompt-label').textContent = '';
+      document.getElementById('prompt-display').innerHTML =
+        `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+    } else if (currentChallenge === 'selfknowledge') {
+      document.getElementById('prompt-label').textContent = 'Your prompt';
+      document.getElementById('prompt-display').innerHTML =
+        `<div class="words-list"><p class="twister-text">${escapeHTML(currentCustomPromptText)}</p></div>`;
+    } else if (currentChallenge === 'interview') {
+      document.getElementById('prompt-label').textContent = 'Your question';
+      document.getElementById('prompt-display').innerHTML =
+        `<p class="twister-text">${escapeHTML(currentCustomPromptText)}</p>`;
+    }
     return;
   }
 
@@ -6130,9 +6201,19 @@ function replaySamePrompt() {
 
   if (prepTimeEnabled && challengeSupportsPrep() && !currentFramework?.disablePrepTime) {
     if (challengeSupportsCustomPrompt() && currentCustomPromptText) {
-      document.getElementById('prep-prompt-label').textContent = '';
-      document.getElementById('prep-prompt-display').innerHTML =
-        `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+      if (currentChallenge === 'story' || currentChallenge === 'topic') {
+        document.getElementById('prep-prompt-label').textContent = '';
+        document.getElementById('prep-prompt-display').innerHTML =
+          `<p class="prompt-text">${getPrepDescHTML()}</p>`;
+      } else if (currentChallenge === 'selfknowledge') {
+        document.getElementById('prep-prompt-label').textContent = 'Your prompt';
+        document.getElementById('prep-prompt-display').innerHTML =
+          `<p class="twister-text">${escapeHTML(currentCustomPromptText)}</p>`;
+      } else if (currentChallenge === 'interview') {
+        document.getElementById('prep-prompt-label').textContent = 'Your question';
+        document.getElementById('prep-prompt-display').innerHTML =
+          `<p class="twister-text">${escapeHTML(currentCustomPromptText)}</p>`;
+      }
     } else if (currentChallenge === 'story' || currentChallenge === 'topic' || currentChallenge === 'gratitude') {
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML =
