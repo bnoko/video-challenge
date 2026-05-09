@@ -2287,7 +2287,7 @@ const CHALLENGES = {
   },
   gratitude: {
     buttonId: 'btn-gratitude',
-    label: 'Daily Gratitude',
+    label: 'Gratitude',
     defaultTime: 60,
     prepSupported: true,
     rerollSupported: false,
@@ -2402,7 +2402,7 @@ TIPS.interview = {
 };
 
 TIPS.gratitude = {
-  title: 'Daily Gratitude',
+  title: 'Gratitude',
   sections: [
     {
       heading: 'How it works',
@@ -2511,7 +2511,7 @@ const FRAMEWORKS = {
     {
       id: 'rule-of-three',
       name: 'Rule of Three',
-      description: 'Make exactly three separate points. Tap each box as you move to that point.',
+      description: 'Make exactly three separate points.',
       promptText: 'Talk about a random topic, making exactly three distinct points.',
       mode: 'parallel',
       elements: [
@@ -2524,7 +2524,7 @@ const FRAMEWORKS = {
     {
       id: 'opinion-justify',
       name: 'Opinion + Justify',
-      description: 'Lead with a firm opinion, then spend the rest justifying it. Tap as you move to each part.',
+      description: 'Lead with a firm opinion, then spend the rest justifying it.',
       promptText: 'Share a firm opinion on a random topic, then justify it.',
       mode: 'parallel',
       elements: [
@@ -2550,7 +2550,7 @@ const FRAMEWORKS = {
     {
       id: 'specific-detail',
       name: 'Specific Detail',
-      description: 'Follow every general claim with a hyper-specific detail. Tap each time you land one.',
+      description: 'Follow every general claim with a hyper-specific detail.',
       promptText: 'Talk about a random topic, grounding every claim with a specific detail.',
       mode: 'counter',
       buttonLabel: 'Tap each time you land a specific detail',
@@ -2561,7 +2561,7 @@ const FRAMEWORKS = {
     {
       id: 'person-place-feeling',
       name: 'Person / Place / Feeling',
-      description: 'Mention one person, one place, and one feeling you\'re grateful for. Tap each as you cover it.',
+      description: 'Mention one person, one place, and one feeling you\'re grateful for.',
       promptText: 'Share your gratitude for a person, a place, and a feeling.',
       mode: 'parallel',
       timeTracked: false,
@@ -2573,9 +2573,9 @@ const FRAMEWORKS = {
       postChallenge: { type: 'completion-timed' },
     },
     {
-      id: 'what-why-impact',
+      id: 'past-present-future',
       name: 'Past / Present / Future',
-      description: 'Share one thing from your past, one thing in your present, and one thing ahead of you that you\'re grateful for. Tap to move to the next section.',
+      description: 'Share one thing from your past, one thing in your present, and one thing ahead of you that you\'re grateful for.',
       promptText: 'Share something from your past, your present, and your future that you\'re grateful for.',
       mode: 'sequential',
       hidePrompt: true,
@@ -2589,7 +2589,7 @@ const FRAMEWORKS = {
     {
       id: 'gratitude-blitz',
       name: 'Gratitude Blitz',
-      description: 'Name as many different things you\'re grateful for as you can. Tap each time you think of a new one.',
+      description: 'Name as many different things you\'re grateful for as you can.',
       promptText: 'Name as many things you\'re grateful for as you can.',
       mode: 'counter',
       disablePrepTime: true,
