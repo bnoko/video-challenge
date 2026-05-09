@@ -1861,6 +1861,8 @@ body {
   inset: 0;
   z-index: 115;
   pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .creator-marker {
@@ -1884,16 +1886,9 @@ body {
 .creator-marker-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   margin-bottom: 8px;
-}
-
-.creator-marker-kind {
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
 }
 
 .creator-marker-time {
@@ -1930,16 +1925,16 @@ body {
 }
 
 #creator-auto-marker {
-  top: max(26px, 4.5%);
+  top: 50%;
   background:
     linear-gradient(180deg, rgba(207, 255, 74, 0.96), rgba(139, 244, 61, 0.94));
   color: #102000;
   border: 3px solid rgba(255,255,255,0.92);
-  transform: translateX(-50%) translateY(-10px);
+  transform: translateX(-50%) translateY(calc(-100% - 10px));
 }
 
 #creator-auto-marker.visible {
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(-50%) translateY(-100%);
 }
 
 #creator-auto-marker .creator-marker-title,
@@ -1948,7 +1943,7 @@ body {
 }
 
 #creator-note-marker {
-  bottom: max(28px, 5%);
+  top: 50%;
   background:
     linear-gradient(180deg, rgba(255, 111, 0, 0.96), rgba(255, 59, 48, 0.94));
   border: 3px solid rgba(255, 245, 157, 0.98);
@@ -4408,6 +4403,7 @@ let creatorAutoMarkerTimeout = null;
 let noteMarkerActive = false;
 let noteTouchStartX = 0;
 let noteTouchStartY = 0;
+let suppressRestoreClickUntil = 0;
 
 const visBtn = document.getElementById('vis-toggle-btn');
 const appEl  = document.getElementById('app');
@@ -4442,7 +4438,7 @@ function buildCreatorMarkerData() {
   };
 }
 
-function renderCreatorMarker(el, kindLabel, title, data) {
+function renderCreatorMarker(el, title, data) {
   const lines = [];
   if (data.challengeName) lines.push(`<div class="creator-marker-line"><strong>Challenge:</strong> ${data.challengeName}</div>`);
   if (data.frameworkName) lines.push(`<div class="creator-marker-line"><strong>Framework:</strong> ${data.frameworkName}</div>`);
@@ -4451,7 +4447,6 @@ function renderCreatorMarker(el, kindLabel, title, data) {
 
   el.innerHTML =
     `<div class="creator-marker-head">`
-      + `<span class="creator-marker-kind">${kindLabel}</span>`
       + `<span class="creator-marker-time">${data.timestamp}</span>`
     + `</div>`
     + `<div class="creator-marker-title">${title}</div>`
@@ -4460,7 +4455,7 @@ function renderCreatorMarker(el, kindLabel, title, data) {
 
 function showAutoTakeEndMarker() {
   clearTimeout(creatorAutoMarkerTimeout);
-  renderCreatorMarker(creatorAutoMarkerEl, 'Take End', 'Take finished', buildCreatorMarkerData());
+  renderCreatorMarker(creatorAutoMarkerEl, 'Take end marker', buildCreatorMarkerData());
   creatorAutoMarkerEl.classList.add('visible');
   creatorAutoMarkerTimeout = setTimeout(() => {
     creatorAutoMarkerEl.classList.remove('visible');
@@ -4469,7 +4464,7 @@ function showAutoTakeEndMarker() {
 
 function showNoteMarker() {
   noteMarkerActive = true;
-  renderCreatorMarker(creatorNoteMarkerEl, 'Note Marker', 'Speak note to future self', buildCreatorMarkerData());
+  renderCreatorMarker(creatorNoteMarkerEl, 'Note marker', buildCreatorMarkerData());
   creatorNoteMarkerEl.classList.add('visible');
 }
 
@@ -4585,6 +4580,7 @@ restoreOverlay.addEventListener('touchstart', e => {
 
 restoreOverlay.addEventListener('touchend', e => {
   if (!uiHidden) return;
+  suppressRestoreClickUntil = Date.now() + 500;
   const touch = e.changedTouches[0];
   const dx = touch.clientX - noteTouchStartX;
   const dy = touch.clientY - noteTouchStartY;
@@ -4599,6 +4595,7 @@ restoreOverlay.addEventListener('touchend', e => {
 
 restoreOverlay.addEventListener('click', e => {
   if (!uiHidden) return;
+  if (Date.now() < suppressRestoreClickUntil) return;
   if (isLowerThirdTouch(e.clientY)) {
     toggleNoteMarker();
     return;
