@@ -667,25 +667,25 @@ body {
   left: max(20px, 5%);
   right: max(20px, 5%);
   display: flex;
+  align-items: stretch;
   gap: clamp(8px, 1.5vw, 12px);
 }
 
-.timesup-again-btn,
-.timesup-menu-btn {
+.timesup-action-btn {
   flex: 1;
-  font-size: clamp(14px, 2.3vh, 19px);
+  min-width: 0;
+  font-size: clamp(13px, 2.1vh, 17px);
   padding: clamp(12px, 2.2vh, 18px) 8px;
   border-radius: 30px;
   cursor: pointer;
   letter-spacing: 0.02em;
   user-select: none;
-  white-space: nowrap;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   text-align: center;
 }
 
-.timesup-again-btn {
+.timesup-primary-btn {
   background: rgba(0,0,0,0.35);
   border: 1.5px solid rgba(255,255,255,0.45);
   color: white;
@@ -2151,8 +2151,9 @@ body {
       </div>
     </div>
     <div class="timesup-actions">
-      <button class="timesup-again-btn" id="again-btn">Do it again</button>
-      <button class="timesup-menu-btn" id="menu-btn">Return to menu</button>
+      <button class="timesup-action-btn timesup-primary-btn" id="same-prompt-btn">Same Prompt</button>
+      <button class="timesup-action-btn timesup-primary-btn" id="new-prompt-btn">New Prompt</button>
+      <button class="timesup-action-btn timesup-menu-btn" id="menu-btn">Main Menu</button>
     </div>
   </div>
 
@@ -3800,6 +3801,7 @@ let currentTopicText     = null; // just the topic word/phrase (lowercased) — 
 let currentPromptType = null;  // selected prompt type object (from PROMPT_TYPES), or null
 let currentStoryWords = null;  // array of 3 word strings (set at launch)
 let currentPlotText   = null;  // plot premise string (set at launch)
+let currentArticulationItem = null; // current articulation passage/item for same-prompt replay
 
 // Articulation 2 state
 let artLineHeight  = 0;    // px height of one rendered line
@@ -4179,6 +4181,7 @@ function renderTopic(topic) {
 }
 
 function renderArticulation(item) {
+  currentArticulationItem = item;
   const d = document.getElementById('prompt-display');
   document.getElementById('prompt-label').textContent = item.name;
   d.innerHTML = `<div class="articulation-scroll"><p class="articulation-text">${item.text}</p></div>`;
@@ -4187,6 +4190,7 @@ function renderArticulation(item) {
 // Articulation 2 helpers
 
 function renderArticulation2(item) {
+  currentArticulationItem = item;
   document.getElementById('prompt-label').textContent = item.name;
   document.getElementById('prompt-display').innerHTML =
     `<div class="art2-scroll" id="art2-scroll"><p class="art2-text" id="art2-text">${item.text}</p></div>`;
@@ -5849,6 +5853,68 @@ function launchChallenge() {
   startActiveChallenge();
 }
 
+function renderCurrentPromptForReplay() {
+  if (currentChallenge === 'story' || currentChallenge === 'topic' || currentChallenge === 'gratitude') {
+    document.getElementById('prompt-label').textContent = '';
+    document.getElementById('prompt-display').innerHTML =
+      `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+    return;
+  }
+
+  if (currentChallenge === 'selfknowledge') {
+    document.getElementById('prompt-label').textContent = 'Your prompt';
+    document.getElementById('prompt-display').innerHTML =
+      `<div class="words-list"><p class="twister-text">${usedPromptText}</p></div>`;
+    return;
+  }
+
+  if (currentChallenge === 'interview') {
+    document.getElementById('prompt-label').textContent = 'Your question';
+    document.getElementById('prompt-display').innerHTML = `<p class="twister-text">${usedPromptText}</p>`;
+    return;
+  }
+
+  if (currentChallenge === 'articulation' && currentArticulationItem) {
+    renderArticulation(currentArticulationItem);
+    return;
+  }
+
+  if (currentChallenge === 'articulation2' && currentArticulationItem) {
+    renderArticulation2(currentArticulationItem);
+  }
+}
+
+function replaySamePrompt() {
+  clearFrameworkOverlay();
+  renderCurrentPromptForReplay();
+
+  if (prepTimeEnabled && challengeSupportsPrep() && !currentFramework?.disablePrepTime) {
+    if (currentChallenge === 'story' || currentChallenge === 'topic' || currentChallenge === 'gratitude') {
+      document.getElementById('prep-prompt-label').textContent = '';
+      document.getElementById('prep-prompt-display').innerHTML =
+        `<p class="prompt-text">${getPrepDescHTML()}</p>`;
+    } else if (currentChallenge === 'selfknowledge') {
+      document.getElementById('prep-prompt-label').textContent = 'Your prompt';
+      document.getElementById('prep-prompt-display').innerHTML =
+        `<p class="twister-text">${usedPromptText}</p>`;
+    } else if (currentChallenge === 'interview') {
+      document.getElementById('prep-prompt-label').textContent = 'Your question';
+      document.getElementById('prep-prompt-display').innerHTML =
+        `<p class="twister-text">${usedPromptText}</p>`;
+    } else if (currentChallenge === 'articulation' || currentChallenge === 'articulation2') {
+      document.getElementById('prep-prompt-label').textContent = usedPromptText;
+      document.getElementById('prep-prompt-display').innerHTML =
+        document.getElementById('prompt-display').innerHTML;
+    }
+
+    showScreen('screen-prep');
+    startPrepTimer();
+    return;
+  }
+
+  startActiveChallenge();
+}
+
 // -Active screen —
 
 document.getElementById('active-back').onclick = () => {
@@ -6028,7 +6094,13 @@ function showTimesUp() {
   showScreen('screen-timesup');
 }
 
-document.getElementById('again-btn').onclick = () => {
+document.getElementById('same-prompt-btn').onclick = () => {
+  showAutoTakeEndMarker();
+  incrementTakeN(currentChallenge);
+  replaySamePrompt();
+};
+
+document.getElementById('new-prompt-btn').onclick = () => {
   // Return to the intro screen for the same challenge (currentChallenge stays set)
   // Keep currentFramework selected so user doesn't have to re-pick it
   showAutoTakeEndMarker();
