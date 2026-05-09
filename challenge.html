@@ -2556,12 +2556,17 @@ const FRAMEWORKS = {
     },
     {
       id: 'specific-detail',
-      name: 'Specific Detail',
-      description: 'Follow every general claim with a hyper-specific detail.',
-      promptText: 'Talk about a random topic, grounding every claim with a specific detail.',
+      name: 'Get Specific',
+      description: 'Practice making your answer more concrete by adding as many specific details as you can.',
+      promptText: 'Talk about a random topic, adding as many specific details as you can.',
       mode: 'counter',
-      buttonLabel: 'Tap each time you land a specific detail',
-      postChallenge: { type: 'counter', resultSentence: '{count} specific details' },
+      buttonLabel: 'Tap here for every specific detail you add',
+      prepButtonLabel: 'Once the challenge begins, tap here for every specific detail you add',
+      postChallenge: {
+        type: 'counter',
+        resultSingular: 'specific detail',
+        resultPlural: 'specific details',
+      },
     },
   ],
   gratitude: [
@@ -5051,6 +5056,15 @@ function renderFrameworkZone() {
       numSpan.textContent = fwkTapCount;
       sentence.appendChild(numSpan);
       if (parts[1]) sentence.appendChild(document.createTextNode(parts[1]));
+    } else if (pc.resultSingular || pc.resultPlural) {
+      const numSpan = document.createElement('span');
+      numSpan.className = 'fwk-counter-sentence-num';
+      numSpan.textContent = fwkTapCount;
+      sentence.appendChild(numSpan);
+      const label = fwkTapCount === 1
+        ? (pc.resultSingular || pc.resultPlural || '')
+        : (pc.resultPlural || pc.resultSingular || '');
+      if (label) sentence.appendChild(document.createTextNode(' ' + label));
     } else {
       const numSpan = document.createElement('span');
       numSpan.className = 'fwk-counter-sentence-num';
