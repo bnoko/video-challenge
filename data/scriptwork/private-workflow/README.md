@@ -6,6 +6,12 @@ This folder is intentionally separate from `data/scriptwork/private/`, which is
 the publish-only app library. Drafts, sourced text, raw responses, rejected
 items, and review notes belong here.
 
+Preferred real-world workflow:
+
+- Byron gets texts manually in browser Grok
+- Byron saves those outputs in small local batch files
+- the Script Curator cleans those files and imports the usable passages here
+
 ## Files
 
 - `sourcing_index.csv` is the editable dashboard.
@@ -28,6 +34,10 @@ node scripts/scriptwork_private_pipeline.js publish
 ```
 
 ## Grok Sourcing
+
+The API path still exists, but it is optional support.
+It is not required if Byron is getting better results by using Grok in the
+browser and saving the outputs locally.
 
 Preferred setup: create an untracked `.env.local` file in the repo root:
 

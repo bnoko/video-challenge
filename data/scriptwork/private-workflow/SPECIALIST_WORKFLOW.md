@@ -6,6 +6,12 @@ The specialist helps maintain Byron's private `Script Work` source pipeline.
 The role is not to change the app UI. It moves items through the file-based
 workflow from candidate idea to approved private excerpt.
 
+Preferred sourcing method:
+
+- Byron uses Grok manually in the browser
+- the specialist imports, cleans, and publishes those saved results
+- API sourcing is optional fallback support
+
 ## Files Touched
 
 - `data/scriptwork/private-workflow/sourcing_index.csv`
