@@ -535,7 +535,7 @@ body {
   justify-content: center;
   gap: clamp(28px, 4vw, 42px);
   flex-wrap: wrap;
-  margin-bottom: clamp(8px, 1.4vh, 14px);
+  margin-bottom: clamp(3px, 0.6vh, 8px);
 }
 
 .scriptwork-result-metric {
@@ -4399,6 +4399,7 @@ let fwkTimedOut           = false; // true only when the challenge ends by natur
 let scriptWorkDragActive  = false;
 let scriptWorkDragStartY  = 0;
 let scriptWorkDragStartScrollTop = 0;
+let scriptWorkKeyboardScrollRAF = null;
 
 // ============================================================
 // HELPERS
@@ -7116,10 +7117,32 @@ function scrollScriptWorkByKeyboard(direction) {
   const scrollEl = getScriptWorkScrollEl();
   if (!scrollEl) return false;
   const lineHeight = parseFloat(getComputedStyle(scrollEl).lineHeight) || 24;
-  scrollEl.scrollBy({
-    top: direction * lineHeight,
-    behavior: 'smooth',
-  });
+  const start = scrollEl.scrollTop;
+  const maxScroll = Math.max(0, scrollEl.scrollHeight - scrollEl.clientHeight);
+  const target = Math.max(0, Math.min(maxScroll, start + (direction * lineHeight)));
+  const distance = target - start;
+  if (distance === 0) return false;
+
+  if (scriptWorkKeyboardScrollRAF !== null) {
+    cancelAnimationFrame(scriptWorkKeyboardScrollRAF);
+    scriptWorkKeyboardScrollRAF = null;
+  }
+
+  const duration = 240;
+  const startTime = performance.now();
+  const easeInOut = t => 0.5 - (Math.cos(Math.PI * t) / 2);
+
+  const step = now => {
+    const progress = Math.min(1, (now - startTime) / duration);
+    scrollEl.scrollTop = start + (distance * easeInOut(progress));
+    if (progress < 1) {
+      scriptWorkKeyboardScrollRAF = requestAnimationFrame(step);
+    } else {
+      scriptWorkKeyboardScrollRAF = null;
+    }
+  };
+
+  scriptWorkKeyboardScrollRAF = requestAnimationFrame(step);
   return true;
 }
 
