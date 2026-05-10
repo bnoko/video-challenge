@@ -532,8 +532,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(12px, 2vw, 18px);
+  gap: clamp(28px, 4vw, 42px);
   flex-wrap: wrap;
+  margin-bottom: clamp(14px, 2.6vh, 24px);
 }
 
 .scriptwork-result-metric {
@@ -1704,7 +1705,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: clamp(6px, 1vh, 10px);
-  margin-top: clamp(-10px, -1.4vh, -6px);
+  margin-top: clamp(10px, 1.8vh, 18px);
 }
 
 .prep-plus-btn {
@@ -3028,7 +3029,7 @@ const FRAMEWORKS = {
     },
     {
       id: 'conversational-focus',
-      name: 'Conversational',
+      name: 'Naturalness',
       description: 'Focus on making the text feel personal, specific, and spoken to someone real.',
       promptText: 'Deliver a script passage conversationally.',
       mode: 'focus',
@@ -6593,6 +6594,14 @@ document.addEventListener('keydown', e => {
   } else if (key === 't') {
     e.preventDefault();
     toggleNoteMarker();
+  } else if (currentChallenge === 'scriptwork' && document.getElementById('screen-active').classList.contains('active')) {
+    if (key === 'arrowdown' || key === 'down') {
+      e.preventDefault();
+      scrollScriptWorkByKeyboard(1);
+    } else if (key === 'arrowup' || key === 'up') {
+      e.preventDefault();
+      scrollScriptWorkByKeyboard(-1);
+    }
   }
 });
 
@@ -7100,6 +7109,17 @@ function moveScriptWorkDrag(clientY) {
 
 function endScriptWorkDrag() {
   scriptWorkDragActive = false;
+}
+
+function scrollScriptWorkByKeyboard(direction) {
+  const scrollEl = getScriptWorkScrollEl();
+  if (!scrollEl) return false;
+  const lineHeight = parseFloat(getComputedStyle(scrollEl).lineHeight) || 24;
+  scrollEl.scrollBy({
+    top: direction * lineHeight * 2,
+    behavior: 'smooth',
+  });
+  return true;
 }
 
 // Tap anywhere on the active screen (not on a button) advances art2 one line
