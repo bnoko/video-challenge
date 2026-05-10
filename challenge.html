@@ -535,7 +535,7 @@ body {
   justify-content: center;
   gap: clamp(28px, 4vw, 42px);
   flex-wrap: wrap;
-  margin-bottom: clamp(3px, 0.6vh, 8px);
+  margin-bottom: 0;
 }
 
 .scriptwork-result-metric {
@@ -4334,6 +4334,10 @@ function playBeep() {
   tone(880, 0, 0.09, 0.32);
 }
 
+function playReadySetGoBeep() {
+  tone(880, 0, 0.09, 0.16);
+}
+
 // Quieter mid-challenge beep -every 10 seconds
 function playMidBeep() {
   tone(880, 0, 0.09, 0.16);
@@ -4799,10 +4803,10 @@ function hideReadySetGo() {
 }
 
 function triggerReadySetGo(onDone) {
-  showReadySetGo('Ready', false); playBeep();
-  setTimeout(() => { showReadySetGo('Set', false);  playBeep(); }, 1000);
-  setTimeout(() => { showReadySetGo('Go',   true);  playBeep(); }, 2000);
-  setTimeout(() => { hideReadySetGo(); if (onDone) onDone(); }, 2700);
+  showReadySetGo('Ready', false); playReadySetGoBeep();
+  setTimeout(() => { showReadySetGo('Set', false);  playReadySetGoBeep(); }, 333);
+  setTimeout(() => { showReadySetGo('Go',   true);  playReadySetGoBeep(); }, 666);
+  setTimeout(() => { hideReadySetGo(); if (onDone) onDone(); }, 940);
 }
 
 function prepTimerTick() {
@@ -4814,15 +4818,15 @@ function prepTimerTick() {
     prepBeepsPlayed.add(3);
     prepTimerPie.setAttribute('d', '');
     prepTimerNum.textContent = '';
-    showReadySetGo('Ready', false); playBeep();
+    showReadySetGo('Ready', false); playReadySetGoBeep();
   }
   if (left <= 2 && left > 1 && !prepBeepsPlayed.has(2)) {
     prepBeepsPlayed.add(2);
-    showReadySetGo('Set', false); playBeep();
+    showReadySetGo('Set', false); playReadySetGoBeep();
   }
   if (left <= 1 && !prepBeepsPlayed.has(1)) {
     prepBeepsPlayed.add(1);
-    showReadySetGo('Go', true); playBeep();
+    showReadySetGo('Go', true); playReadySetGoBeep();
   }
 
   if (left > 3) renderPrepTimer(left);
@@ -4831,7 +4835,7 @@ function prepTimerTick() {
     prepTimerRAF = requestAnimationFrame(prepTimerTick);
   } else {
     prepTimerRunning = false;
-    setTimeout(() => { hideReadySetGo(); playStart(); startActiveChallenge(); }, 700);
+    setTimeout(() => { hideReadySetGo(); playStart(); startActiveChallenge(); }, 260);
   }
 }
 
