@@ -31,6 +31,10 @@ The JSON files in `data/` are now the authoring source of truth for:
 - `data/articulation.json` → `ARTICULATIONS`
 - `data/scriptwork/public/original_passages.json` → `SCRIPT_WORK_PUBLIC_ORIGINAL_PASSAGES`
 - `data/scriptwork/public/articulation_passages.json` → `SCRIPT_WORK_PUBLIC_ARTICULATION_PASSAGES`
+- `data/scriptwork/private/movie_monologues.json` → `SCRIPT_WORK_PRIVATE_MOVIE_MONOLOGUES`
+- `data/scriptwork/private/famous_speeches.json` → `SCRIPT_WORK_PRIVATE_FAMOUS_SPEECHES`
+- `data/scriptwork/private/poetry.json` → `SCRIPT_WORK_PRIVATE_POETRY`
+- `data/scriptwork/private/personal_scripts.json` → `SCRIPT_WORK_PRIVATE_PERSONAL_SCRIPTS`
 
 To push updated content into the app without deploying yet, run:
 
@@ -43,6 +47,10 @@ To verify whether `challenge.html` is already in sync, run:
 ```bash
 node "/Users/byron/Content creating videos/Video challenges/scripts/sync_embedded_content.js" --check
 ```
+
+For `Script Work`, non-empty private category files show up automatically as
+prompt types in the app after sync/deploy. Empty ones stay hidden until you add
+at least one passage entry.
 
 ---
 

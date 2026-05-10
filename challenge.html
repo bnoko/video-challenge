@@ -2852,6 +2852,30 @@ const PROMPT_TYPES = {
       introPhrase: 'deliver an articulation passage',
     },
     {
+      id: 'movie-monologues',
+      name: 'Movie Monologues',
+      description: 'Practice with private movie monologue passages.',
+      introPhrase: 'deliver a movie monologue passage',
+    },
+    {
+      id: 'famous-speeches',
+      name: 'Famous Speeches',
+      description: 'Practice with private famous speech passages.',
+      introPhrase: 'deliver a famous speech passage',
+    },
+    {
+      id: 'poetry',
+      name: 'Poetry',
+      description: 'Practice with private poetry passages.',
+      introPhrase: 'deliver a poetry passage',
+    },
+    {
+      id: 'personal-scripts',
+      name: 'Personal Scripts',
+      description: 'Practice with private personal script passages.',
+      introPhrase: 'deliver a personal script passage',
+    },
+    {
       id: 'custom-text',
       name: 'Custom Text',
       description: 'Bring your own one-off passage or script.',
@@ -6978,13 +7002,35 @@ function normalizeScriptWorkEntry(entry) {
   };
 }
 
+function getAvailableScriptWorkPromptTypes() {
+  const privatePromptTypeMap = {
+    'movie-monologues': 'movie_monologues',
+    'famous-speeches': 'famous_speeches',
+    poetry: 'poetry',
+    'personal-scripts': 'personal_scripts',
+  };
+  return (PROMPT_TYPES.scriptwork || []).filter(pt => {
+    if (pt.id === 'custom-text') return true;
+    if (pt.id === 'original-passage') return SCRIPT_WORK_LIBRARY.public.original_passages.length > 0;
+    if (pt.id === 'articulation-passage') return SCRIPT_WORK_LIBRARY.public.articulation_passages.length > 0;
+    const privateKey = privatePromptTypeMap[pt.id];
+    return privateKey ? SCRIPT_WORK_LIBRARY.private[privateKey].length > 0 : true;
+  });
+}
+
+function getPromptTypeOptions(challenge = currentChallenge) {
+  if (challenge === 'scriptwork') return getAvailableScriptWorkPromptTypes();
+  return PROMPT_TYPES[challenge] || [];
+}
+
 function getScriptWorkLibraryEntries(promptTypeId = getScriptWorkPromptType()) {
   if (promptTypeId === 'articulation-passage') {
     return SCRIPT_WORK_LIBRARY.public.articulation_passages;
   }
-  if (promptTypeId === 'private-library') {
-    return Object.values(SCRIPT_WORK_LIBRARY.private).flat();
-  }
+  if (promptTypeId === 'movie-monologues') return SCRIPT_WORK_LIBRARY.private.movie_monologues;
+  if (promptTypeId === 'famous-speeches') return SCRIPT_WORK_LIBRARY.private.famous_speeches;
+  if (promptTypeId === 'poetry') return SCRIPT_WORK_LIBRARY.private.poetry;
+  if (promptTypeId === 'personal-scripts') return SCRIPT_WORK_LIBRARY.private.personal_scripts;
   return SCRIPT_WORK_LIBRARY.public.original_passages;
 }
 
@@ -8021,7 +8067,7 @@ function updatePromptTypePill() {
 function setPromptTypePillVisibility() {
   const wrap = document.getElementById('prompt-type-pill-wrap');
   if (!wrap) return;
-  const list = PROMPT_TYPES[currentChallenge] || [];
+  const list = getPromptTypeOptions(currentChallenge);
   wrap.style.display = list.length > 0 ? 'block' : 'none';
   if (currentChallenge === 'scriptwork' && list.length > 0 && !currentPromptType) {
     currentPromptType = list[0];
@@ -8035,7 +8081,7 @@ function setPromptTypePillVisibility() {
 
 function openPromptTypePicker() {
   const listEl = document.getElementById('prompt-type-picker-list');
-  const ptList = PROMPT_TYPES[currentChallenge] || [];
+  const ptList = getPromptTypeOptions(currentChallenge);
   listEl.innerHTML = '';
 
   if (currentChallenge !== 'scriptwork') {
@@ -9115,7 +9161,7 @@ function selectChallenge(challenge) {
     currentStoryWords = null;
     currentPlotText   = null;
   } else if (challenge === 'scriptwork') {
-    currentPromptType = (PROMPT_TYPES.scriptwork && PROMPT_TYPES.scriptwork[0]) || null;
+    currentPromptType = getPromptTypeOptions('scriptwork')[0] || null;
     currentScriptWorkText = '';
     currentScriptWorkTitle = '';
     currentScriptWorkEntry = null;
