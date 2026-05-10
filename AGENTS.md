@@ -125,10 +125,10 @@ to the current challenge. Don't add manual clears in each btn onclick — it's a
 | plot          | Story Plot         | 60s  |                                          |
 | scriptwork    | Script Work        | 60s  | manual finish; prompt types + focuses    |
 | selfknowledge | Self-Knowledge     | 60s  |                                          |
-| interview     | Interview Practice | 60s  |                                          |
+| interview     | (disabled)         | 60s  | CONFIG.interview.enabled=false — parked for now      |
 | gratitude     | Gratitude          | 60s  | frameworks: parallel/sequential/counter  |
 | articulation  | (disabled)         | 30s  | CONFIG.articulation.enabled=false        |
-| articulation2 | Articulation       | 30s  | line-by-line navigation                  |
+| articulation2 | (disabled)         | 30s  | CONFIG.articulation2.enabled=false — parked for now  |
 
 ## Framework system
 Frameworks are optional guided structures layered on top of a challenge.
