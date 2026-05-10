@@ -444,6 +444,7 @@ body {
   position: relative;
   height: 9.8em;
   max-height: 9.8em;
+  padding-bottom: 4.9em;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -534,7 +535,7 @@ body {
   justify-content: center;
   gap: clamp(28px, 4vw, 42px);
   flex-wrap: wrap;
-  margin-bottom: clamp(14px, 2.6vh, 24px);
+  margin-bottom: clamp(8px, 1.4vh, 14px);
 }
 
 .scriptwork-result-metric {
@@ -7116,7 +7117,7 @@ function scrollScriptWorkByKeyboard(direction) {
   if (!scrollEl) return false;
   const lineHeight = parseFloat(getComputedStyle(scrollEl).lineHeight) || 24;
   scrollEl.scrollBy({
-    top: direction * lineHeight * 2,
+    top: direction * lineHeight,
     behavior: 'smooth',
   });
   return true;
