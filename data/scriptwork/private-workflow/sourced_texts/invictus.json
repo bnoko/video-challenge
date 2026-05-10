@@ -1,0 +1,15 @@
+{
+  "id": "invictus",
+  "category": "poetry",
+  "title": "Invictus",
+  "author": "William Ernest Henley",
+  "sourceContext": "full poem",
+  "specificSectionHint": "",
+  "sourceStatus": "sourced",
+  "promptUsed": "Imported from browser Grok capture file.",
+  "rawResponse": "Out of the night that covers me,\nBlack as the pit from pole to pole,\nI thank whatever gods may be\nFor my unconquerable soul.\nIn the fell clutch of circumstance\nI have not winced nor cried aloud.\nUnder the bludgeonings of chance\nMy head is bloody, but unbowed.\nBeyond this place of wrath and tears\nLooms but the Horror of the shade,\nAnd yet the menace of the years\nFinds and shall find me unafraid.\nIt matters not how strait the gate,\nHow charged with punishments the scroll,\nI am the master of my fate,\nI am the captain of my soul.",
+  "cleanedSourceText": "Out of the night that covers me,\nBlack as the pit from pole to pole,\nI thank whatever gods may be\nFor my unconquerable soul.\nIn the fell clutch of circumstance\nI have not winced nor cried aloud.\nUnder the bludgeonings of chance\nMy head is bloody, but unbowed.\nBeyond this place of wrath and tears\nLooms but the Horror of the shade,\nAnd yet the menace of the years\nFinds and shall find me unafraid.\nIt matters not how strait the gate,\nHow charged with punishments the scroll,\nI am the master of my fate,\nI am the captain of my soul.",
+  "sourceNotes": "Imported from browser Grok capture file.",
+  "lastReviewedAt": null,
+  "sourcedAt": "2026-05-10T12:05:41.201Z"
+}

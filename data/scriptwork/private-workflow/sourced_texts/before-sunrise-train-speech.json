@@ -1,0 +1,15 @@
+{
+  "id": "before-sunrise-train-speech",
+  "category": "movie_monologues",
+  "title": "Before Sunrise train speech",
+  "author": "Ethan Hawke / Jesse",
+  "sourceContext": "Jesse asking Céline to get off the train with him in Vienna",
+  "specificSectionHint": "train platform speech asking her to get off the train",
+  "sourceStatus": "sourced",
+  "promptUsed": "Imported from browser Grok capture file.",
+  "rawResponse": "Alright, I have an admittedly insane idea, but if I don’t ask you this, it’s just, uh, you know, it’s going to haunt me the rest of my life.\n\nI want to keep talking to you. I mean, I have no idea what your situation is, but I feel like we have some kind of, uh, connection. Right?\n\nSo listen… here’s the deal. This is what we should do. You should get off the train with me here in Vienna, and come check out the town. Come on. It’ll be fun. Come on.\n\nAll I know is I have to catch an Austrian Airlines flight tomorrow morning at 9:30, and I don’t really have enough money for a hotel, so I was just going to walk around, and it would be a lot more fun if you came with me. And if I turn out to be some kind of psycho, you know, you just get on the next train.\n\nAlright?",
+  "cleanedSourceText": "Alright, I have an admittedly insane idea, but if I don’t ask you this, it’s just, uh, you know, it’s going to haunt me the rest of my life.\n\nI want to keep talking to you. I mean, I have no idea what your situation is, but I feel like we have some kind of, uh, connection. Right?\n\nSo listen… here’s the deal. This is what we should do. You should get off the train with me here in Vienna, and come check out the town. Come on. It’ll be fun. Come on.\n\nAll I know is I have to catch an Austrian Airlines flight tomorrow morning at 9:30, and I don’t really have enough money for a hotel, so I was just going to walk around, and it would be a lot more fun if you came with me. And if I turn out to be some kind of psycho, you know, you just get on the next train.\n\nAlright?",
+  "sourceNotes": "Imported from browser Grok capture file.",
+  "lastReviewedAt": null,
+  "sourcedAt": "2026-05-10T12:05:41.201Z"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "scent-of-a-woman-ferrari-speech",
+  "category": "movie_monologues",
+  "title": "Scent of a Woman Ferrari speech",
+  "author": "Al Pacino / Frank Slade",
+  "sourceContext": "Frank Slade talking to Charlie about women and Ferrari",
+  "specificSectionHint": "the Ferrari speech",
+  "sourceStatus": "sourced",
+  "promptUsed": "Imported from browser Grok capture file.",
+  "rawResponse": "Yes, Mr. Simms, there’s only two syllables in this whole wide world worth hearing: *pussy*.\n\nAre you listening to me, son? I’m givin’ you pearls here.\n\n**Charlie:**\nI guess you really like women.\n\n**Frank Slade:**\n**Oh, above all things!**\nA very, very distant second…\n**is a Ferrari.**\n\nCharlie? Give me your hand.\nThis is just the start of your education, son.\n\n---",
+  "cleanedSourceText": "Yes, Mr. Simms, there’s only two syllables in this whole wide world worth hearing: *pussy*.\n\nAre you listening to me, son? I’m givin’ you pearls here.\n\nCharlie:\nI guess you really like women.\n\nFrank Slade:\nOh, above all things!\nA very, very distant second…\nis a Ferrari.\n\nCharlie? Give me your hand.\nThis is just the start of your education, son.",
+  "sourceNotes": "Imported from browser Grok capture file.",
+  "lastReviewedAt": null,
+  "sourcedAt": "2026-05-10T12:05:41.202Z"
+}

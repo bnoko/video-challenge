@@ -1,0 +1,25 @@
+{
+  "sourceId": "before-sunrise-train-speech",
+  "sourceTitle": "Before Sunrise train speech",
+  "sourceAuthor": "Ethan Hawke / Jesse",
+  "sourceYear": null,
+  "category": "movie_monologues",
+  "sourceType": "movie_monologue",
+  "extracts": [
+    {
+      "extractId": "before-sunrise-train-speech-01",
+      "label": "",
+      "startMarker": "",
+      "endMarker": "",
+      "text": "Alright, I have an admittedly insane idea, but if I don’t ask you this, it’s just, uh, you know, it’s going to haunt me the rest of my life.\n\nI want to keep talking to you. I mean, I have no idea what your situation is, but I feel like we have some kind of, uh, connection. Right?\n\nSo listen… here’s the deal. This is what we should do. You should get off the train with me here in Vienna, and come check out the town. Come on. It’ll be fun. Come on.\n\nAll I know is I have to catch an Austrian Airlines flight tomorrow morning at 9:30, and I don’t really have enough money for a hotel, so I was just going to walk around, and it would be a lot more fun if you came with me. And if I turn out to be some kind of psycho, you know, you just get on the next train.\n\nAlright?",
+      "lengthWords": 161,
+      "lengthSeconds": 67,
+      "status": "approved",
+      "tags": [],
+      "tone": [],
+      "performanceFocus": [],
+      "difficulty": 3,
+      "notes": "Imported from browser Grok capture and cleaned for app use."
+    }
+  ]
+}

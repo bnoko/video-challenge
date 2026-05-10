@@ -1,0 +1,25 @@
+{
+  "sourceId": "friends-romans-countrymen",
+  "sourceTitle": "Friends, Romans, countrymen",
+  "sourceAuthor": "William Shakespeare / Mark Antony",
+  "sourceYear": null,
+  "category": "famous_speeches",
+  "sourceType": "play_speech",
+  "extracts": [
+    {
+      "extractId": "friends-romans-countrymen-01",
+      "label": "",
+      "startMarker": "",
+      "endMarker": "",
+      "text": "Friends, Romans, countrymen, lend me your ears;\nI come to bury Caesar, not to praise him.\nThe evil that men do lives after them;\nThe good is oft interred with their bones;\nSo let it be with Caesar. The noble Brutus\nHath told you Caesar was ambitious:\nIf it were so, it was a grievous fault,\nAnd grievously hath Caesar answer’d it.\n\nHere, under leave of Brutus and the rest—\nFor Brutus is an honourable man;\nSo are they all, all honourable men—\nCome I to speak in Caesar’s funeral.\n\nHe was my friend, faithful and just to me:\nBut Brutus says he was ambitious;\nAnd Brutus is an honourable man.\n\nHe hath brought many captives home to Rome\nWhose ransoms did the general coffers fill:\nDid this in Caesar seem ambitious?\nWhen that the poor have cried, Caesar hath wept:\nAmbition should be made of sterner stuff:\nYet Brutus says he was ambitious;\nAnd Brutus is an honourable man.\n\nYou all did see that on the Lupercal\nI thrice presented him a kingly crown,\nWhich he did thrice refuse: was this ambition?\nYet Brutus says he was ambitious;\nAnd, sure, he is an honourable man.\n\nI speak not to disprove what Brutus spoke,\nBut here I am to speak what I do know.\nYou all did love him once, not without cause:\nWhat cause withholds you then, to mourn for him?\nO judgment! thou art fled to brutish beasts,\nAnd men have lost their reason. Bear with me;\nMy heart is in the coffin there with Caesar,\nAnd I must pause till it come back to me.",
+      "lengthWords": 268,
+      "lengthSeconds": 112,
+      "status": "approved",
+      "tags": [],
+      "tone": [],
+      "performanceFocus": [],
+      "difficulty": 3,
+      "notes": "Imported from browser Grok capture and cleaned for app use."
+    }
+  ]
+}

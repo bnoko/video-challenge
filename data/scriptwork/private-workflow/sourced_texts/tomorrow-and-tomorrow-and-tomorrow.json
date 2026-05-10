@@ -1,0 +1,15 @@
+{
+  "id": "tomorrow-and-tomorrow-and-tomorrow",
+  "category": "famous_speeches",
+  "title": "Tomorrow, and tomorrow, and tomorrow",
+  "author": "William Shakespeare / Macbeth",
+  "sourceContext": "Macbeth Act 5 Scene 5 soliloquy",
+  "specificSectionHint": "",
+  "sourceStatus": "sourced",
+  "promptUsed": "Imported from browser Grok capture file.",
+  "rawResponse": "Tomorrow, and tomorrow, and tomorrow,\nCreeps in this petty pace from day to day,\nTo the last syllable of recorded time;\nAnd all our yesterdays have lighted fools\nThe way to dusty death. Out, out, brief candle!\nLife’s but a walking shadow, a poor player,\nThat struts and frets his hour upon the stage,\nAnd then is heard no more. It is a tale\nTold by an idiot, full of sound and fury,\nSignifying nothing.",
+  "cleanedSourceText": "Tomorrow, and tomorrow, and tomorrow,\nCreeps in this petty pace from day to day,\nTo the last syllable of recorded time;\nAnd all our yesterdays have lighted fools\nThe way to dusty death. Out, out, brief candle!\nLife’s but a walking shadow, a poor player,\nThat struts and frets his hour upon the stage,\nAnd then is heard no more. It is a tale\nTold by an idiot, full of sound and fury,\nSignifying nothing.",
+  "sourceNotes": "Imported from browser Grok capture file.",
+  "lastReviewedAt": null,
+  "sourcedAt": "2026-05-10T12:05:41.202Z"
+}

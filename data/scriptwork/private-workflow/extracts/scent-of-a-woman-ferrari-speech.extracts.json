@@ -1,0 +1,25 @@
+{
+  "sourceId": "scent-of-a-woman-ferrari-speech",
+  "sourceTitle": "Scent of a Woman Ferrari speech",
+  "sourceAuthor": "Al Pacino / Frank Slade",
+  "sourceYear": null,
+  "category": "movie_monologues",
+  "sourceType": "movie_monologue",
+  "extracts": [
+    {
+      "extractId": "scent-of-a-woman-ferrari-speech-01",
+      "label": "",
+      "startMarker": "",
+      "endMarker": "",
+      "text": "Yes, Mr. Simms, there’s only two syllables in this whole wide world worth hearing: *pussy*.\n\nAre you listening to me, son? I’m givin’ you pearls here.\n\nCharlie:\nI guess you really like women.\n\nFrank Slade:\nOh, above all things!\nA very, very distant second…\nis a Ferrari.\n\nCharlie? Give me your hand.\nThis is just the start of your education, son.",
+      "lengthWords": 61,
+      "lengthSeconds": 25,
+      "status": "approved",
+      "tags": [],
+      "tone": [],
+      "performanceFocus": [],
+      "difficulty": 3,
+      "notes": "Imported from browser Grok capture and cleaned for app use."
+    }
+  ]
+}

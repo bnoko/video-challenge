@@ -14,6 +14,10 @@ const CONTENT_MAP = [
   { constName: "TOPICS", jsonPath: "data/topics.json" },
   { constName: "SCRIPT_WORK_PUBLIC_ORIGINAL_PASSAGES", jsonPath: "data/scriptwork/public/original_passages.json" },
   { constName: "SCRIPT_WORK_PUBLIC_ARTICULATION_PASSAGES", jsonPath: "data/scriptwork/public/articulation_passages.json" },
+  { constName: "SCRIPT_WORK_PRIVATE_MOVIE_MONOLOGUES", jsonPath: "data/scriptwork/private/movie_monologues.json" },
+  { constName: "SCRIPT_WORK_PRIVATE_FAMOUS_SPEECHES", jsonPath: "data/scriptwork/private/famous_speeches.json" },
+  { constName: "SCRIPT_WORK_PRIVATE_POETRY", jsonPath: "data/scriptwork/private/poetry.json" },
+  { constName: "SCRIPT_WORK_PRIVATE_PERSONAL_SCRIPTS", jsonPath: "data/scriptwork/private/personal_scripts.json" },
 ];
 
 function escapeRegex(text) {
@@ -34,7 +38,7 @@ function syncEmbeddedContent({ checkOnly = false } = {}) {
     const data = JSON.parse(fs.readFileSync(absJsonPath, "utf8"));
     const replacement = buildReplacement(constName, jsonPath, data);
     const pattern = new RegExp(
-      `(?:\\/\\/ Synced from .*?\\n)?const ${escapeRegex(constName)} = \\[[\\s\\S]*?\\n\\];`
+      `(?:\\/\\/ Synced from .*?\\n)?const ${escapeRegex(constName)} = \\[[\\s\\S]*?\\];`
     );
 
     if (!pattern.test(html)) {

@@ -1,0 +1,25 @@
+{
+  "sourceId": "tomorrow-and-tomorrow-and-tomorrow",
+  "sourceTitle": "Tomorrow, and tomorrow, and tomorrow",
+  "sourceAuthor": "William Shakespeare / Macbeth",
+  "sourceYear": null,
+  "category": "famous_speeches",
+  "sourceType": "play_speech",
+  "extracts": [
+    {
+      "extractId": "tomorrow-and-tomorrow-and-tomorrow-01",
+      "label": "",
+      "startMarker": "",
+      "endMarker": "",
+      "text": "Tomorrow, and tomorrow, and tomorrow,\nCreeps in this petty pace from day to day,\nTo the last syllable of recorded time;\nAnd all our yesterdays have lighted fools\nThe way to dusty death. Out, out, brief candle!\nLife’s but a walking shadow, a poor player,\nThat struts and frets his hour upon the stage,\nAnd then is heard no more. It is a tale\nTold by an idiot, full of sound and fury,\nSignifying nothing.",
+      "lengthWords": 75,
+      "lengthSeconds": 31,
+      "status": "approved",
+      "tags": [],
+      "tone": [],
+      "performanceFocus": [],
+      "difficulty": 3,
+      "notes": "Imported from browser Grok capture and cleaned for app use."
+    }
+  ]
+}

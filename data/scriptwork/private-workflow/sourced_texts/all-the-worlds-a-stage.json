@@ -1,0 +1,15 @@
+{
+  "id": "all-the-worlds-a-stage",
+  "category": "famous_speeches",
+  "title": "All the World's a Stage",
+  "author": "William Shakespeare / Jaques",
+  "sourceContext": "As You Like It Act 2 Scene 7 speech",
+  "specificSectionHint": "",
+  "sourceStatus": "sourced",
+  "promptUsed": "Imported from browser Grok capture file.",
+  "rawResponse": "And all the men and women merely players;\nThey have their exits and their entrances;\nAnd one man in his time plays many parts,\nHis acts being seven ages. At first the infant,\nMewling and puking in the nurse’s arms.\n\nThen the whining schoolboy, with his satchel\nAnd shining morning face, creeping like snail\nUnwillingly to school. And then the lover,\nSighing like furnace, with a woeful ballad\nMade to his mistress’ eyebrow. Then a soldier,\nFull of strange oaths, and bearded like the pard,\nJealous in honour, sudden and quick in quarrel,\nSeeking the bubble reputation\nEven in the cannon’s mouth. And then the justice,\nIn fair round belly with good capon lined,\nWith eyes severe and beard of formal cut,\nFull of wise saws and modern instances;\nAnd so he plays his part. The sixth age shifts\nInto the lean and slippered pantaloon,\nWith spectacles on nose and pouch on side;\nHis youthful hose, well saved, a world too wide\nFor his shrunk shank; and his big manly voice,\nTurning again toward childish treble, pipes\nAnd whistles in his sound. Last scene of all,\nThat ends this strange eventful history,\nIs second childishness and mere oblivion,\nSans teeth, sans eyes, sans taste, sans everything.\n\n---",
+  "cleanedSourceText": "All the world’s a stage,\nAnd all the men and women merely players;\nThey have their exits and their entrances;\nAnd one man in his time plays many parts,\nHis acts being seven ages. At first the infant,\nMewling and puking in the nurse’s arms.\n\nThen the whining schoolboy, with his satchel\nAnd shining morning face, creeping like snail\nUnwillingly to school. And then the lover,\nSighing like furnace, with a woeful ballad\nMade to his mistress’ eyebrow. Then a soldier,\nFull of strange oaths, and bearded like the pard,\nJealous in honour, sudden and quick in quarrel,\nSeeking the bubble reputation\nEven in the cannon’s mouth. And then the justice,\nIn fair round belly with good capon lined,\nWith eyes severe and beard of formal cut,\nFull of wise saws and modern instances;\nAnd so he plays his part. The sixth age shifts\nInto the lean and slippered pantaloon,\nWith spectacles on nose and pouch on side;\nHis youthful hose, well saved, a world too wide\nFor his shrunk shank; and his big manly voice,\nTurning again toward childish treble, pipes\nAnd whistles in his sound. Last scene of all,\nThat ends this strange eventful history,\nIs second childishness and mere oblivion,\nSans teeth, sans eyes, sans taste, sans everything.",
+  "sourceNotes": "Imported from browser Grok capture file.",
+  "lastReviewedAt": null,
+  "sourcedAt": "2026-05-10T12:05:41.202Z"
+}
