@@ -2620,6 +2620,7 @@ const TIPS = {
           'Deliver pre-written text rather than inventing ideas from scratch.',
           'There is no countdown. Finish the full text, then end the take manually.',
           'Use prompt type to choose the text source and focus to choose what part of the delivery you pay attention to.',
+          'This first version supports original practice passages, articulation passages, and one-off custom text.',
         ]
       },
       {
@@ -2747,20 +2748,20 @@ const PROMPT_TYPES = {
   scriptwork: [
     {
       id: 'original-passage',
-      name: 'Original Practice Passage',
-      description: 'Use an original practice passage designed for delivery work.',
+      name: 'Original Practice',
+      description: 'Public-safe original passages written for delivery practice.',
       introPhrase: 'deliver an original practice passage',
     },
     {
       id: 'articulation-passage',
-      name: 'Existing Articulation Passage',
-      description: 'Use one of the existing articulation passages as your text.',
+      name: 'Articulation Passages',
+      description: 'Reuse articulation-style passages as script-delivery practice.',
       introPhrase: 'deliver an articulation passage',
     },
     {
       id: 'custom-text',
       name: 'Custom Text',
-      description: 'Bring your own short passage or script.',
+      description: 'Bring your own one-off passage or script.',
       introPhrase: 'deliver your own custom text',
     },
   ],
@@ -3342,6 +3343,11 @@ const ARTICULATIONS = [
   }
 ];
 
+SCRIPT_WORK_LIBRARY.public.original_passages =
+  SCRIPT_WORK_LIBRARY.public.original_passages.map(normalizeScriptWorkEntry);
+SCRIPT_WORK_LIBRARY.public.articulation_passages =
+  ARTICULATIONS.map(buildScriptWorkEntryFromArticulation);
+
 // Synced from data/plots.json via scripts/sync_embedded_content.js
 const PLOTS = [
   "A woman goes to fight a dragon, but they become friends",
@@ -3784,24 +3790,95 @@ const INTERVIEW_QUESTIONS = [
 
 const GRATITUDE_PROMPT = CHALLENGES.gratitude.defaultPromptText;
 
-const SCRIPT_WORK_PASSAGES = [
-  {
-    name: 'Practice Passage 1',
-    text: 'I used to think clarity was mostly about getting the words right. The more time I spend on camera, the more I realise it is also about whether the thought feels lived in. A line can be perfectly clean and still feel distant. What makes it land is commitment. You stop reciting, you stop demonstrating, and you actually let the idea matter while you are saying it.',
+const SCRIPT_WORK_LIBRARY = {
+  public: {
+    original_passages: [
+      {
+        id: 'scriptwork-original-clarity-vs-commitment',
+        title: 'Clarity vs Commitment',
+        sourceTitle: 'Original Practice Passage',
+        sourceAuthor: 'Video Challenge App',
+        sourceYear: 2026,
+        sourceType: 'original',
+        visibility: 'public',
+        category: 'original_passages',
+        tags: ['reflective', 'camera-work', 'commitment'],
+        tone: ['thoughtful', 'direct'],
+        performanceFocus: ['conviction', 'clarity', 'presence'],
+        difficulty: 2,
+        lengthWords: 67,
+        lengthSeconds: 30,
+        text: 'I used to think clarity was mostly about getting the words right. The more time I spend on camera, the more I realise it is also about whether the thought feels lived in. A line can be perfectly clean and still feel distant. What makes it land is commitment. You stop reciting, you stop demonstrating, and you actually let the idea matter while you are saying it.',
+        notes: 'Good for presence and conviction work.',
+        status: 'approved',
+      },
+      {
+        id: 'scriptwork-original-smaller-take',
+        title: 'The Simpler Take',
+        sourceTitle: 'Original Practice Passage',
+        sourceAuthor: 'Video Challenge App',
+        sourceYear: 2026,
+        sourceType: 'original',
+        visibility: 'public',
+        category: 'original_passages',
+        tags: ['subtle', 'presence', 'camera-work'],
+        tone: ['calm', 'observant'],
+        performanceFocus: ['naturalness', 'presence', 'restraint'],
+        difficulty: 2,
+        lengthWords: 67,
+        lengthSeconds: 30,
+        text: 'Some of the best takes do not feel bigger. They feel simpler. The voice settles, the body stops trying to help, and the meaning gets sharper. You can see the person thinking instead of managing themselves. That shift is small from the outside, but it changes everything. Suddenly the words feel chosen in the moment rather than borrowed from a script.',
+        notes: 'Useful for conversational and camera-presence focus.',
+        status: 'approved',
+      },
+      {
+        id: 'scriptwork-original-more-precision',
+        title: 'More Precision',
+        sourceTitle: 'Original Practice Passage',
+        sourceAuthor: 'Video Challenge App',
+        sourceYear: 2026,
+        sourceType: 'original',
+        visibility: 'public',
+        category: 'original_passages',
+        tags: ['precision', 'timing', 'delivery'],
+        tone: ['grounded', 'confident'],
+        performanceFocus: ['pacing', 'clarity', 'control'],
+        difficulty: 2,
+        lengthWords: 64,
+        lengthSeconds: 29,
+        text: 'When a piece starts to feel flat, the answer is not always more energy. Sometimes it is more precision. A cleaner pause. A clearer turn in thought. A stronger sense of who the words are for. The performance wakes up when the intention gets specific. Then even a quiet delivery can feel direct, alive, and impossible to ignore.',
+        notes: 'Strong pacing passage.',
+        status: 'approved',
+      },
+      {
+        id: 'scriptwork-original-responsive-pacing',
+        title: 'Responsive Pacing',
+        sourceTitle: 'Original Practice Passage',
+        sourceAuthor: 'Video Challenge App',
+        sourceYear: 2026,
+        sourceType: 'original',
+        visibility: 'public',
+        category: 'original_passages',
+        tags: ['pacing', 'thought', 'landing'],
+        tone: ['steady', 'clear'],
+        performanceFocus: ['pacing', 'control', 'conviction'],
+        difficulty: 2,
+        lengthWords: 68,
+        lengthSeconds: 31,
+        text: 'If I rush because I know the text, I stop giving the listener time to receive it. The words may still come out smoothly, but the meaning starts sliding past. Better pacing is not just slower pacing. It is responsive pacing. You let one idea land, then you move. You create enough space for the thought to register before the next one arrives.',
+        notes: 'Best for pacing and conversational focus.',
+        status: 'approved',
+      },
+    ],
+    articulation_passages: [],
   },
-  {
-    name: 'Practice Passage 2',
-    text: 'Some of the best takes do not feel bigger. They feel simpler. The voice settles, the body stops trying to help, and the meaning gets sharper. You can see the person thinking instead of managing themselves. That shift is small from the outside, but it changes everything. Suddenly the words feel chosen in the moment rather than borrowed from a script.',
+  private: {
+    movie_monologues: [],
+    famous_speeches: [],
+    poetry: [],
+    personal_scripts: [],
   },
-  {
-    name: 'Practice Passage 3',
-    text: 'When a piece starts to feel flat, the answer is not always more energy. Sometimes it is more precision. A cleaner pause. A clearer turn in thought. A stronger sense of who the words are for. The performance wakes up when the intention gets specific. Then even a quiet delivery can feel direct, alive, and impossible to ignore.',
-  },
-  {
-    name: 'Practice Passage 4',
-    text: 'If I rush because I know the text, I stop giving the listener time to receive it. The words may still come out smoothly, but the meaning starts sliding past. Better pacing is not just slower pacing. It is responsive pacing. You let one idea land, then you move. You create enough space for the thought to register before the next one arrives.',
-  },
-];
+};
 
 
 // Synced from data/topics.json via scripts/sync_embedded_content.js
@@ -4192,6 +4269,7 @@ let currentArticulationItem = null; // current articulation passage/item for sam
 let currentCustomPromptText = ''; // exact user-entered prompt for custom launches / same-prompt replay
 let currentScriptWorkText = '';
 let currentScriptWorkTitle = '';
+let currentScriptWorkEntry = null;
 
 // Articulation 2 state
 let artLineHeight  = 0;    // px height of one rendered line
@@ -4289,6 +4367,59 @@ function formatResultDuration(ms) {
   const seconds = totalSeconds % 60;
   if (minutes > 0) return `${minutes}m ${seconds}s`;
   return `${seconds}s`;
+}
+
+function countWords(text) {
+  const trimmed = String(text || '').trim();
+  return trimmed ? trimmed.split(/\s+/).length : 0;
+}
+
+function estimateScriptWorkSeconds(wordCount) {
+  return Math.max(15, Math.round((wordCount / 150) * 60));
+}
+
+function normalizeScriptWorkEntry(entry) {
+  const wordCount = entry.lengthWords || countWords(entry.text);
+  return {
+    ...entry,
+    lengthWords: wordCount,
+    lengthSeconds: entry.lengthSeconds || estimateScriptWorkSeconds(wordCount),
+  };
+}
+
+function buildScriptWorkEntryFromArticulation(item, index) {
+  return normalizeScriptWorkEntry({
+    id: `scriptwork-articulation-${index + 1}`,
+    title: item.name,
+    sourceTitle: item.name,
+    sourceAuthor: 'Video Challenge App',
+    sourceYear: 2026,
+    sourceType: 'articulation',
+    visibility: 'public',
+    category: 'articulation_passages',
+    tags: ['clarity', 'articulation', 'precision'],
+    tone: ['focused'],
+    performanceFocus: ['articulation', 'clarity', 'pace-control'],
+    difficulty: 3,
+    text: item.text,
+    notes: 'Shared from the articulation library for delivery practice.',
+    status: 'approved',
+  });
+}
+
+function getScriptWorkLibraryEntries(promptTypeId = getScriptWorkPromptType()) {
+  if (promptTypeId === 'articulation-passage') {
+    return SCRIPT_WORK_LIBRARY.public.articulation_passages;
+  }
+  if (promptTypeId === 'private-library') {
+    return Object.values(SCRIPT_WORK_LIBRARY.private).flat();
+  }
+  return SCRIPT_WORK_LIBRARY.public.original_passages;
+}
+
+function pickScriptWorkEntry(promptTypeId = getScriptWorkPromptType()) {
+  const entries = getScriptWorkLibraryEntries(promptTypeId);
+  return entries.length ? pickRandom(entries, 1)[0] : null;
 }
 
 function animateTap(el, cb, ms = 350) {
@@ -4699,6 +4830,37 @@ function getScriptWorkTextHTML(text = currentScriptWorkText) {
   return escapeHTML(text).replace(/\n/g, '<br>');
 }
 
+function applyScriptWorkEntry(entry) {
+  if (!entry) return false;
+  currentScriptWorkEntry = entry;
+  currentScriptWorkTitle = entry.title;
+  currentScriptWorkText = entry.text;
+  usedPromptText = entry.title;
+  return true;
+}
+
+function buildCustomScriptWorkEntry(text) {
+  return {
+    id: 'scriptwork-custom',
+    title: 'Custom Text',
+    sourceTitle: 'Custom Text',
+    sourceAuthor: '',
+    sourceYear: '',
+    sourceType: 'custom',
+    visibility: 'private',
+    category: 'personal_scripts',
+    tags: [],
+    tone: [],
+    performanceFocus: [],
+    difficulty: 1,
+    lengthWords: countWords(text),
+    lengthSeconds: estimateScriptWorkSeconds(countWords(text)),
+    text,
+    notes: 'One-off custom text for immediate practice.',
+    status: 'custom',
+  };
+}
+
 function buildScriptWorkHTML(includeCue = false) {
   const parts = [];
   if (includeCue && currentFramework?.mode === 'focus') {
@@ -4872,7 +5034,9 @@ function challengeSupportsPrep(challenge = currentChallenge) {
 
 function challengeSupportsReroll(challenge = currentChallenge) {
   if (challenge === 'story') return Boolean(currentPromptType);
-  if (challenge === 'scriptwork') return getScriptWorkPromptType() !== 'custom-text';
+  if (challenge === 'scriptwork') {
+    return getScriptWorkPromptType() !== 'custom-text' && getScriptWorkLibraryEntries().length > 0;
+  }
   return getChallengeConfig(challenge).rerollSupported === true;
 }
 
@@ -5024,8 +5188,53 @@ function validateFrameworkDefinitions() {
   }
 }
 
+function validateScriptWorkLibrary() {
+  const requiredFields = [
+    'id', 'title', 'sourceType', 'visibility', 'category', 'difficulty',
+    'lengthWords', 'lengthSeconds', 'text', 'status',
+  ];
+  const errors = [];
+  const ids = new Set();
+  const entries = [
+    ...SCRIPT_WORK_LIBRARY.public.original_passages,
+    ...SCRIPT_WORK_LIBRARY.public.articulation_passages,
+    ...Object.values(SCRIPT_WORK_LIBRARY.private).flat(),
+  ];
+
+  entries.forEach((entry, index) => {
+    const label = `SCRIPT_WORK_LIBRARY entry ${index}`;
+    requiredFields.forEach(field => {
+      if (entry[field] === undefined || entry[field] === null || entry[field] === '') {
+        errors.push(`${label}: missing ${field}`);
+      }
+    });
+    if (ids.has(entry.id)) {
+      errors.push(`${label}: duplicate id "${entry.id}"`);
+    } else {
+      ids.add(entry.id);
+    }
+    if (!Number.isFinite(entry.difficulty) || entry.difficulty < 1) {
+      errors.push(`${label}: difficulty must be a positive number`);
+    }
+    if (!Number.isFinite(entry.lengthWords) || entry.lengthWords < 1) {
+      errors.push(`${label}: lengthWords must be a positive number`);
+    }
+    if (!Number.isFinite(entry.lengthSeconds) || entry.lengthSeconds < 1) {
+      errors.push(`${label}: lengthSeconds must be a positive number`);
+    }
+    if (entry.visibility !== 'public' && entry.visibility !== 'private') {
+      errors.push(`${label}: visibility must be "public" or "private"`);
+    }
+  });
+
+  if (errors.length > 0) {
+    throw new Error('Invalid Script Work library:\n' + errors.join('\n'));
+  }
+}
+
 validateChallengeDefinitions();
 validateFrameworkDefinitions();
+validateScriptWorkLibrary();
 
 // Converts a verb to its gerund (-ing) form.
 // Rule: drop silent trailing 'e' (not 'ee', 'oe') then add 'ing'; otherwise just add 'ing'.
@@ -5243,7 +5452,7 @@ function openPromptTypePicker() {
   const noneDesc = currentChallenge === 'story'
     ? 'Just tell a story — no constraints'
     : currentChallenge === 'scriptwork'
-      ? 'Use an original practice passage.'
+      ? 'Use the original practice library.'
       : 'Use the default prompt style.';
   noneItem.innerHTML = '<span class="framework-picker-name">No prompt type</span>'
     + `<span class="framework-picker-desc">${noneDesc}</span>`;
@@ -5964,8 +6173,7 @@ function launchCustomPromptChallenge(rawPrompt) {
     currentStoryWords = null;
     currentPlotText   = null;
   } else if (currentChallenge === 'scriptwork') {
-    currentScriptWorkTitle = 'Custom Text';
-    currentScriptWorkText = prompt;
+    applyScriptWorkEntry(buildCustomScriptWorkEntry(prompt));
   } else if (currentChallenge === 'topic') {
     currentTopicSentence = null;
     currentTopicText     = null;
@@ -6307,6 +6515,7 @@ function selectChallenge(challenge) {
     currentPromptType = null;
     currentScriptWorkText = '';
     currentScriptWorkTitle = '';
+    currentScriptWorkEntry = null;
   } else if (challenge === 'topic') {
     currentTopicSentence = null;
     currentTopicText     = null;
@@ -6419,18 +6628,7 @@ document.getElementById('prep-reroll').onclick = () => {
     restartPrepAfterReroll();
     return;
   } else if (currentChallenge === 'scriptwork') {
-    const promptTypeId = getScriptWorkPromptType();
-    if (promptTypeId === 'articulation-passage') {
-      const item = pickRandom(ARTICULATIONS, 1)[0];
-      currentScriptWorkTitle = item.name;
-      currentScriptWorkText = item.text;
-      usedPromptText = item.name;
-    } else {
-      const item = pickRandom(SCRIPT_WORK_PASSAGES, 1)[0];
-      currentScriptWorkTitle = item.name;
-      currentScriptWorkText = item.text;
-      usedPromptText = item.name;
-    }
+    applyScriptWorkEntry(pickScriptWorkEntry());
     renderScriptWork(false);
     document.getElementById('prep-prompt-label').textContent = currentScriptWorkTitle;
     document.getElementById('prep-prompt-display').innerHTML = buildScriptWorkHTML(false);
@@ -6522,20 +6720,11 @@ function launchChallenge() {
     return;
   } else if (currentChallenge === 'scriptwork') {
     const promptTypeId = getScriptWorkPromptType();
-    if (promptTypeId === 'articulation-passage') {
-      const item = pickRandom(ARTICULATIONS, 1)[0];
-      currentScriptWorkTitle = item.name;
-      currentScriptWorkText = item.text;
-      usedPromptText = item.name;
-    } else if (promptTypeId === 'custom-text') {
+    if (promptTypeId === 'custom-text') {
       openCustomPromptPanel();
       return;
-    } else {
-      const item = pickRandom(SCRIPT_WORK_PASSAGES, 1)[0];
-      currentScriptWorkTitle = item.name;
-      currentScriptWorkText = item.text;
-      usedPromptText = item.name;
     }
+    applyScriptWorkEntry(pickScriptWorkEntry(promptTypeId));
 
     renderScriptWork(false);
     timerTotal = getEffectiveTime();
@@ -6661,8 +6850,7 @@ function renderCurrentPromptForReplay() {
       document.getElementById('prompt-display').innerHTML =
         `<p class="twister-text">${escapeHTML(currentCustomPromptText)}</p>`;
     } else if (currentChallenge === 'scriptwork') {
-      currentScriptWorkTitle = 'Custom Text';
-      currentScriptWorkText = currentCustomPromptText;
+      applyScriptWorkEntry(buildCustomScriptWorkEntry(currentCustomPromptText));
       renderScriptWork(true);
     }
     return;
@@ -6836,18 +7024,7 @@ document.getElementById('reroll-btn').onclick = () => {
     document.getElementById('prompt-display').innerHTML = `<p class="twister-text">${q}</p>`;
     restartActiveAfterReroll();
   } else if (currentChallenge === 'scriptwork') {
-    const promptTypeId = getScriptWorkPromptType();
-    if (promptTypeId === 'articulation-passage') {
-      const item = pickRandom(ARTICULATIONS, 1)[0];
-      currentScriptWorkTitle = item.name;
-      currentScriptWorkText = item.text;
-      usedPromptText = item.name;
-    } else {
-      const item = pickRandom(SCRIPT_WORK_PASSAGES, 1)[0];
-      currentScriptWorkTitle = item.name;
-      currentScriptWorkText = item.text;
-      usedPromptText = item.name;
-    }
+    applyScriptWorkEntry(pickScriptWorkEntry());
     renderScriptWork(true);
     restartActiveAfterReroll();
   }
@@ -6940,7 +7117,7 @@ function showTimesUp() {
 
   } else if (challengeConfig.timesUpMode === 'scriptwork') {
     const elapsedMs = challengeNow();
-    const words = currentScriptWorkText.trim() ? currentScriptWorkText.trim().split(/\s+/).length : 0;
+    const words = currentScriptWorkEntry?.lengthWords || countWords(currentScriptWorkText);
     const minutes = elapsedMs / 60000;
     const wpm = minutes > 0 ? Math.round(words / minutes) : 0;
 
