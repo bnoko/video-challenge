@@ -1,4 +1,4 @@
-# Video Challenge App — Claude Instructions
+# Video Challenge App — Codex Instructions
 
 ## Project
 Single-file HTML app (`challenge.html`) for video recording warm-up challenges.
@@ -216,13 +216,15 @@ The launch code also guards: `if (prepTimeEnabled && !currentFramework?.disableP
   before deploy
 - `deploy.sh` handles this sync automatically
 
+## Imported Claude Cowork project instructions
+
 ## Working setup
 
-Use threads lightly as separate roles:
+Use the threads lightly as separate roles:
 
 - **Manager**: planning, sequencing, architecture decisions, prompt-writing, and
   synthesizing outputs from other threads. Prefer keeping implementation work in
-  dev threads unless there is a reason to do it directly here.
+  the dev threads unless there is a reason to do it directly here.
 - **Dev**: straightforward implementation, scoped bug fixes, cleanup, and
   low-risk edits.
 - **Senior Dev**: harder debugging, cross-cutting refactors, audits, and tasks
