@@ -4804,9 +4804,9 @@ function hideReadySetGo() {
 
 function triggerReadySetGo(onDone) {
   showReadySetGo('Ready', false); playReadySetGoBeep();
-  setTimeout(() => { showReadySetGo('Set', false);  playReadySetGoBeep(); }, 333);
-  setTimeout(() => { showReadySetGo('Go',   true);  playReadySetGoBeep(); }, 666);
-  setTimeout(() => { hideReadySetGo(); if (onDone) onDone(); }, 940);
+  setTimeout(() => { showReadySetGo('Set', false);  playReadySetGoBeep(); }, 666);
+  setTimeout(() => { showReadySetGo('Go',   true);  playReadySetGoBeep(); }, 1332);
+  setTimeout(() => { hideReadySetGo(); if (onDone) onDone(); }, 1880);
 }
 
 function prepTimerTick() {
@@ -4835,7 +4835,7 @@ function prepTimerTick() {
     prepTimerRAF = requestAnimationFrame(prepTimerTick);
   } else {
     prepTimerRunning = false;
-    setTimeout(() => { hideReadySetGo(); playStart(); startActiveChallenge(); }, 260);
+    setTimeout(() => { hideReadySetGo(); playStart(); startActiveChallenge(); }, 520);
   }
 }
 
