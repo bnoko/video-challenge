@@ -436,6 +436,41 @@ body {
   text-shadow: 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.7);
 }
 
+.scriptwork-scroll {
+  max-height: clamp(190px, 32vh, 300px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.scriptwork-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.scriptwork-text {
+  color: white;
+  font-size: clamp(18px, 3vh, 26px);
+  font-weight: 400;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.7);
+}
+
+.scriptwork-focus-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.scriptwork-focus-cue {
+  color: rgba(255,255,255,0.96);
+  font-size: clamp(16px, 2.6vh, 22px);
+  font-weight: 600;
+  line-height: 1.35;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.9);
+}
+
 /* Articulation 2: scroll window -height & padding set dynamically by JS */
 .art2-scroll {
   overflow: hidden;
@@ -856,6 +891,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.prep-skip-btn.text-mode {
+  color: white;
+  font-size: clamp(11px, 1.9vh, 14px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
 }
 
 /* ============================================================
@@ -2197,6 +2241,7 @@ body {
       <div class="challenge-options">
         <button class="challenge-btn" id="btn-story">📖 Storytelling</button>
         <button class="challenge-btn" id="btn-topic">🎲 Random Topic</button>
+        <button class="challenge-btn" id="btn-scriptwork">🎬 Script Work</button>
         <button class="challenge-btn" id="btn-selfknowledge">🪞 Self-Knowledge</button>
         <button class="challenge-btn" id="btn-interview">💼 Interview Practice</button>
         <button class="challenge-btn" id="btn-gratitude">🙏 Gratitude</button>
@@ -2451,6 +2496,7 @@ body {
 const CONFIG = {
   story:         { enabled: true,  public: true  },
   topic:         { enabled: true,  public: true  },
+  scriptwork:    { enabled: true,  public: false },
   selfknowledge: { enabled: true,  public: true  },
   interview:     { enabled: true,  public: true  },
   gratitude:     { enabled: true,  public: true  },
@@ -2480,6 +2526,17 @@ const CHALLENGES = {
     rerollSupported: true,
     defaultPromptText: 'Talk about a random topic.',
     ratings: [{ label: 'Clarity' }, { label: 'Confidence' }],
+  },
+  scriptwork: {
+    buttonId: 'btn-scriptwork',
+    label: 'Script Work',
+    defaultTime: 60,
+    prepSupported: true,
+    rerollSupported: true,
+    defaultPromptText: 'Deliver a short script passage.',
+    timerMode: 'manual',
+    timesUpMode: 'scriptwork',
+    ratings: [],
   },
   selfknowledge: {
     buttonId: 'btn-selfknowledge',
@@ -2552,6 +2609,27 @@ const TIPS = {
       '<strong>Rule of three</strong> - make three observations. It feels complete and fills time naturally.',
       '<strong>Lead with an opinion</strong> - "I think X is fascinating because…" is more engaging than "X is a type of…"',
       '<strong>Bridge when stuck</strong> - "What\'s interesting about this is…" buys you a moment to think.',
+    ]
+  },
+  scriptwork: {
+    title: 'Script Work',
+    sections: [
+      {
+        heading: 'How it works',
+        items: [
+          'Deliver pre-written text rather than inventing ideas from scratch.',
+          'There is no countdown. Finish the full text, then end the take manually.',
+          'Use prompt type to choose the text source and focus to choose what part of the delivery you pay attention to.',
+        ]
+      },
+      {
+        heading: 'What to aim for',
+        items: [
+          '<strong>Presence</strong> — stay connected to the words instead of reciting them mechanically.',
+          '<strong>Believability</strong> — make the text feel thought and meant, not merely said.',
+          '<strong>Refinement</strong> — repeat the same text with different focuses and notice what changes.',
+        ]
+      }
     ]
   },
   articulation: {
@@ -2664,6 +2742,26 @@ const PROMPT_TYPES = {
       name: 'Basic Plot',
       description: 'Get a story premise to bring to life.',
       introPhrase: 'tell a story from a random plot premise',
+    },
+  ],
+  scriptwork: [
+    {
+      id: 'original-passage',
+      name: 'Original Practice Passage',
+      description: 'Use an original practice passage designed for delivery work.',
+      introPhrase: 'deliver an original practice passage',
+    },
+    {
+      id: 'articulation-passage',
+      name: 'Existing Articulation Passage',
+      description: 'Use one of the existing articulation passages as your text.',
+      introPhrase: 'deliver an articulation passage',
+    },
+    {
+      id: 'custom-text',
+      name: 'Custom Text',
+      description: 'Bring your own short passage or script.',
+      introPhrase: 'deliver your own custom text',
     },
   ],
 };
@@ -2821,6 +2919,80 @@ const FRAMEWORKS = {
         resultSingular: 'thing you\'re grateful for',
         resultPlural: 'things you\'re grateful for',
       },
+    },
+  ],
+  scriptwork: [
+    {
+      id: 'articulation-focus',
+      name: 'Articulation',
+      description: 'Focus on speaking cleanly so every word lands without stiffness.',
+      promptText: 'Deliver a script passage with a focus on articulation.',
+      mode: 'focus',
+      shortCue: 'Speak cleanly, not forcefully.',
+      guidance: 'Let every word land, especially the ends of words. Open your mouth a little more than normal and keep the sound easy, not stiff.',
+      mistakeToAvoid: 'Over-enunciating so hard that it sounds unnatural.',
+      ratingLabel: 'Articulation',
+      postChallenge: { type: 'none' },
+    },
+    {
+      id: 'conversational-focus',
+      name: 'Conversational',
+      description: 'Focus on making the text feel personal, specific, and spoken to someone real.',
+      promptText: 'Deliver a script passage conversationally.',
+      mode: 'focus',
+      shortCue: 'Say it like you mean it to one real person.',
+      guidance: 'Imagine exactly who you’re talking to and let the thought arrive before the line. Keep it specific and personal instead of sounding like you’re "performing."',
+      mistakeToAvoid: 'Slipping into a presentation voice.',
+      ratingLabel: 'Naturalness',
+      postChallenge: { type: 'none' },
+    },
+    {
+      id: 'emotion-focus',
+      name: 'Emotion',
+      description: 'Focus on the feeling underneath the words instead of adding emotion on top.',
+      promptText: 'Deliver a script passage with emotional truth.',
+      mode: 'focus',
+      shortCue: 'Play the feeling underneath the words, not on top of them.',
+      guidance: 'Don’t try to show emotion. Focus on what the words mean to you and let the feeling affect the delivery naturally.',
+      mistakeToAvoid: 'Pushing the emotion too hard.',
+      ratingLabel: 'Emotion',
+      postChallenge: { type: 'none' },
+    },
+    {
+      id: 'intensity-focus',
+      name: 'Intensity',
+      description: 'Focus on raising the stakes and committing harder to what the text means.',
+      promptText: 'Deliver a script passage with higher intensity.',
+      mode: 'focus',
+      shortCue: 'Raise the stakes, not just the volume.',
+      guidance: 'Let the urgency come from why this matters right now. More intensity usually means more focus, more commitment, and less backing away.',
+      mistakeToAvoid: 'Mistaking intensity for shouting.',
+      ratingLabel: 'Intensity',
+      postChallenge: { type: 'none' },
+    },
+    {
+      id: 'pacing-focus',
+      name: 'Pacing',
+      description: 'Focus on giving each thought time to land instead of rushing the text.',
+      promptText: 'Deliver a script passage with better pacing.',
+      mode: 'focus',
+      shortCue: 'Don’t rush the thought.',
+      guidance: 'Let each idea land before moving to the next. Vary the speed a little so important moments have space and the piece doesn’t flatten out.',
+      mistakeToAvoid: 'Racing through because you know the text.',
+      ratingLabel: 'Pacing',
+      postChallenge: { type: 'none' },
+    },
+    {
+      id: 'camera-presence-focus',
+      name: 'Camera Presence',
+      description: 'Focus on staying present, still, and connected on camera while delivering the text.',
+      promptText: 'Deliver a script passage with strong camera presence.',
+      mode: 'focus',
+      shortCue: 'Be still, present, and connected.',
+      guidance: 'Let the camera come to you instead of reaching for it. Keep your focus clear, your face alive, and your body quiet enough that small choices read.',
+      mistakeToAvoid: 'Fidgeting or trying too hard to look "on."',
+      ratingLabel: 'Presence',
+      postChallenge: { type: 'none' },
     },
   ],
 };
@@ -3612,6 +3784,25 @@ const INTERVIEW_QUESTIONS = [
 
 const GRATITUDE_PROMPT = CHALLENGES.gratitude.defaultPromptText;
 
+const SCRIPT_WORK_PASSAGES = [
+  {
+    name: 'Practice Passage 1',
+    text: 'I used to think clarity was mostly about getting the words right. The more time I spend on camera, the more I realise it is also about whether the thought feels lived in. A line can be perfectly clean and still feel distant. What makes it land is commitment. You stop reciting, you stop demonstrating, and you actually let the idea matter while you are saying it.',
+  },
+  {
+    name: 'Practice Passage 2',
+    text: 'Some of the best takes do not feel bigger. They feel simpler. The voice settles, the body stops trying to help, and the meaning gets sharper. You can see the person thinking instead of managing themselves. That shift is small from the outside, but it changes everything. Suddenly the words feel chosen in the moment rather than borrowed from a script.',
+  },
+  {
+    name: 'Practice Passage 3',
+    text: 'When a piece starts to feel flat, the answer is not always more energy. Sometimes it is more precision. A cleaner pause. A clearer turn in thought. A stronger sense of who the words are for. The performance wakes up when the intention gets specific. Then even a quiet delivery can feel direct, alive, and impossible to ignore.',
+  },
+  {
+    name: 'Practice Passage 4',
+    text: 'If I rush because I know the text, I stop giving the listener time to receive it. The words may still come out smoothly, but the meaning starts sliding past. Better pacing is not just slower pacing. It is responsive pacing. You let one idea land, then you move. You create enough space for the thought to register before the next one arrives.',
+  },
+];
+
 
 // Synced from data/topics.json via scripts/sync_embedded_content.js
 const TOPICS = [
@@ -3999,6 +4190,8 @@ let currentStoryWords = null;  // array of 3 word strings (set at launch)
 let currentPlotText   = null;  // plot premise string (set at launch)
 let currentArticulationItem = null; // current articulation passage/item for same-prompt replay
 let currentCustomPromptText = ''; // exact user-entered prompt for custom launches / same-prompt replay
+let currentScriptWorkText = '';
+let currentScriptWorkTitle = '';
 
 // Articulation 2 state
 let artLineHeight  = 0;    // px height of one rendered line
@@ -4021,6 +4214,8 @@ let timerRAF        = null;
 let timerRunning    = false;
 let beepsPlayed     = new Set();
 let midBeepsPlayed  = new Set();
+let manualTimerMode = false;
+let manualElapsedBeforePause = 0;
 
 // Framework state
 let currentFramework      = null;  // selected framework object, or null
@@ -4050,7 +4245,7 @@ function escapeHTML(str) {
 }
 
 function challengeSupportsCustomPrompt(challenge = currentChallenge) {
-  return ['story', 'topic', 'selfknowledge', 'interview'].includes(challenge);
+  return ['story', 'topic', 'scriptwork', 'selfknowledge', 'interview'].includes(challenge);
 }
 
 function clearCustomPromptState() {
@@ -4079,6 +4274,21 @@ function getCustomPromptHTML(rawPrompt = currentCustomPromptText) {
   const prefix = getCustomPromptPrefixText();
   if (!prefix) return escapeHTML(raw);
   return escapeHTML(prefix) + `<strong class="topic-highlight">${escapeHTML(raw)}</strong>`;
+}
+
+function formatElapsedTimer(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function formatResultDuration(ms) {
+  const totalSeconds = Math.max(0, Math.round(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
 }
 
 function animateTap(el, cb, ms = 350) {
@@ -4207,6 +4417,14 @@ function renderTimer(left) {
 }
 
 function timerTick() {
+  if (manualTimerMode) {
+    const elapsedMs = challengeNow();
+    timerPie.setAttribute('d', '');
+    timerNum.textContent = formatElapsedTimer(elapsedMs);
+    timerRAF = requestAnimationFrame(timerTick);
+    return;
+  }
+
   const elapsed = (performance.now() - timerStartWall) / 1000;
   const left = Math.max(0, timerRemaining - elapsed);
 
@@ -4243,6 +4461,15 @@ function timerTick() {
 }
 
 function startTimer() {
+  if (manualTimerMode) {
+    manualElapsedBeforePause = 0;
+    timerStartWall = performance.now();
+    timerRunning = true;
+    timerPie.setAttribute('d', '');
+    timerNum.textContent = '0:00';
+    timerRAF = requestAnimationFrame(timerTick);
+    return;
+  }
   timerStartWall  = performance.now();
   timerRunning    = true;
   beepsPlayed     = new Set();
@@ -4254,6 +4481,10 @@ function startTimer() {
 // Using this for framework taps means paused time (e.g. help overlay) is excluded
 // from section durations on the results screen.
 function challengeNow() {
+  if (manualTimerMode) {
+    if (timerStartWall === null) return manualElapsedBeforePause;
+    return manualElapsedBeforePause + (performance.now() - timerStartWall);
+  }
   if (timerStartWall === null) {
     return (timerTotal - timerRemaining) * 1000;
   }
@@ -4263,6 +4494,13 @@ function challengeNow() {
 
 function pauseTimer() {
   if (!timerRunning) return;
+  if (manualTimerMode) {
+    manualElapsedBeforePause += performance.now() - timerStartWall;
+    cancelAnimationFrame(timerRAF);
+    timerRunning = false;
+    timerStartWall = null;
+    return;
+  }
   const elapsed = (performance.now() - timerStartWall) / 1000;
   timerRemaining = Math.max(0, timerRemaining - elapsed);
   cancelAnimationFrame(timerRAF);
@@ -4271,6 +4509,12 @@ function pauseTimer() {
 }
 
 function resumeTimer() {
+  if (manualTimerMode) {
+    timerStartWall = performance.now();
+    timerRunning = true;
+    timerRAF = requestAnimationFrame(timerTick);
+    return;
+  }
   timerStartWall = performance.now();
   timerRunning   = true;
   timerRAF       = requestAnimationFrame(timerTick);
@@ -4278,8 +4522,16 @@ function resumeTimer() {
 
 function stopTimer() {
   cancelAnimationFrame(timerRAF);
-  timerRunning   = false;
+  if (manualTimerMode && timerRunning && timerStartWall !== null) {
+    manualElapsedBeforePause += performance.now() - timerStartWall;
+  }
+  timerRunning = false;
   timerStartWall = null;
+  if (manualTimerMode) {
+    timerPie.setAttribute('d', '');
+    timerNum.textContent = formatElapsedTimer(manualElapsedBeforePause);
+    return;
+  }
   timerRemaining = 0;
 }
 
@@ -4387,14 +4639,27 @@ function stopPrepTimer() {
 }
 
 function startActiveChallenge() {
-  if (currentFramework?.timeOverride) timerTotal = currentFramework.timeOverride;
+  const challengeConfig = getChallengeConfig();
+  manualTimerMode = challengeConfig.timerMode === 'manual';
+  if (!manualTimerMode && currentFramework?.timeOverride) timerTotal = currentFramework.timeOverride;
   timerRemaining = timerTotal;
   showScreen('screen-active');
   document.getElementById('reroll-btn').style.display =
     challengeSupportsReroll() ? '' : 'none';
+  const activeSkipBtn = document.getElementById('active-skip');
+  if (currentChallenge === 'scriptwork') {
+    activeSkipBtn.classList.add('text-mode');
+    activeSkipBtn.textContent = 'Done';
+  } else {
+    activeSkipBtn.classList.remove('text-mode');
+    activeSkipBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 6 11 12 5 18"/><polyline points="13 6 19 12 13 18"/></svg>';
+  }
   fwkChallengeStartTime = 0;
   fwkChallengeEndTime   = 0;
   fwkTimedOut           = false;
+  if (currentChallenge === 'scriptwork') {
+    renderScriptWork(true);
+  }
   renderFrameworkOverlay();
   startTimer();
 }
@@ -4424,6 +4689,35 @@ function renderArticulation(item) {
   const d = document.getElementById('prompt-display');
   document.getElementById('prompt-label').textContent = item.name;
   d.innerHTML = `<div class="articulation-scroll"><p class="articulation-text">${item.text}</p></div>`;
+}
+
+function getScriptWorkPromptType() {
+  return currentPromptType?.id || 'original-passage';
+}
+
+function getScriptWorkTextHTML(text = currentScriptWorkText) {
+  return escapeHTML(text).replace(/\n/g, '<br>');
+}
+
+function buildScriptWorkHTML(includeCue = false) {
+  const parts = [];
+  if (includeCue && currentFramework?.mode === 'focus') {
+    parts.push(
+      `<div class="scriptwork-focus-block">`
+        + `<div class="framework-guidance-label">Focus · ${escapeHTML(currentFramework.name)}</div>`
+        + `<div class="scriptwork-focus-cue">${escapeHTML(currentFramework.shortCue || '')}</div>`
+      + `</div>`
+    );
+  }
+  parts.push(
+    `<div class="scriptwork-scroll"><p class="scriptwork-text">${getScriptWorkTextHTML()}</p></div>`
+  );
+  return parts.join('');
+}
+
+function renderScriptWork(includeCue = false) {
+  document.getElementById('prompt-label').textContent = currentScriptWorkTitle;
+  document.getElementById('prompt-display').innerHTML = buildScriptWorkHTML(includeCue);
 }
 
 // Articulation 2 helpers
@@ -4507,8 +4801,15 @@ function openHelp() {
     document.getElementById('help-title').textContent = 'Tips';
   }
 
+  if (currentChallenge === 'scriptwork' && currentFramework?.mode === 'focus') {
+    listHTML += `<li class="help-section-heading">Focus: ${currentFramework.name}</li>`
+      + `<li><strong>Short cue</strong> — ${currentFramework.shortCue}</li>`
+      + `<li>${currentFramework.guidance}</li>`
+      + `<li><strong>Mistake to avoid</strong> — ${currentFramework.mistakeToAvoid}</li>`;
+  }
+
   // Auto-inject generic frameworks blurb for any challenge that supports them
-  if (FRAMEWORKS[currentChallenge]) {
+  if (FRAMEWORKS[currentChallenge] && currentChallenge !== 'scriptwork') {
     listHTML += '<li class="help-section-heading">Frameworks</li>'
       + '<li>Tap <strong>Add framework</strong> on the intro screen to add structure to your challenge. '
       + 'Tap each element as you reach it — you\'ll see a breakdown on the results screen.</li>';
@@ -4571,6 +4872,7 @@ function challengeSupportsPrep(challenge = currentChallenge) {
 
 function challengeSupportsReroll(challenge = currentChallenge) {
   if (challenge === 'story') return Boolean(currentPromptType);
+  if (challenge === 'scriptwork') return getScriptWorkPromptType() !== 'custom-text';
   return getChallengeConfig(challenge).rerollSupported === true;
 }
 
@@ -4609,16 +4911,18 @@ function validateChallengeDefinitions() {
 }
 
 function validateFrameworkDefinitions() {
-  const validModes = new Set(['parallel', 'sequential', 'counter']);
+  const validModes = new Set(['parallel', 'sequential', 'counter', 'focus']);
   const expectedPostTypeByMode = {
     parallel: 'completion-timed',
     sequential: 'time-distribution',
     counter: 'counter',
+    focus: 'none',
   };
   const allowedFrameworkFields = new Set([
     'id', 'name', 'description', 'promptText', 'mode', 'disablePrepTime',
     'timeOverride', 'elements', 'buttonLabel', 'prepButtonLabel',
     'postChallenge', 'hidePrompt', 'timeTracked',
+    'shortCue', 'guidance', 'mistakeToAvoid', 'ratingLabel',
   ]);
   const allowedElementFields = new Set(['label', 'emoji', 'hint', 'flex']);
   const errors = [];
@@ -4699,6 +5003,12 @@ function validateFrameworkDefinitions() {
             });
           });
         }
+      } else if (fw.mode === 'focus') {
+        ['shortCue', 'guidance', 'mistakeToAvoid', 'ratingLabel'].forEach(field => {
+          if (typeof fw[field] !== 'string' || fw[field].trim() === '') {
+            errors.push(`${label}: focus frameworks require ${field}`);
+          }
+        });
       }
 
       Object.keys(fw).forEach(field => {
@@ -4750,6 +5060,7 @@ function getEffectivePromptText() {
     return currentFramework?.promptText || CHALLENGE_DEFAULT_DESCS['story'];
   }
   if (currentChallenge === 'topic' && currentTopicSentence) return currentTopicSentence;
+  if (currentChallenge === 'scriptwork' && currentScriptWorkText) return currentScriptWorkText;
   return currentFramework?.promptText || CHALLENGE_DEFAULT_DESCS[currentChallenge];
 }
 
@@ -4765,6 +5076,9 @@ function getEffectivePromptHTML() {
   }
   if (currentChallenge === 'topic' && currentTopicText) {
     return 'Talk about <strong class="topic-highlight">' + currentTopicText + '</strong>';
+  }
+  if (currentChallenge === 'scriptwork' && currentScriptWorkText) {
+    return escapeHTML(currentScriptWorkText);
   }
   return getEffectivePromptText() || '';
 }
@@ -4808,6 +5122,11 @@ function getIntroDesc() {
     const ptPhrase = currentPromptType?.introPhrase || 'tell a story';
     const fwkPart  = currentFramework ? `, using the ${currentFramework.name} framework` : '';
     return `You'll get ${seconds} seconds to ${ptPhrase}${fwkPart}`;
+  }
+  if (currentChallenge === 'scriptwork') {
+    const ptPhrase = currentPromptType?.introPhrase || 'deliver an original practice passage';
+    const fwkPart = currentFramework ? `, focusing on ${currentFramework.name}` : '';
+    return `You'll ${ptPhrase}${fwkPart}. There’s no countdown — finish when you finish.`;
   }
   const rawPrompt = getEffectivePromptText();
   if (!rawPrompt) return '';
@@ -4899,7 +5218,7 @@ function updatePromptTypePill() {
   }
   // Sync intro-desc — story uses getIntroDesc() which handles both pill states
   const descEl = document.getElementById('intro-desc');
-  if (descEl && currentChallenge === 'story') descEl.textContent = getIntroDesc();
+  if (descEl && (currentChallenge === 'story' || currentChallenge === 'scriptwork')) descEl.textContent = getIntroDesc();
 }
 
 function setPromptTypePillVisibility() {
@@ -4921,8 +5240,13 @@ function openPromptTypePicker() {
 
   const noneItem = document.createElement('div');
   noneItem.className = 'framework-picker-item' + (currentPromptType === null ? ' active' : '');
+  const noneDesc = currentChallenge === 'story'
+    ? 'Just tell a story — no constraints'
+    : currentChallenge === 'scriptwork'
+      ? 'Use an original practice passage.'
+      : 'Use the default prompt style.';
   noneItem.innerHTML = '<span class="framework-picker-name">No prompt type</span>'
-    + '<span class="framework-picker-desc">Just tell a story — no constraints</span>';
+    + `<span class="framework-picker-desc">${noneDesc}</span>`;
   noneItem.onclick = () => { currentPromptType = null; updatePromptTypePill(); closePromptTypePicker(); };
   listEl.appendChild(noneItem);
 
@@ -5015,12 +5339,24 @@ function renderFrameworkPrepOverlay() {
     const label = currentFramework.prepButtonLabel || currentFramework.buttonLabel || currentFramework.postChallenge.label || 'Count';
     btn.innerHTML = `<span class="fwk-counter-label">${label}</span>`;
     wrap.appendChild(btn);
+  } else if (currentFramework.mode === 'focus') {
+    const guidance = document.createElement('div');
+    guidance.className = 'framework-guidance-label';
+    guidance.textContent = `Focus · ${currentFramework.name}`;
+    wrap.appendChild(guidance);
+
+    const cue = document.createElement('div');
+    cue.className = 'scriptwork-focus-cue';
+    cue.textContent = currentFramework.shortCue;
+    wrap.appendChild(cue);
   }
 }
 
 function renderFrameworkOverlay() {
   clearFrameworkOverlay();
   if (!currentFramework) return;
+
+  if (currentFramework.mode === 'focus') return;
 
   const wrap = document.getElementById('framework-active-wrap');
   wrap.style.display = 'flex';
@@ -5199,6 +5535,8 @@ function renderFrameworkZone() {
   if (!currentFramework) return;
 
   const pc = currentFramework.postChallenge;
+
+  if (pc.type === 'none') return;
 
   if (pc.type === 'time-distribution') {
     const SEG_COLORS = ['#eab308', '#60a5fa', '#f472b6', '#34d399', '#fb923c', '#a78bfa', '#38bdf8'];
@@ -5447,7 +5785,9 @@ function renderChallengeRatings() {
   ratingsEl.innerHTML = '';
   ratingsEl.style.display = 'none';
 
-  const ratings = getChallengeConfig().ratings || [];
+  const ratings = currentChallenge === 'scriptwork' && currentFramework?.ratingLabel
+    ? [{ label: currentFramework.ratingLabel }]
+    : (getChallengeConfig().ratings || []);
   if (ratings.length === 0) return;
 
   ratings.forEach(rating => {
@@ -5623,6 +5963,9 @@ function launchCustomPromptChallenge(rawPrompt) {
   if (currentChallenge === 'story') {
     currentStoryWords = null;
     currentPlotText   = null;
+  } else if (currentChallenge === 'scriptwork') {
+    currentScriptWorkTitle = 'Custom Text';
+    currentScriptWorkText = prompt;
   } else if (currentChallenge === 'topic') {
     currentTopicSentence = null;
     currentTopicText     = null;
@@ -5632,6 +5975,8 @@ function launchCustomPromptChallenge(rawPrompt) {
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prompt-display').innerHTML =
       `<p class="prompt-text">${getCustomPromptHTML()}</p>`;
+  } else if (currentChallenge === 'scriptwork') {
+    renderScriptWork(false);
   } else if (currentChallenge === 'selfknowledge') {
     document.getElementById('prompt-label').textContent = 'Your prompt';
     document.getElementById('prompt-display').innerHTML =
@@ -5648,6 +5993,9 @@ function launchCustomPromptChallenge(rawPrompt) {
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML =
         `<p class="prompt-text">${getPrepDescHTML()}</p>`;
+    } else if (currentChallenge === 'scriptwork') {
+      document.getElementById('prep-prompt-label').textContent = 'Custom Text';
+      document.getElementById('prep-prompt-display').innerHTML = buildScriptWorkHTML(false);
     } else if (currentChallenge === 'selfknowledge') {
       document.getElementById('prep-prompt-label').textContent = 'Your prompt';
       document.getElementById('prep-prompt-display').innerHTML =
@@ -5955,6 +6303,10 @@ function selectChallenge(challenge) {
     currentPromptType = null;
     currentStoryWords = null;
     currentPlotText   = null;
+  } else if (challenge === 'scriptwork') {
+    currentPromptType = null;
+    currentScriptWorkText = '';
+    currentScriptWorkTitle = '';
   } else if (challenge === 'topic') {
     currentTopicSentence = null;
     currentTopicText     = null;
@@ -6066,6 +6418,24 @@ document.getElementById('prep-reroll').onclick = () => {
       document.getElementById('prompt-display').innerHTML;
     restartPrepAfterReroll();
     return;
+  } else if (currentChallenge === 'scriptwork') {
+    const promptTypeId = getScriptWorkPromptType();
+    if (promptTypeId === 'articulation-passage') {
+      const item = pickRandom(ARTICULATIONS, 1)[0];
+      currentScriptWorkTitle = item.name;
+      currentScriptWorkText = item.text;
+      usedPromptText = item.name;
+    } else {
+      const item = pickRandom(SCRIPT_WORK_PASSAGES, 1)[0];
+      currentScriptWorkTitle = item.name;
+      currentScriptWorkText = item.text;
+      usedPromptText = item.name;
+    }
+    renderScriptWork(false);
+    document.getElementById('prep-prompt-label').textContent = currentScriptWorkTitle;
+    document.getElementById('prep-prompt-display').innerHTML = buildScriptWorkHTML(false);
+    restartPrepAfterReroll();
+    return;
   }
   if (wordsHTML) {
     document.getElementById('prompt-display').innerHTML = wordsHTML;
@@ -6105,6 +6475,13 @@ document.getElementById('prep-toggle-input').onchange = (e) => {
 
 document.getElementById('go-btn').onclick = () => {
   const goEl = document.getElementById('go-btn');
+  if (currentChallenge === 'scriptwork' && getScriptWorkPromptType() === 'custom-text' && !currentCustomPromptText) {
+    playPop();
+    animateTap(goEl, () => {
+      openCustomPromptPanel();
+    });
+    return;
+  }
   playStart();
   animateTap(goEl, () => {
     launchChallenge();
@@ -6136,6 +6513,36 @@ function launchChallenge() {
       document.getElementById('prep-prompt-label').textContent = '';
       document.getElementById('prep-prompt-display').innerHTML =
         `<p class="prompt-text">${getPrepDescHTML()}</p>`;
+      showScreen('screen-prep');
+      startPrepTimer();
+      return;
+    }
+
+    startActiveChallenge();
+    return;
+  } else if (currentChallenge === 'scriptwork') {
+    const promptTypeId = getScriptWorkPromptType();
+    if (promptTypeId === 'articulation-passage') {
+      const item = pickRandom(ARTICULATIONS, 1)[0];
+      currentScriptWorkTitle = item.name;
+      currentScriptWorkText = item.text;
+      usedPromptText = item.name;
+    } else if (promptTypeId === 'custom-text') {
+      openCustomPromptPanel();
+      return;
+    } else {
+      const item = pickRandom(SCRIPT_WORK_PASSAGES, 1)[0];
+      currentScriptWorkTitle = item.name;
+      currentScriptWorkText = item.text;
+      usedPromptText = item.name;
+    }
+
+    renderScriptWork(false);
+    timerTotal = getEffectiveTime();
+
+    if (prepTimeEnabled && challengeSupportsPrep() && !currentFramework?.disablePrepTime) {
+      document.getElementById('prep-prompt-label').textContent = currentScriptWorkTitle;
+      document.getElementById('prep-prompt-display').innerHTML = buildScriptWorkHTML(false);
       showScreen('screen-prep');
       startPrepTimer();
       return;
@@ -6253,6 +6660,10 @@ function renderCurrentPromptForReplay() {
       document.getElementById('prompt-label').textContent = 'Your question';
       document.getElementById('prompt-display').innerHTML =
         `<p class="twister-text">${escapeHTML(currentCustomPromptText)}</p>`;
+    } else if (currentChallenge === 'scriptwork') {
+      currentScriptWorkTitle = 'Custom Text';
+      currentScriptWorkText = currentCustomPromptText;
+      renderScriptWork(true);
     }
     return;
   }
@@ -6261,6 +6672,11 @@ function renderCurrentPromptForReplay() {
     document.getElementById('prompt-label').textContent = '';
     document.getElementById('prompt-display').innerHTML =
       `<p class="prompt-text">${getEffectivePromptHTML()}</p>`;
+    return;
+  }
+
+  if (currentChallenge === 'scriptwork') {
+    renderScriptWork(true);
     return;
   }
 
@@ -6305,6 +6721,9 @@ function replaySamePrompt() {
         document.getElementById('prep-prompt-label').textContent = 'Your question';
         document.getElementById('prep-prompt-display').innerHTML =
           `<p class="twister-text">${escapeHTML(currentCustomPromptText)}</p>`;
+      } else if (currentChallenge === 'scriptwork') {
+        document.getElementById('prep-prompt-label').textContent = 'Custom Text';
+        document.getElementById('prep-prompt-display').innerHTML = buildScriptWorkHTML(false);
       }
     } else if (currentChallenge === 'story' || currentChallenge === 'topic' || currentChallenge === 'gratitude') {
       document.getElementById('prep-prompt-label').textContent = '';
@@ -6318,6 +6737,9 @@ function replaySamePrompt() {
       document.getElementById('prep-prompt-label').textContent = 'Your question';
       document.getElementById('prep-prompt-display').innerHTML =
         `<p class="twister-text">${usedPromptText}</p>`;
+    } else if (currentChallenge === 'scriptwork') {
+      document.getElementById('prep-prompt-label').textContent = currentScriptWorkTitle;
+      document.getElementById('prep-prompt-display').innerHTML = buildScriptWorkHTML(false);
     } else if (currentChallenge === 'articulation' || currentChallenge === 'articulation2') {
       document.getElementById('prep-prompt-label').textContent = usedPromptText;
       document.getElementById('prep-prompt-display').innerHTML =
@@ -6413,6 +6835,21 @@ document.getElementById('reroll-btn').onclick = () => {
     document.getElementById('prompt-label').textContent = 'Your question';
     document.getElementById('prompt-display').innerHTML = `<p class="twister-text">${q}</p>`;
     restartActiveAfterReroll();
+  } else if (currentChallenge === 'scriptwork') {
+    const promptTypeId = getScriptWorkPromptType();
+    if (promptTypeId === 'articulation-passage') {
+      const item = pickRandom(ARTICULATIONS, 1)[0];
+      currentScriptWorkTitle = item.name;
+      currentScriptWorkText = item.text;
+      usedPromptText = item.name;
+    } else {
+      const item = pickRandom(SCRIPT_WORK_PASSAGES, 1)[0];
+      currentScriptWorkTitle = item.name;
+      currentScriptWorkText = item.text;
+      usedPromptText = item.name;
+    }
+    renderScriptWork(true);
+    restartActiveAfterReroll();
   }
   // Gratitude: no reroll -static prompt
 };
@@ -6501,6 +6938,19 @@ function showTimesUp() {
       }
     });
 
+  } else if (challengeConfig.timesUpMode === 'scriptwork') {
+    const elapsedMs = challengeNow();
+    const words = currentScriptWorkText.trim() ? currentScriptWorkText.trim().split(/\s+/).length : 0;
+    const minutes = elapsedMs / 60000;
+    const wpm = minutes > 0 ? Math.round(words / minutes) : 0;
+
+    title.textContent = 'Done!';
+    sub.style.display = 'none';
+    prompt.style.display = 'none';
+    completion.style.display = 'block';
+    completion.textContent = wpm > 0
+      ? `${formatResultDuration(elapsedMs)} · ${wpm} WPM`
+      : formatResultDuration(elapsedMs);
   } else {
     title.textContent = challengeConfig.timesUpTitle || "Done!";
     if (challengeConfig.timesUpClass) timesupScreen.classList.add(challengeConfig.timesUpClass);
