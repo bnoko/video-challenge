@@ -1706,7 +1706,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: clamp(6px, 1vh, 10px);
-  margin-top: clamp(10px, 1.8vh, 18px);
+  margin-top: clamp(4px, 0.8vh, 10px);
 }
 
 .prep-plus-btn {
@@ -7123,7 +7123,7 @@ function scrollScriptWorkByKeyboard(direction) {
   const lineHeight = parseFloat(getComputedStyle(scrollEl).lineHeight) || 24;
   const start = scrollEl.scrollTop;
   const maxScroll = Math.max(0, scrollEl.scrollHeight - scrollEl.clientHeight);
-  const target = Math.max(0, Math.min(maxScroll, start + (direction * lineHeight)));
+  const target = Math.max(0, Math.min(maxScroll, start + (direction * lineHeight * 3)));
   const distance = target - start;
   if (distance === 0) return false;
 
@@ -7132,7 +7132,7 @@ function scrollScriptWorkByKeyboard(direction) {
     scriptWorkKeyboardScrollRAF = null;
   }
 
-  const duration = 240;
+  const duration = 340;
   const startTime = performance.now();
   const easeInOut = t => 0.5 - (Math.cos(Math.PI * t) / 2);
 
