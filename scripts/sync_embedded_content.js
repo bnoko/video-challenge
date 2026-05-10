@@ -12,6 +12,8 @@ const CONTENT_MAP = [
   { constName: "SELF_KNOWLEDGE", jsonPath: "data/self_knowledge.json" },
   { constName: "INTERVIEW_QUESTIONS", jsonPath: "data/interview_questions.json" },
   { constName: "TOPICS", jsonPath: "data/topics.json" },
+  { constName: "SCRIPT_WORK_PUBLIC_ORIGINAL_PASSAGES", jsonPath: "data/scriptwork/public/original_passages.json" },
+  { constName: "SCRIPT_WORK_PUBLIC_ARTICULATION_PASSAGES", jsonPath: "data/scriptwork/public/articulation_passages.json" },
 ];
 
 function escapeRegex(text) {

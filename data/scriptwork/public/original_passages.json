@@ -1,0 +1,122 @@
+[
+  {
+    "id": "scriptwork-original-clarity-vs-commitment",
+    "title": "Clarity vs Commitment",
+    "sourceTitle": "Original Practice Passage",
+    "sourceAuthor": "Video Challenge App",
+    "sourceYear": 2026,
+    "sourceType": "original",
+    "visibility": "public",
+    "category": "original_passages",
+    "tags": [
+      "reflective",
+      "camera-work",
+      "commitment"
+    ],
+    "tone": [
+      "thoughtful",
+      "direct"
+    ],
+    "performanceFocus": [
+      "conviction",
+      "clarity",
+      "presence"
+    ],
+    "difficulty": 2,
+    "lengthWords": 67,
+    "lengthSeconds": 30,
+    "text": "I used to think clarity was mostly about getting the words right. The more time I spend on camera, the more I realise it is also about whether the thought feels lived in. A line can be perfectly clean and still feel distant. What makes it land is commitment. You stop reciting, you stop demonstrating, and you actually let the idea matter while you are saying it.",
+    "notes": "Good for presence and conviction work.",
+    "status": "approved"
+  },
+  {
+    "id": "scriptwork-original-smaller-take",
+    "title": "The Simpler Take",
+    "sourceTitle": "Original Practice Passage",
+    "sourceAuthor": "Video Challenge App",
+    "sourceYear": 2026,
+    "sourceType": "original",
+    "visibility": "public",
+    "category": "original_passages",
+    "tags": [
+      "subtle",
+      "presence",
+      "camera-work"
+    ],
+    "tone": [
+      "calm",
+      "observant"
+    ],
+    "performanceFocus": [
+      "naturalness",
+      "presence",
+      "restraint"
+    ],
+    "difficulty": 2,
+    "lengthWords": 67,
+    "lengthSeconds": 30,
+    "text": "Some of the best takes do not feel bigger. They feel simpler. The voice settles, the body stops trying to help, and the meaning gets sharper. You can see the person thinking instead of managing themselves. That shift is small from the outside, but it changes everything. Suddenly the words feel chosen in the moment rather than borrowed from a script.",
+    "notes": "Useful for naturalness and camera-presence focus.",
+    "status": "approved"
+  },
+  {
+    "id": "scriptwork-original-more-precision",
+    "title": "More Precision",
+    "sourceTitle": "Original Practice Passage",
+    "sourceAuthor": "Video Challenge App",
+    "sourceYear": 2026,
+    "sourceType": "original",
+    "visibility": "public",
+    "category": "original_passages",
+    "tags": [
+      "precision",
+      "timing",
+      "delivery"
+    ],
+    "tone": [
+      "grounded",
+      "confident"
+    ],
+    "performanceFocus": [
+      "pacing",
+      "clarity",
+      "control"
+    ],
+    "difficulty": 2,
+    "lengthWords": 64,
+    "lengthSeconds": 29,
+    "text": "When a piece starts to feel flat, the answer is not always more energy. Sometimes it is more precision. A cleaner pause. A clearer turn in thought. A stronger sense of who the words are for. The performance wakes up when the intention gets specific. Then even a quiet delivery can feel direct, alive, and impossible to ignore.",
+    "notes": "Strong pacing passage.",
+    "status": "approved"
+  },
+  {
+    "id": "scriptwork-original-responsive-pacing",
+    "title": "Responsive Pacing",
+    "sourceTitle": "Original Practice Passage",
+    "sourceAuthor": "Video Challenge App",
+    "sourceYear": 2026,
+    "sourceType": "original",
+    "visibility": "public",
+    "category": "original_passages",
+    "tags": [
+      "pacing",
+      "thought",
+      "landing"
+    ],
+    "tone": [
+      "steady",
+      "clear"
+    ],
+    "performanceFocus": [
+      "pacing",
+      "control",
+      "conviction"
+    ],
+    "difficulty": 2,
+    "lengthWords": 68,
+    "lengthSeconds": 31,
+    "text": "If I rush because I know the text, I stop giving the listener time to receive it. The words may still come out smoothly, but the meaning starts sliding past. Better pacing is not just slower pacing. It is responsive pacing. You let one idea land, then you move. You create enough space for the thought to register before the next one arrives.",
+    "notes": "Best for pacing and naturalness focus.",
+    "status": "approved"
+  }
+]

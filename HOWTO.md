@@ -29,6 +29,8 @@ The JSON files in `data/` are now the authoring source of truth for:
 - `data/self_knowledge.json` → `SELF_KNOWLEDGE`
 - `data/interview_questions.json` → `INTERVIEW_QUESTIONS`
 - `data/articulation.json` → `ARTICULATIONS`
+- `data/scriptwork/public/original_passages.json` → `SCRIPT_WORK_PUBLIC_ORIGINAL_PASSAGES`
+- `data/scriptwork/public/articulation_passages.json` → `SCRIPT_WORK_PUBLIC_ARTICULATION_PASSAGES`
 
 To push updated content into the app without deploying yet, run:
 
@@ -62,7 +64,7 @@ node "/Users/byron/Content creating videos/Video challenges/scripts/sync_embedde
 ```
 cd "/Users/byron/Content creating videos/Video challenges"
 node scripts/sync_embedded_content.js
-git add challenge.html data/*.json
+git add challenge.html data
 git commit -m "update"
 git push
 ```

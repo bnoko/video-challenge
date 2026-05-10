@@ -6,7 +6,7 @@ set -e
 
 cd "$(dirname "$0")"
 node scripts/sync_embedded_content.js
-git add challenge.html data/*.json scripts/sync_embedded_content.js HOWTO.md deploy.sh
+git add challenge.html data scripts/sync_embedded_content.js HOWTO.md deploy.sh
 git commit -m "Update challenge app" 2>/dev/null || echo "(nothing new to commit)"
 git push
 echo ""
