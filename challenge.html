@@ -3343,11 +3343,6 @@ const ARTICULATIONS = [
   }
 ];
 
-SCRIPT_WORK_LIBRARY.public.original_passages =
-  SCRIPT_WORK_LIBRARY.public.original_passages.map(normalizeScriptWorkEntry);
-SCRIPT_WORK_LIBRARY.public.articulation_passages =
-  ARTICULATIONS.map(buildScriptWorkEntryFromArticulation);
-
 // Synced from data/plots.json via scripts/sync_embedded_content.js
 const PLOTS = [
   "A woman goes to fight a dragon, but they become friends",
@@ -3879,6 +3874,11 @@ const SCRIPT_WORK_LIBRARY = {
     personal_scripts: [],
   },
 };
+
+SCRIPT_WORK_LIBRARY.public.original_passages =
+  SCRIPT_WORK_LIBRARY.public.original_passages.map(normalizeScriptWorkEntry);
+SCRIPT_WORK_LIBRARY.public.articulation_passages =
+  ARTICULATIONS.map(buildScriptWorkEntryFromArticulation);
 
 
 // Synced from data/topics.json via scripts/sync_embedded_content.js
